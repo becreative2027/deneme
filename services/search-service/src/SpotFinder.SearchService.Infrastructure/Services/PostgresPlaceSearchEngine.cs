@@ -41,14 +41,13 @@ public sealed class PostgresPlaceSearchEngine : IPlaceSearchEngine
 
     public async Task<IReadOnlyList<string>> AutocompleteAsync(string query, Guid? cityId, string languageCode, CancellationToken ct = default)
     {
-        var cityFilter = cityId.HasValue ? $"AND p.city_id = '{cityId}'" : "";
+        var cityFilter = cityId.HasValue ? $"AND p.city_id = {cityId}" : "";
         var sql = $"""
             SELECT DISTINCT pt.name
             FROM place.places p
             JOIN place.place_translations pt ON pt.place_id = p.id
-            WHERE pt.language_code = '{languageCode}'
-            AND pt.name ILIKE '{query.Replace("'", "''")}%'
-            AND p.is_active = true
+            WHERE pt.name ILIKE '{query.Replace("'", "''")}%'
+            AND p.is_deleted = false
             {cityFilter}
             ORDER BY pt.name
             LIMIT 10
@@ -61,11 +60,11 @@ public sealed class PostgresPlaceSearchEngine : IPlaceSearchEngine
         var conditions = BuildConditions(filter, languageCode);
         var offset = (filter.Page - 1) * filter.PageSize;
         return $"""
-            SELECT p.id AS place_id, p.slug, COALESCE(pt.name, p.slug) AS name,
-                   p.latitude, p.longitude, p.city_id
+            SELECT p.id AS "PlaceId", COALESCE(pt.slug, p.id::text) AS "Slug", COALESCE(pt.name, p.id::text) AS "Name",
+                   COALESCE(p.latitude, 0) AS "Latitude", COALESCE(p.longitude, 0) AS "Longitude", COALESCE(p.city_id, 0) AS "CityId"
             FROM place.places p
-            LEFT JOIN place.place_translations pt ON pt.place_id = p.id AND pt.language_code = '{languageCode}'
-            WHERE p.is_active = true {conditions}
+            LEFT JOIN place.place_translations pt ON pt.place_id = p.id
+            WHERE p.is_deleted = false {conditions}
             ORDER BY p.created_at DESC
             LIMIT {filter.PageSize} OFFSET {offset}
             """;
@@ -75,10 +74,10 @@ public sealed class PostgresPlaceSearchEngine : IPlaceSearchEngine
     {
         var conditions = BuildConditions(filter, languageCode);
         return $"""
-            SELECT COUNT(*) AS count
+            SELECT COUNT(*) AS "Count"
             FROM place.places p
-            LEFT JOIN place.place_translations pt ON pt.place_id = p.id AND pt.language_code = '{languageCode}'
-            WHERE p.is_active = true {conditions}
+            LEFT JOIN place.place_translations pt ON pt.place_id = p.id
+            WHERE p.is_deleted = false {conditions}
             """;
     }
 
@@ -95,17 +94,17 @@ public sealed class PostgresPlaceSearchEngine : IPlaceSearchEngine
     }
 }
 
-file record PlaceSearchRaw
+internal record PlaceSearchRaw
 {
     public Guid PlaceId { get; init; }
     public string Slug { get; init; } = string.Empty;
     public string Name { get; init; } = string.Empty;
     public double Latitude { get; init; }
     public double Longitude { get; init; }
-    public Guid CityId { get; init; }
+    public int CityId { get; init; }
 }
 
-file record CountResult
+internal record CountResult
 {
     public long Count { get; init; }
 }

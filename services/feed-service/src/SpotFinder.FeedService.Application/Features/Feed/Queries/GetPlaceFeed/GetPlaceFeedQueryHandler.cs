@@ -110,12 +110,12 @@ public sealed class GetPlaceFeedQueryHandler
         var userIds = posts.Select(p => p.UserId).Distinct().ToList();
 
         // ── STEP 3: Bulk loads ────────────────────────────────────────────────
-        var mediaTask = _db.PostMedia
+        var mediaList = await _db.PostMedia
             .Where(m => postIds.Contains(m.PostId))
             .Select(m => new { m.PostId, m.Url })
             .ToListAsync(ct);
 
-        var userTask = (
+        var userList = await (
             from u in _db.Users
             where userIds.Contains(u.Id)
             join pr in _db.UserProfiles on u.Id equals pr.UserId into prg
@@ -129,29 +129,26 @@ public sealed class GetPlaceFeedQueryHandler
         ).ToListAsync(ct);
 
         // Single place → one optimised query instead of multi-place GroupBy
-        var placeNameTask = _db.PlaceTranslations
+        var placeName = await _db.PlaceTranslations
             .Where(t => t.PlaceId == request.PlaceId)
             .OrderBy(t => t.LanguageId == 1 ? 0 : 1)
             .ThenBy(t => t.LanguageId)
             .Select(t => t.Name)
-            .FirstOrDefaultAsync(ct);
+            .FirstOrDefaultAsync(ct) ?? string.Empty;
 
-        var likedTask = _db.PostLikes
+        var likedList = await _db.PostLikes
             .Where(l => l.UserId == request.UserId && postIds.Contains(l.PostId))
             .Select(l => l.PostId)
             .ToListAsync(ct);
 
-        await Task.WhenAll(mediaTask, userTask, placeNameTask, likedTask);
-
         // ── STEP 4: In-memory projection ──────────────────────────────────────
-        var mediaByPost = mediaTask.Result
+        var mediaByPost = mediaList
             .GroupBy(m => m.PostId)
             .ToDictionary(g => g.Key,
                           g => (IReadOnlyList<string>)g.Select(m => m.Url).ToList());
 
-        var userById  = userTask.Result.ToDictionary(u => u.Id);
-        var placeName = placeNameTask.Result ?? string.Empty;
-        var likedSet  = likedTask.Result.ToHashSet();
+        var userById  = userList.ToDictionary(u => u.Id);
+        var likedSet  = likedList.ToHashSet();
         var placeDto  = new FeedPlaceDto(request.PlaceId, placeName);
 
         var dtos = posts.Select(p =>

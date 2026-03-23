@@ -19,5 +19,5 @@ public sealed record SearchPlacesQuery(
 public sealed record PlaceSearchResultDto(
     Guid PlaceId, string Slug, string Name,
     double Latitude, double Longitude,
-    Guid CityId, List<string> LabelSlugs,
+    int CityId, List<string> LabelSlugs,
     double? DistanceKm, double RelevanceScore);

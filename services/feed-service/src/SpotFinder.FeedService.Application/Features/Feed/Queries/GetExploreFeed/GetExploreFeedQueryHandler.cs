@@ -104,24 +104,22 @@ public sealed class GetExploreFeedQueryHandler
         var trendingSlots     = (int)Math.Ceiling(pageSize * blend.Trending);
         var discoverySlots    = Math.Max(1, pageSize - personalizedSlots - trendingSlots);
 
-        // ── STEP 1: User interest vector + trending place IDs (parallel) ───────
-        var interestTask = _db.UserInterests
+        // ── STEP 1: User interest vector + trending place IDs (sequential) ─────
+        var interestList = await _db.UserInterests
             .Where(i => i.UserId == request.UserId)
             .Select(i => new { i.LabelId, i.Score })
             .ToListAsync(ct);
 
-        var trendingPlacesTask = _db.TrendingScores
+        var trendingPlacesList = await _db.TrendingScores
             .Where(t => t.Score > 0)
             .OrderByDescending(t => t.Score)
             .Take(50)
             .Select(t => new { t.PlaceId, t.Score })
             .ToListAsync(ct);
 
-        await Task.WhenAll(interestTask, trendingPlacesTask);
-
-        var interestByLabel  = interestTask.Result.ToDictionary(i => i.LabelId, i => i.Score);
-        var trendByPlaceRaw  = trendingPlacesTask.Result.ToDictionary(t => t.PlaceId, t => t.Score);
-        var trendingPlaceIds = trendingPlacesTask.Result.Select(t => t.PlaceId).ToList();
+        var interestByLabel  = interestList.ToDictionary(i => i.LabelId, i => i.Score);
+        var trendByPlaceRaw  = trendingPlacesList.ToDictionary(t => t.PlaceId, t => t.Score);
+        var trendingPlaceIds = trendingPlacesList.Select(t => t.PlaceId).ToList();
 
         // Over-fetch 2× each slot so deduplication leaves enough posts
         var personalizedFetch = personalizedSlots * 2;
@@ -211,12 +209,12 @@ public sealed class GetExploreFeedQueryHandler
         var allPostIds  = merged.Select(p => p.Id).ToList();
         var allUserIds  = merged.Select(p => p.UserId).Distinct().ToList();
 
-        var mediaTask = _db.PostMedia
+        var mediaList = await _db.PostMedia
             .Where(m => allPostIds.Contains(m.PostId))
             .Select(m => new { m.PostId, m.Url })
             .ToListAsync(ct);
 
-        var userTask = (
+        var userList = await (
             from u in _db.Users
             where allUserIds.Contains(u.Id)
             join pr in _db.UserProfiles on u.Id equals pr.UserId into prg
@@ -229,22 +227,20 @@ public sealed class GetExploreFeedQueryHandler
             }
         ).ToListAsync(ct);
 
-        var placeTask = _db.PlaceTranslations
+        var placeList = await _db.PlaceTranslations
             .Where(t => allPlaceIds.Contains(t.PlaceId))
             .Select(t => new { t.PlaceId, t.LanguageId, t.Name })
             .ToListAsync(ct);
 
-        var likedTask = _db.PostLikes
+        var likedList = await _db.PostLikes
             .Where(l => l.UserId == request.UserId && allPostIds.Contains(l.PostId))
             .Select(l => l.PostId)
             .ToListAsync(ct);
 
-        var placeLabelTask = _db.PlaceLabels
+        var placeLabelList = await _db.PlaceLabels
             .Where(pl => allPlaceIds.Contains(pl.PlaceId))
             .Select(pl => new { pl.PlaceId, pl.LabelId })
             .ToListAsync(ct);
-
-        await Task.WhenAll(mediaTask, userTask, placeTask, likedTask, placeLabelTask);
 
         // ── STEP 4: Score + rank + diversity ─────────────────────────────────
         //
@@ -259,7 +255,7 @@ public sealed class GetExploreFeedQueryHandler
         var trendCap          = opts.Trending.Cap;
         var interestMultiplier = variant == "B" ? 1.5m : 2.0m;
 
-        var labelsByPlace = placeLabelTask.Result
+        var labelsByPlace = placeLabelList
             .GroupBy(pl => pl.PlaceId)
             .ToDictionary(g => g.Key, g => g.Select(pl => pl.LabelId).ToList());
 
@@ -292,20 +288,20 @@ public sealed class GetExploreFeedQueryHandler
             .ToList();
 
         // ── STEP 5: Project DTOs ──────────────────────────────────────────────
-        var mediaByPost = mediaTask.Result
+        var mediaByPost = mediaList
             .GroupBy(m => m.PostId)
             .ToDictionary(g => g.Key,
                           g => (IReadOnlyList<string>)g.Select(m => m.Url).ToList());
 
-        var userById = userTask.Result.ToDictionary(u => u.Id);
+        var userById = userList.ToDictionary(u => u.Id);
 
-        var nameByPlace = placeTask.Result
+        var nameByPlace = placeList
             .GroupBy(t => t.PlaceId)
             .ToDictionary(
                 g => g.Key,
                 g => (g.FirstOrDefault(t => t.LanguageId == 1) ?? g.First()).Name);
 
-        var likedSet = likedTask.Result.ToHashSet();
+        var likedSet = likedList.ToHashSet();
 
         var dtos = ranked.Select(x =>
         {

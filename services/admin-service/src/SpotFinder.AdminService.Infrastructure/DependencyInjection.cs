@@ -17,10 +17,10 @@ public static class DependencyInjection
         var connStr = configuration.GetConnectionString("AdminDb")!;
 
         // Admin-schema context (moderation, audit, import jobs)
-        services.AddDbContext<AdminDbContext>(options => options.UseNpgsql(connStr));
+        services.AddDbContext<AdminDbContext>(options => options.UseNpgsql(connStr).UseSnakeCaseNamingConvention());
 
         // Cross-schema write context (place.*, label.*, geo.*)
-        services.AddDbContext<AdminWriteDbContext>(options => options.UseNpgsql(connStr));
+        services.AddDbContext<AdminWriteDbContext>(options => options.UseNpgsql(connStr).UseSnakeCaseNamingConvention());
 
         services.AddMemoryCache(o => o.SizeLimit = 256);
         services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<AdminDbContext>());

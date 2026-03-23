@@ -7,7 +7,7 @@ public sealed class PlaceSearchResult
     public string Name { get; init; } = string.Empty;
     public double Latitude { get; init; }
     public double Longitude { get; init; }
-    public Guid CityId { get; init; }
+    public int CityId { get; init; }
     public List<string> LabelSlugs { get; init; } = new();
     public double? DistanceKm { get; init; }
     public double RelevanceScore { get; init; }

@@ -111,12 +111,12 @@ public sealed class GetNearbyFeedQueryHandler
         var placeIds = posts.Select(p => p.PlaceId).Distinct().ToList();
 
         // ── STEP 3: Bulk loads ────────────────────────────────────────────────
-        var mediaTask = _db.PostMedia
+        var mediaList = await _db.PostMedia
             .Where(m => postIds.Contains(m.PostId))
             .Select(m => new { m.PostId, m.Url })
             .ToListAsync(ct);
 
-        var userTask = (
+        var userList = await (
             from u in _db.Users
             where userIds.Contains(u.Id)
             join pr in _db.UserProfiles on u.Id equals pr.UserId into prg
@@ -129,33 +129,31 @@ public sealed class GetNearbyFeedQueryHandler
             }
         ).ToListAsync(ct);
 
-        var placeTask = _db.PlaceTranslations
+        var placeList = await _db.PlaceTranslations
             .Where(t => placeIds.Contains(t.PlaceId))
             .Select(t => new { t.PlaceId, t.LanguageId, t.Name })
             .ToListAsync(ct);
 
-        var likedTask = _db.PostLikes
+        var likedList = await _db.PostLikes
             .Where(l => l.UserId == request.UserId && postIds.Contains(l.PostId))
             .Select(l => l.PostId)
             .ToListAsync(ct);
 
-        await Task.WhenAll(mediaTask, userTask, placeTask, likedTask);
-
         // ── STEP 4: In-memory projection ──────────────────────────────────────
-        var mediaByPost = mediaTask.Result
+        var mediaByPost = mediaList
             .GroupBy(m => m.PostId)
             .ToDictionary(g => g.Key,
                           g => (IReadOnlyList<string>)g.Select(m => m.Url).ToList());
 
-        var userById = userTask.Result.ToDictionary(u => u.Id);
+        var userById = userList.ToDictionary(u => u.Id);
 
-        var nameByPlace = placeTask.Result
+        var nameByPlace = placeList
             .GroupBy(t => t.PlaceId)
             .ToDictionary(
                 g => g.Key,
                 g => (g.FirstOrDefault(t => t.LanguageId == 1) ?? g.First()).Name);
 
-        var likedSet = likedTask.Result.ToHashSet();
+        var likedSet = likedList.ToHashSet();
 
         var dtos = posts.Select(p =>
         {

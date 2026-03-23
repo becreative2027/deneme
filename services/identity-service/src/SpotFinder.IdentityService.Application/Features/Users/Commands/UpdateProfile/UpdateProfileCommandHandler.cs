@@ -17,21 +17,22 @@ public sealed class UpdateProfileCommandHandler(
         var sw = Stopwatch.StartNew();
 
         var profile = await profileRepository.GetByUserIdAsync(cmd.UserId, ct);
+        var isNew = profile is null;
 
-        if (profile is null)
+        if (isNew)
         {
             // Upsert: create profile on first update
             profile = new UserProfile { UserId = cmd.UserId };
             await profileRepository.AddAsync(profile, ct);
         }
 
-        if (cmd.DisplayName != null)     profile.DisplayName     = cmd.DisplayName;
-        if (cmd.Bio != null)             profile.Bio             = cmd.Bio;
-        if (cmd.ProfileImageUrl != null) profile.ProfileImageUrl = cmd.ProfileImageUrl;
+        if (cmd.DisplayName != null)     profile!.DisplayName     = cmd.DisplayName;
+        if (cmd.Bio != null)             profile!.Bio             = cmd.Bio;
+        if (cmd.ProfileImageUrl != null) profile!.ProfileImageUrl = cmd.ProfileImageUrl;
 
-        profile.UpdatedAt = DateTime.UtcNow;
+        profile!.UpdatedAt = DateTime.UtcNow;
 
-        profileRepository.Update(profile);
+        if (!isNew) profileRepository.Update(profile);
         await unitOfWork.SaveChangesAsync(ct);
 
         sw.Stop();
