@@ -1,0 +1,29 @@
+You are a senior backend engineer.
+
+We want to upgrade the place_scores table to support ranking optimization.
+
+Task:
+
+Modify place.place_scores table:
+
+- Add column:
+  final_score NUMERIC(5,2)
+
+Requirements:
+
+- Do NOT drop table
+- Make migration safe and idempotent
+- If column exists, do nothing
+- Update EF Core model accordingly
+
+Then:
+
+- Update DbContext configuration
+- Ensure model is in sync with DB
+
+After execution:
+
+- Show table structure
+- Confirm final_score exists
+
+Execute now.

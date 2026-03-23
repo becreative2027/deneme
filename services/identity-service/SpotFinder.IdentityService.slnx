@@ -1,0 +1,13 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/SpotFinder.IdentityService.API/SpotFinder.IdentityService.API.csproj" />
+    <Project Path="src/SpotFinder.IdentityService.Application/SpotFinder.IdentityService.Application.csproj" />
+    <Project Path="src/SpotFinder.IdentityService.Domain/SpotFinder.IdentityService.Domain.csproj" />
+    <Project Path="src/SpotFinder.IdentityService.Infrastructure/SpotFinder.IdentityService.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/SpotFinder.IdentityService.UnitTests/SpotFinder.IdentityService.UnitTests.csproj" />
+  </Folder>
+  <Project Path="../../shared/building-blocks/SpotFinder.BuildingBlocks/SpotFinder.BuildingBlocks.csproj" />
+  <Project Path="../../shared/contracts/SpotFinder.Contracts/SpotFinder.Contracts.csproj" />
+</Solution>

@@ -1,0 +1,6 @@
+@SpotFinder.ApiGateway_HostAddress = http://localhost:5243
+
+GET {{SpotFinder.ApiGateway_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

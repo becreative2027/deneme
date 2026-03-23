@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/SpotFinder.ContentService.API/SpotFinder.ContentService.API.csproj" />
+    <Project Path="src/SpotFinder.ContentService.Application/SpotFinder.ContentService.Application.csproj" />
+    <Project Path="src/SpotFinder.ContentService.Domain/SpotFinder.ContentService.Domain.csproj" />
+    <Project Path="src/SpotFinder.ContentService.Infrastructure/SpotFinder.ContentService.Infrastructure.csproj" />
+  </Folder>
+  <Project Path="../../shared/building-blocks/SpotFinder.BuildingBlocks/SpotFinder.BuildingBlocks.csproj" />
+</Solution>

@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup><TargetFramework>net10.0</TargetFramework><Nullable>enable</Nullable><ImplicitUsings>enable</ImplicitUsings></PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="MediatR" Version="12.4.1" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.3" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="8.1.1" />
+    <ProjectReference Include="..\SpotFinder.SearchService.Application\SpotFinder.SearchService.Application.csproj" />
+    <ProjectReference Include="..\SpotFinder.SearchService.Infrastructure\SpotFinder.SearchService.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\..\..\shared\building-blocks\SpotFinder.BuildingBlocks\SpotFinder.BuildingBlocks.csproj" />
+  </ItemGroup>
+</Project>

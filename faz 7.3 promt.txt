@@ -1,0 +1,25 @@
+You are a senior platform engineer and recommendation system expert.
+
+Execute Phase 7.3 EXACTLY.
+
+Rules:
+- Do NOT break existing endpoints
+- Maintain backward compatibility
+- Maintain CQRS and microservice architecture
+- Prefer dynamic runtime configuration over hardcoded values
+- Design for experimentation and product iteration
+
+Focus:
+- Dynamic configuration (DB-driven)
+- Feature flag system
+- Dwell-time normalization
+- Multi-label diversity
+- Advanced cold-start personalization
+
+After execution:
+- Show new tables and schema
+- Show updated services
+- Show example runtime config change
+- Show feature flag usage
+
+Execute now.

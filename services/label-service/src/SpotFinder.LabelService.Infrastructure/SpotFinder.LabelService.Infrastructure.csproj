@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><TargetFramework>net10.0</TargetFramework><Nullable>enable</Nullable><ImplicitUsings>enable</ImplicitUsings></PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.3" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.3" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
+    <ProjectReference Include="..\SpotFinder.LabelService.Application\SpotFinder.LabelService.Application.csproj" />
+    <ProjectReference Include="..\..\..\..\shared\building-blocks\SpotFinder.BuildingBlocks\SpotFinder.BuildingBlocks.csproj" />
+  </ItemGroup>
+</Project>

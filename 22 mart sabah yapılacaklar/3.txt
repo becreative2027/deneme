@@ -1,0 +1,24 @@
+You are a database performance expert.
+
+We want to optimize label-based filtering performance.
+
+Task:
+
+Add the following indexes:
+
+- label.place_labels(place_id)
+- label.place_labels(label_id)
+
+Requirements:
+
+- Use proper naming:
+  - idx_place_labels_place_id
+  - idx_place_labels_label_id
+- Ensure indexes are not duplicated (check before creating)
+
+After execution:
+
+- Show all indexes on label.place_labels
+- Confirm both indexes exist
+
+Execute now.

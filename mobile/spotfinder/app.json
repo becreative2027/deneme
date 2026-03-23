@@ -1,0 +1,55 @@
+{
+  "expo": {
+    "name": "SpotFinder",
+    "slug": "spotfinder",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#1a1a2e"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.spotfinder.app",
+      "buildNumber": "1",
+      "infoPlist": {
+        "NSPhotoLibraryUsageDescription": "SpotFinder uses your photo library to attach photos to posts.",
+        "NSCameraUsageDescription": "SpotFinder uses your camera to capture spot photos."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#6c63ff"
+      },
+      "package": "com.spotfinder.app",
+      "versionCode": 1,
+      "notification": {
+        "icon": "./assets/icon.png",
+        "color": "#6c63ff",
+        "androidMode": "default"
+      }
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-secure-store",
+      "expo-image-picker",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#6c63ff",
+          "sounds": []
+        }
+      ]
+    ],
+    "extra": {
+      "apiBaseUrl": "http://localhost:5000"
+    }
+  }
+}

@@ -1,0 +1,35 @@
+You are designing a future-proof AI-ready labeling system.
+
+We want to upgrade label.label_keywords table to support:
+
+- AI labeling
+- rule-based labeling
+- confidence scoring
+
+Task:
+
+Modify label.label_keywords table:
+
+Add columns:
+
+- confidence NUMERIC(5,2) DEFAULT 1.0
+- source TEXT
+
+Requirements:
+
+- Do NOT drop table
+- Migration must be idempotent
+- Existing rows must not break
+- Default values must be applied safely
+
+Then:
+
+- Update EF Core entity
+- Ensure model matches DB
+
+After execution:
+
+- Show updated table schema
+- Confirm new columns exist
+
+Execute now.

@@ -1,0 +1,32 @@
+namespace SpotFinder.PlaceService.Application.Features.Places.Queries.GetPlaceDetail;
+
+public sealed record PlaceDetailResponse(
+    Guid Id,
+    string Name,
+    string? Slug,
+    string? GooglePlaceId,
+    string? CoverImageUrl,
+    int? CountryId,
+    int? CityId,
+    string? CityName,
+    int? DistrictId,
+    string? DistrictName,
+    double? Latitude,
+    double? Longitude,
+    decimal? Rating,
+    int? UserRatingsTotal,
+    string ParkingStatus,
+    PlaceScoreDto? Score,
+    IReadOnlyList<PlaceLabelDto> Labels);
+
+public sealed record PlaceScoreDto(
+    decimal? PopularityScore,
+    decimal? QualityScore,
+    decimal? TrendScore,
+    decimal? FinalScore);
+
+public sealed record PlaceLabelDto(
+    int LabelId,
+    string Key,
+    string DisplayName,
+    decimal Weight);

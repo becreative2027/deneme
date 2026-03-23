@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><TargetFramework>net10.0</TargetFramework><Nullable>enable</Nullable><ImplicitUsings>enable</ImplicitUsings></PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="MediatR" Version="12.4.1" />
+    <PackageReference Include="FluentValidation" Version="11.11.0" />
+    <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="11.11.0" />
+    <ProjectReference Include="..\SpotFinder.AdminService.Domain\SpotFinder.AdminService.Domain.csproj" />
+    <ProjectReference Include="..\SpotFinder.AdminService.Infrastructure\SpotFinder.AdminService.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\..\..\shared\building-blocks\SpotFinder.BuildingBlocks\SpotFinder.BuildingBlocks.csproj" />
+  </ItemGroup>
+</Project>

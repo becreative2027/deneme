@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/SpotFinder.SocialGraphService.API/SpotFinder.SocialGraphService.API.csproj" />
+    <Project Path="src/SpotFinder.SocialGraphService.Application/SpotFinder.SocialGraphService.Application.csproj" />
+    <Project Path="src/SpotFinder.SocialGraphService.Domain/SpotFinder.SocialGraphService.Domain.csproj" />
+    <Project Path="src/SpotFinder.SocialGraphService.Infrastructure/SpotFinder.SocialGraphService.Infrastructure.csproj" />
+  </Folder>
+  <Project Path="../../shared/building-blocks/SpotFinder.BuildingBlocks/SpotFinder.BuildingBlocks.csproj" />
+</Solution>

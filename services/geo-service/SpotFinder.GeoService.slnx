@@ -1,0 +1,13 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/SpotFinder.GeoService.API/SpotFinder.GeoService.API.csproj" />
+    <Project Path="src/SpotFinder.GeoService.Application/SpotFinder.GeoService.Application.csproj" />
+    <Project Path="src/SpotFinder.GeoService.Domain/SpotFinder.GeoService.Domain.csproj" />
+    <Project Path="src/SpotFinder.GeoService.Infrastructure/SpotFinder.GeoService.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/SpotFinder.GeoService.UnitTests/SpotFinder.GeoService.UnitTests.csproj" />
+  </Folder>
+  <Project Path="../../shared/building-blocks/SpotFinder.BuildingBlocks/SpotFinder.BuildingBlocks.csproj" />
+  <Project Path="../../shared/shared-kernel/SpotFinder.SharedKernel/SpotFinder.SharedKernel.csproj" />
+</Solution>

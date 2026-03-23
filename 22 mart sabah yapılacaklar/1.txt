@@ -1,0 +1,30 @@
+You are a senior database architect.
+
+We are currently using a microservice-aware PostgreSQL setup with multiple schemas (geo, place, label).
+
+Even though in a strict microservice architecture cross-schema foreign keys are avoided, in this phase we are running a single database instance and we want to enforce data integrity.
+
+Task:
+
+Add foreign key constraints from place.places to geo schema tables:
+
+- place.places.country_id → geo.countries.id
+- place.places.city_id → geo.cities.id
+- place.places.district_id → geo.districts.id
+
+Requirements:
+
+- Do NOT drop existing data
+- Make the script idempotent (safe to run multiple times)
+- Add proper constraint names:
+  - fk_place_country
+  - fk_place_city
+  - fk_place_district
+- Validate constraints after creation
+
+After execution:
+
+- Show all constraints on place.places
+- Confirm FK relationships are active
+
+Execute now.

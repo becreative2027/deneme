@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/SpotFinder.AdminService.API/SpotFinder.AdminService.API.csproj" />
+    <Project Path="src/SpotFinder.AdminService.Application/SpotFinder.AdminService.Application.csproj" />
+    <Project Path="src/SpotFinder.AdminService.Domain/SpotFinder.AdminService.Domain.csproj" />
+    <Project Path="src/SpotFinder.AdminService.Infrastructure/SpotFinder.AdminService.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/SpotFinder.AdminService.UnitTests/SpotFinder.AdminService.UnitTests.csproj" />
+  </Folder>
+  <Project Path="../../shared/building-blocks/SpotFinder.BuildingBlocks/SpotFinder.BuildingBlocks.csproj" />
+</Solution>
