@@ -13,7 +13,8 @@ public static class DependencyInjection
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddDbContext<GeoDbContext>(options =>
-            options.UseNpgsql(configuration.GetConnectionString("DefaultConnection") ?? configuration.GetConnectionString("GeoDb")));
+            options.UseNpgsql(configuration.GetConnectionString("DefaultConnection") ?? configuration.GetConnectionString("GeoDb"))
+                   .UseSnakeCaseNamingConvention());
         services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<GeoDbContext>());
         services.AddScoped<ILanguageRepository, LanguageRepository>();
         services.AddScoped<ICountryRepository, CountryRepository>();

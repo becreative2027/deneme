@@ -14,7 +14,7 @@ public static class DependencyInjection
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddDbContext<ContentDbContext>(options =>
-            options.UseNpgsql(configuration.GetConnectionString("ContentDb")));
+            options.UseNpgsql(configuration.GetConnectionString("ContentDb")).UseSnakeCaseNamingConvention());
 
         // Phase 7.2 — bind all recommendation parameters from appsettings.json.
         // Validates at startup that explore-blend ratios sum to ≈ 1.
