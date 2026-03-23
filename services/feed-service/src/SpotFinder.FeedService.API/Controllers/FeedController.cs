@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -134,7 +135,9 @@ public sealed class FeedController : ControllerBase
     // ── Helpers ───────────────────────────────────────────────────────────────
     private Guid GetUserId()
     {
-        var claim = User.FindFirst("sub") ?? User.FindFirst("nameid");
+        var claim = User.FindFirst(ClaimTypes.NameIdentifier)
+                 ?? User.FindFirst("sub")
+                 ?? User.FindFirst("nameid");
         return claim is not null && Guid.TryParse(claim.Value, out var id) ? id : Guid.Empty;
     }
 }

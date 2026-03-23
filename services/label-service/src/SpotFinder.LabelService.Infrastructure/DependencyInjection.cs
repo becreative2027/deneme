@@ -13,7 +13,7 @@ public static class DependencyInjection
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddDbContext<LabelDbContext>(options =>
-            options.UseNpgsql(configuration.GetConnectionString("LabelDb")));
+            options.UseNpgsql(configuration.GetConnectionString("LabelDb")).UseSnakeCaseNamingConvention());
         services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<LabelDbContext>());
         services.AddScoped<ILabelCategoryRepository, LabelCategoryRepository>();
         services.AddScoped<ILabelRepository, LabelRepository>();

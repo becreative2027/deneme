@@ -167,13 +167,13 @@ public sealed class GetPersonalizedFeedQueryHandler
         var userIds  = candidates.Select(p => p.UserId).Distinct().ToList();
         var placeIds = candidates.Select(p => p.PlaceId).Distinct().ToList();
 
-        // ── STEP 3: Six parallel bulk loads ───────────────────────────────────
-        var mediaTask = _db.PostMedia
+        // ── STEP 3: Sequential bulk loads ─────────────────────────────────────
+        var mediaList = await _db.PostMedia
             .Where(m => postIds.Contains(m.PostId))
             .Select(m => new { m.PostId, m.Url })
             .ToListAsync(ct);
 
-        var userTask = (
+        var userList = await (
             from u in _db.Users
             where userIds.Contains(u.Id)
             join pr in _db.UserProfiles on u.Id equals pr.UserId into prg
@@ -186,27 +186,25 @@ public sealed class GetPersonalizedFeedQueryHandler
             }
         ).ToListAsync(ct);
 
-        var placeTask = _db.PlaceTranslations
+        var placeList = await _db.PlaceTranslations
             .Where(t => placeIds.Contains(t.PlaceId))
             .Select(t => new { t.PlaceId, t.LanguageId, t.Name })
             .ToListAsync(ct);
 
-        var likedTask = _db.PostLikes
+        var likedList = await _db.PostLikes
             .Where(l => l.UserId == request.UserId && postIds.Contains(l.PostId))
             .Select(l => l.PostId)
             .ToListAsync(ct);
 
-        var trendTask = _db.TrendingScores
+        var trendList = await _db.TrendingScores
             .Where(t => placeIds.Contains(t.PlaceId))
             .Select(t => new { t.PlaceId, t.Score })
             .ToListAsync(ct);
 
-        var placeLabelTask = _db.PlaceLabels
+        var placeLabelList = await _db.PlaceLabels
             .Where(pl => placeIds.Contains(pl.PlaceId))
             .Select(pl => new { pl.PlaceId, pl.LabelId })
             .ToListAsync(ct);
-
-        await Task.WhenAll(mediaTask, userTask, placeTask, likedTask, trendTask, placeLabelTask);
 
         // ── STEP 4: In-memory scoring ─────────────────────────────────────────
         //
@@ -219,11 +217,11 @@ public sealed class GetPersonalizedFeedQueryHandler
         //             + min(trend_score, trendCap)
 
         var trendCap     = opts.Trending.Cap;
-        var trendByPlace = trendTask.Result.ToDictionary(
+        var trendByPlace = trendList.ToDictionary(
             t => t.PlaceId,
             t => Math.Min(t.Score, trendCap));
 
-        var labelsByPlace = placeLabelTask.Result
+        var labelsByPlace = placeLabelList
             .GroupBy(pl => pl.PlaceId)
             .ToDictionary(g => g.Key, g => g.Select(pl => pl.LabelId).ToList());
 
@@ -252,20 +250,20 @@ public sealed class GetPersonalizedFeedQueryHandler
             .ToList();
 
         // ── STEP 5: Project to DTOs ───────────────────────────────────────────
-        var mediaByPost = mediaTask.Result
+        var mediaByPost = mediaList
             .GroupBy(m => m.PostId)
             .ToDictionary(g => g.Key,
                           g => (IReadOnlyList<string>)g.Select(m => m.Url).ToList());
 
-        var userById = userTask.Result.ToDictionary(u => u.Id);
+        var userById = userList.ToDictionary(u => u.Id);
 
-        var nameByPlace = placeTask.Result
+        var nameByPlace = placeList
             .GroupBy(t => t.PlaceId)
             .ToDictionary(
                 g => g.Key,
                 g => (g.FirstOrDefault(t => t.LanguageId == 1) ?? g.First()).Name);
 
-        var likedSet = likedTask.Result.ToHashSet();
+        var likedSet = likedList.ToHashSet();
 
         var dtos = posts.Select(x =>
         {

@@ -17,11 +17,11 @@ public static class DependencyInjection
 
         // Write context — owns migrations, tracks domain entities
         services.AddDbContext<PlaceDbContext>(options =>
-            options.UseNpgsql(connectionString));
+            options.UseNpgsql(connectionString).UseSnakeCaseNamingConvention());
 
         // Read context — migration-less, cross-schema, used only by CQRS query handlers
         services.AddDbContext<PlaceQueryDbContext>(options =>
-            options.UseNpgsql(connectionString).UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking));
+            options.UseNpgsql(connectionString).UseSnakeCaseNamingConvention().UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking));
 
         services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<PlaceDbContext>());
         services.AddScoped<IPlaceRepository, PlaceRepository>();

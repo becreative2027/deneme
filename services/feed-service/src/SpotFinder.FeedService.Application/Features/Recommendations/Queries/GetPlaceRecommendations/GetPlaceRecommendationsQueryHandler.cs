@@ -145,43 +145,41 @@ public sealed class GetPlaceRecommendationsQueryHandler
         }
 
         // ── STEP 3: Bulk-load data ────────────────────────────────────────────
-        var placeLabelsTask = _db.PlaceLabels
+        var placeLabelsList = await _db.PlaceLabels
             .Where(pl => candidatePlaceIds.Contains(pl.PlaceId))
             .Select(pl => new { pl.PlaceId, pl.LabelId, pl.Weight })
             .ToListAsync(ct);
 
-        var trendTask = _db.TrendingScores
+        var trendList = await _db.TrendingScores
             .Where(t => candidatePlaceIds.Contains(t.PlaceId))
             .Select(t => new { t.PlaceId, t.Score })
             .ToListAsync(ct);
 
-        var nameTask = _db.PlaceTranslations
+        var nameList = await _db.PlaceTranslations
             .Where(t => candidatePlaceIds.Contains(t.PlaceId))
             .Select(t => new { t.PlaceId, t.LanguageId, t.Name })
             .ToListAsync(ct);
 
-        Task<List<DwellEntry>> dwellTask = Task.FromResult(new List<DwellEntry>());
+        List<DwellEntry> dwellList = new List<DwellEntry>();
         if (dwellEnabled && !isFallback)
-            dwellTask = LoadDwellScoresAsync(request.UserId, candidatePlaceIds, ct);
-
-        await Task.WhenAll(placeLabelsTask, trendTask, nameTask, dwellTask);
+            dwellList = await LoadDwellScoresAsync(request.UserId, candidatePlaceIds, ct);
 
         // ── STEP 4: Score aggregation ─────────────────────────────────────────
-        var trendByPlace = trendTask.Result.ToDictionary(
+        var trendByPlace = trendList.ToDictionary(
             t => t.PlaceId,
             t => Math.Min(t.Score, trendCap));
 
-        var dwellByPlace = dwellTask.Result.ToDictionary(
+        var dwellByPlace = dwellList.ToDictionary(
             d => d.PlaceId,
             d => d.NormalizedDwell);
 
-        var nameByPlace = nameTask.Result
+        var nameByPlace = nameList
             .GroupBy(t => t.PlaceId)
             .ToDictionary(
                 g => g.Key,
                 g => (g.FirstOrDefault(t => t.LanguageId == 1) ?? g.First()).Name);
 
-        var allPlaceScores = placeLabelsTask.Result
+        var allPlaceScores = placeLabelsList
             .GroupBy(pl => pl.PlaceId)
             .Select(g =>
             {
@@ -212,7 +210,7 @@ public sealed class GetPlaceRecommendationsQueryHandler
 
         if (placeScores.Count == 0 && isFallback)
         {
-            placeScores = trendTask.Result
+            placeScores = trendList
                 .OrderByDescending(t => t.Score)
                 .Take(pageSize)
                 .Select(t => (
