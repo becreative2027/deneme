@@ -10,6 +10,9 @@ public sealed class UserProfileRepository(IdentityDbContext db) : IUserProfileRe
     public Task<UserProfile?> GetByUserIdAsync(Guid userId, CancellationToken ct = default)
         => db.Profiles.FirstOrDefaultAsync(p => p.UserId == userId, ct);
 
+    public async Task<IReadOnlyList<UserProfile>> GetByUserIdsAsync(IReadOnlyList<Guid> userIds, CancellationToken ct = default)
+        => await db.Profiles.Where(p => userIds.Contains(p.UserId)).ToListAsync(ct);
+
     public async Task AddAsync(UserProfile profile, CancellationToken ct = default)
         => await db.Profiles.AddAsync(profile, ct);
 

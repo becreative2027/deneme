@@ -14,6 +14,8 @@ public sealed class Place : AggregateRoot<Guid>
     public decimal? Rating { get; private set; }
     public int? UserRatingsTotal { get; private set; }
     public string ParkingStatus { get; private set; } = "unavailable";
+    public string? MenuUrl { get; private set; }
+    public List<string> MenuImageUrls { get; private set; } = new();
     public string? Source { get; private set; }
     public DateTime? SourceLastSyncedAt { get; private set; }
     public bool IsDeleted { get; private set; }
@@ -61,6 +63,24 @@ public sealed class Place : AggregateRoot<Guid>
     public void SetParkingStatus(string status)
     {
         ParkingStatus = status;
+        UpdatedAt = DateTime.UtcNow;
+    }
+
+    public void SetMenuUrl(string? url)
+    {
+        MenuUrl = url;
+        UpdatedAt = DateTime.UtcNow;
+    }
+
+    public void SetMenuImageUrls(IEnumerable<string> urls)
+    {
+        MenuImageUrls = urls.ToList();
+        UpdatedAt = DateTime.UtcNow;
+    }
+
+    public void AddMenuImageUrl(string url)
+    {
+        MenuImageUrls.Add(url);
         UpdatedAt = DateTime.UtcNow;
     }
 

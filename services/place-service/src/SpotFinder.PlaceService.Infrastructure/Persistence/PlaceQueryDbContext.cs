@@ -47,6 +47,13 @@ public sealed class PlaceQueryDbContext : DbContext
             b.Property(x => x.Rating).HasColumnName("rating").HasPrecision(2, 1);
             b.Property(x => x.UserRatingsTotal).HasColumnName("user_ratings_total");
             b.Property(x => x.ParkingStatus).HasColumnName("parking_status");
+            b.Property(x => x.MenuUrl).HasColumnName("menu_url");
+            b.Property(x => x.MenuImageUrls)
+                .HasColumnName("menu_image_urls")
+                .HasColumnType("jsonb")
+                .HasConversion(
+                    v => System.Text.Json.JsonSerializer.Serialize(v, (System.Text.Json.JsonSerializerOptions?)null),
+                    v => System.Text.Json.JsonSerializer.Deserialize<List<string>>(v, (System.Text.Json.JsonSerializerOptions?)null) ?? new List<string>());
             b.Property(x => x.IsDeleted).HasColumnName("is_deleted");
             b.Property(x => x.CreatedAt).HasColumnName("created_at");
             b.HasQueryFilter(x => !x.IsDeleted);

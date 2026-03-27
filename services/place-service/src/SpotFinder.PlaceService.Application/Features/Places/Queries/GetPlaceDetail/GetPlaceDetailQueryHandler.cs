@@ -110,6 +110,8 @@ public sealed class GetPlaceDetailQueryHandler
             place.Rating,
             place.UserRatingsTotal,
             place.ParkingStatus,
+            place.MenuUrl,
+            place.MenuImageUrls,
             scoreDto,
             labels);
 

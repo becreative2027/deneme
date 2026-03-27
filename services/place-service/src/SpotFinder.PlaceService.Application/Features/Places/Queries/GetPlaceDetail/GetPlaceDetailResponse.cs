@@ -16,6 +16,8 @@ public sealed record PlaceDetailResponse(
     decimal? Rating,
     int? UserRatingsTotal,
     string ParkingStatus,
+    string? MenuUrl,
+    IReadOnlyList<string> MenuImageUrls,
     PlaceScoreDto? Score,
     IReadOnlyList<PlaceLabelDto> Labels);
 

@@ -7,6 +7,8 @@ using SpotFinder.FeedService.Application.Features.Feed.Queries.GetFollowingFeed;
 using SpotFinder.FeedService.Application.Features.Feed.Queries.GetNearbyFeed;
 using SpotFinder.FeedService.Application.Features.Feed.Queries.GetPersonalizedFeed;
 using SpotFinder.FeedService.Application.Features.Feed.Queries.GetPlaceFeed;
+using SpotFinder.FeedService.Application.Features.Feed.Queries.GetUserPosts;
+using SpotFinder.FeedService.Application.Features.Feed.Queries.GetUserPostCount;
 
 namespace SpotFinder.FeedService.API.Controllers;
 
@@ -129,6 +131,31 @@ public sealed class FeedController : ControllerBase
 
         var result = await _sender.Send(new GetExploreFeedQuery(userId, pageSize), ct);
 
+        return result.IsSuccess ? Ok(result.Data) : BadRequest(result.Errors);
+    }
+
+    // ── GET /api/users/{userId}/posts/count ──────────────────────────────────
+    [HttpGet("/api/users/{userId:guid}/posts/count")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetUserPostCount(Guid userId, CancellationToken ct)
+    {
+        var count = await _sender.Send(new GetUserPostCountQuery(userId), ct);
+        return Ok(new { count });
+    }
+
+    // ── GET /api/users/{userId}/posts ─────────────────────────────────────────
+    [HttpGet("/api/users/{userId:guid}/posts")]
+    public async Task<IActionResult> GetUserPosts(
+        Guid              userId,
+        [FromQuery] int       pageSize        = 10,
+        [FromQuery] int?      cursorScore     = null,
+        [FromQuery] DateTime? cursorCreatedAt = null,
+        [FromQuery] Guid?     cursorPostId    = null,
+        CancellationToken     ct              = default)
+    {
+        var requestingUserId = GetUserId();
+        var result = await _sender.Send(
+            new GetUserPostsQuery(userId, requestingUserId, pageSize, cursorScore, cursorCreatedAt, cursorPostId), ct);
         return result.IsSuccess ? Ok(result.Data) : BadRequest(result.Errors);
     }
 

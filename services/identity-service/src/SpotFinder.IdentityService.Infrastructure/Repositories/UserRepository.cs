@@ -25,6 +25,9 @@ public sealed class UserRepository : IUserRepository
     public async Task<bool> ExistsByUsernameAsync(string username, CancellationToken ct = default)
         => await _context.Users.AnyAsync(u => u.Username == username, ct);
 
+    public async Task<IReadOnlyList<User>> GetByIdsAsync(IReadOnlyList<Guid> ids, CancellationToken ct = default)
+        => await _context.Users.Where(u => ids.Contains(u.Id)).ToListAsync(ct);
+
     public async Task AddAsync(User user, CancellationToken ct = default)
         => await _context.Users.AddAsync(user, ct);
 

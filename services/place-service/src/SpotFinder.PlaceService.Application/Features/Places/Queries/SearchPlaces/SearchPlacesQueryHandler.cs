@@ -50,6 +50,17 @@ public sealed class SearchPlacesQueryHandler
         if (request.MinRating.HasValue)
             query = query.Where(p => p.Rating >= request.MinRating);
 
+        // ── Text search (name ILIKE via translation table) ────────────────────
+        if (!string.IsNullOrWhiteSpace(request.Query))
+        {
+            var pattern = $"%{request.Query.Trim()}%";
+            var matchingPlaceIds = _db.PlaceTranslations
+                .Where(t => t.LanguageId == request.LanguageId &&
+                            EF.Functions.ILike(t.Name, pattern))
+                .Select(t => t.PlaceId);
+            query = query.Where(p => matchingPlaceIds.Contains(p.Id));
+        }
+
         // ── Label filter ──────────────────────────────────────────────────────
         if (request.LabelIds is { Count: > 0 })
         {
