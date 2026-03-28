@@ -47,6 +47,8 @@ export interface Place {
   districtName?: string;
   latitude?: number;
   longitude?: number;
+  favoriteCount?: number;
+  wishlistCount?: number;
 }
 
 export interface FeedPage {
@@ -108,6 +110,7 @@ export interface PlaceSearchRequest {
   matchMode?: 'ANY' | 'ALL';
   pageSize?: number;
   page?: number;
+  langId?: number;
 }
 
 export interface FilterLabel {

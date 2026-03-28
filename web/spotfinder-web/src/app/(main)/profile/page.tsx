@@ -3,7 +3,7 @@
 import React, { useCallback, useRef, useEffect, useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { LogOut, Images, Pencil, Grid3X3, List, X, Check, Camera, Heart, MapPin } from 'lucide-react';
+import { LogOut, Images, Pencil, Grid3X3, List, X, Check, Camera, Heart, MapPin, Settings, Globe } from 'lucide-react';
 import { Post } from '@/lib/types';
 import { useMe, useUserPosts } from '@/hooks/useProfile';
 import { useLikePost } from '@/hooks/useFeed';
@@ -22,6 +22,8 @@ import { EmptyState } from '@/components/EmptyState';
 import { useToast } from '@/components/Toast';
 import { PhotoLightbox } from '@/components/PhotoLightbox';
 import { FollowListSheet } from '@/components/FollowListSheet';
+import { useT } from '@/lib/i18n';
+import { useLocaleStore, Locale } from '@/store/localeStore';
 
 function formatCount(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
@@ -56,7 +58,71 @@ function StatItem({
   return <div className="flex flex-col items-center">{inner}</div>;
 }
 
+// ─── Settings Sheet ────────────────────────────────────────────────────────────
+function SettingsSheet({ onClose }: { onClose: () => void }) {
+  const t = useT();
+  const { locale, setLocale } = useLocaleStore();
+
+  return (
+    <div
+      className="fixed inset-0 z-[200] flex items-end justify-center"
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+      <div className="relative w-full max-w-md bg-white dark:bg-surface-dark rounded-t-2xl flex flex-col">
+        {/* Handle */}
+        <div className="flex justify-center pt-3 pb-1">
+          <div className="w-10 h-1 rounded-full bg-gray-300 dark:bg-gray-600" />
+        </div>
+
+        {/* Header */}
+        <div className="flex items-center justify-between px-4 pb-3 border-b border-border-light dark:border-border-dark">
+          <h3 className="text-base font-bold text-text-light dark:text-text-dark">{t('settings.title')}</h3>
+          <button
+            type="button"
+            onClick={onClose}
+            className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-full"
+          >
+            <X size={20} />
+          </button>
+        </div>
+
+        {/* Language section */}
+        <div className="px-4 py-4 pb-8">
+          <div className="flex items-center gap-2 mb-3">
+            <Globe size={16} className="text-gray-400" />
+            <span className="text-sm font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wide text-xs">
+              {t('settings.language')}
+            </span>
+          </div>
+          <div className="flex gap-3">
+            {(['tr', 'en'] as Locale[]).map((loc) => {
+              const label = loc === 'tr' ? t('settings.languageTR') : t('settings.languageEN');
+              const isActive = locale === loc;
+              return (
+                <button
+                  key={loc}
+                  type="button"
+                  onClick={() => setLocale(loc)}
+                  className={`flex-1 py-3 rounded-xl text-sm font-semibold border-2 transition-colors ${
+                    isActive
+                      ? 'border-[#6c63ff] bg-violet-50 dark:bg-violet-900/20 text-[#6c63ff]'
+                      : 'border-border-light dark:border-border-dark text-gray-500 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-500'
+                  }`}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function ProfilePage() {
+  const t = useT();
   const meQuery = useMe();
   const profile = meQuery.data;
   const doLogout = useAuthStore((s) => s.logout);
@@ -69,6 +135,7 @@ export default function ProfilePage() {
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [followSheet, setFollowSheet] = useState<'followers' | 'following' | null>(null);
   const [editOpen, setEditOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [editName, setEditName] = useState('');
   const [editBio, setEditBio] = useState('');
   const [editAvatarFile, setEditAvatarFile] = useState<File | null>(null);
@@ -102,10 +169,10 @@ export default function ProfilePage() {
       setEditOpen(false);
       setEditAvatarFile(null);
       setEditAvatarPreview(null);
-      showToast('Profile updated!', 'success');
+      showToast(t('profile.updated'), 'success');
     },
     onError: () => {
-      showToast('Could not update profile.', 'error');
+      showToast(t('profile.updateError'), 'error');
     },
   });
 
@@ -126,13 +193,13 @@ export default function ProfilePage() {
   };
 
   const handleLogout = useCallback(async () => {
-    if (!confirm('Are you sure you want to sign out?')) return;
+    if (!confirm(t('profile.signOutConfirm'))) return;
     try {
       await apiLogout();
     } catch {}
     doLogout();
     router.replace('/login');
-  }, [doLogout, router]);
+  }, [doLogout, router, t]);
 
   const handleLike = useCallback(
     (postId: string, currentlyLiked: boolean) => {
@@ -171,7 +238,7 @@ export default function ProfilePage() {
   if (meQuery.isError || !profile) {
     return (
       <div className="min-h-dvh flex items-center justify-center">
-        <ErrorState message="Could not load profile." onRetry={() => meQuery.refetch()} />
+        <ErrorState message={t('profile.loadError')} onRetry={() => meQuery.refetch()} />
       </div>
     );
   }
@@ -184,16 +251,23 @@ export default function ProfilePage() {
           <Avatar uri={profile.avatarUrl} name={profile.displayName} size={72} />
           <div className="flex items-center gap-1">
             <button
+              onClick={() => setSettingsOpen(true)}
+              className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors rounded-full hover:bg-gray-100 dark:hover:bg-gray-800"
+              title={t('settings.title')}
+            >
+              <Settings size={18} />
+            </button>
+            <button
               onClick={openEdit}
               className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors rounded-full hover:bg-gray-100 dark:hover:bg-gray-800"
-              title="Edit profile"
+              title={t('profile.editProfile')}
             >
               <Pencil size={18} />
             </button>
             <button
               onClick={handleLogout}
               className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors rounded-full hover:bg-gray-100 dark:hover:bg-gray-800"
-              title="Sign out"
+              title={t('profile.signOut')}
             >
               <LogOut size={20} />
             </button>
@@ -210,9 +284,9 @@ export default function ProfilePage() {
         ) : null}
 
         <div className="flex gap-6 mt-4 pb-4 border-b border-border-light dark:border-border-dark">
-          <StatItem label="Gönderi" value={profile.postsCount} />
-          <StatItem label="Takipçi" value={profile.followersCount} onClick={() => setFollowSheet('followers')} />
-          <StatItem label="Takip" value={profile.followingCount} onClick={() => setFollowSheet('following')} />
+          <StatItem label={t('profile.posts')} value={profile.postsCount} />
+          <StatItem label={t('profile.followers')} value={profile.followersCount} onClick={() => setFollowSheet('followers')} />
+          <StatItem label={t('profile.following')} value={profile.followingCount} onClick={() => setFollowSheet('following')} />
         </div>
 
         {/* View mode tabs */}
@@ -258,12 +332,12 @@ export default function ProfilePage() {
               <div className="w-6 h-6 border-2 border-[#6c63ff] border-t-transparent rounded-full animate-spin" />
             </div>
           ) : favoritesQuery.isError ? (
-            <ErrorState message="Favoriler yüklenemedi." onRetry={() => favoritesQuery.refetch()} />
+            <ErrorState message={t('profile.favoritesError')} onRetry={() => favoritesQuery.refetch()} />
           ) : !favoritesQuery.data || favoritesQuery.data.length === 0 ? (
             <EmptyState
               icon={Heart}
-              title="Henüz favori yok"
-              subtitle="Mekan sayfasındaki kalp ikonuna basarak mekanları favorilerine ekleyebilirsin."
+              title={t('profile.noFavorites')}
+              subtitle={t('profile.noFavoritesHint')}
             />
           ) : (
             favoritesQuery.data.map((place) => (
@@ -284,13 +358,13 @@ export default function ProfilePage() {
           <PostSkeleton />
         </div>
       ) : postsQuery.isError ? (
-        <ErrorState message="Could not load posts." onRetry={() => postsQuery.refetch()} />
+        <ErrorState message={t('profile.postsError')} onRetry={() => postsQuery.refetch()} />
       ) : allPosts.length === 0 ? (
-        <EmptyState icon={Images} title="No posts yet" subtitle="Share your first spot!" />
+        <EmptyState icon={Images} title={t('profile.noPosts')} subtitle={t('profile.noPostsHint')} />
       ) : viewMode === 'grid' ? (
         postsWithImage.length === 0 ? (
           <div className="px-5 py-10 text-center">
-            <p className="text-sm text-gray-400">No photos yet</p>
+            <p className="text-sm text-gray-400">{t('profile.noPhotos')}</p>
           </div>
         ) : (
           <div className="grid grid-cols-3 gap-0.5">
@@ -328,7 +402,7 @@ export default function ProfilePage() {
             </div>
           )}
           {!postsQuery.hasNextPage && allPosts.length > 0 && (
-            <p className="text-center text-xs text-gray-400 py-6">All posts loaded</p>
+            <p className="text-center text-xs text-gray-400 py-6">{t('profile.allLoaded')}</p>
           )}
         </>
       ))}
@@ -339,7 +413,7 @@ export default function ProfilePage() {
           <div className="w-full max-w-md bg-white dark:bg-surface-dark rounded-t-2xl sm:rounded-2xl flex flex-col" style={{ maxHeight: 'calc(90dvh - 64px)' }}>
             {/* Fixed header */}
             <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b border-border-light dark:border-border-dark shrink-0">
-              <h3 className="text-base font-bold text-text-light dark:text-text-dark">Edit Profile</h3>
+              <h3 className="text-base font-bold text-text-light dark:text-text-dark">{t('profile.editProfile')}</h3>
               <button
                 onClick={() => setEditOpen(false)}
                 className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-full"
@@ -387,7 +461,7 @@ export default function ProfilePage() {
             <div className="space-y-4">
               <div>
                 <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1.5">
-                  Display Name
+                  {t('profile.displayName')}
                 </label>
                 <input
                   type="text"
@@ -399,14 +473,14 @@ export default function ProfilePage() {
               </div>
               <div>
                 <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1.5">
-                  Bio
+                  {t('profile.bio')}
                 </label>
                 <textarea
                   value={editBio}
                   onChange={(e) => setEditBio(e.target.value)}
                   maxLength={160}
                   rows={3}
-                  placeholder="Tell the world about yourself..."
+                  placeholder={t('profile.bioPlaceholder')}
                   className="w-full px-3 py-2.5 text-sm rounded-xl border border-border-light dark:border-border-dark bg-bg-light dark:bg-bg-dark text-text-light dark:text-text-dark focus:outline-none focus:ring-2 focus:ring-[#6c63ff]/40 resize-none"
                 />
                 <p className="text-xs text-gray-400 text-right mt-1">{editBio.length}/160</p>
@@ -427,7 +501,7 @@ export default function ProfilePage() {
                 ) : (
                   <>
                     <Check size={16} />
-                    Save Changes
+                    {t('profile.saveChanges')}
                   </>
                 )}
               </button>
@@ -435,6 +509,9 @@ export default function ProfilePage() {
           </div>
         </div>
       )}
+
+      {/* Settings sheet */}
+      {settingsOpen && <SettingsSheet onClose={() => setSettingsOpen(false)} />}
 
       {/* Follow list sheet */}
       {followSheet && profile && (

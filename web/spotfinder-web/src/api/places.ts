@@ -19,7 +19,7 @@ function normalizePlace(p: any): Place {
     address: p.address ?? '',
     imageUrl: p.imageUrl ?? p.coverImageUrl ?? undefined,
     averageRating: p.averageRating ?? p.rating ?? 0,
-    reviewCount: p.reviewCount ?? 0,
+    reviewCount: p.reviewCount ?? p.userRatingsTotal ?? 0,
     description: p.description ?? undefined,
     labels: Array.isArray(p.labels)
       ? p.labels.map((l: any) => (typeof l === 'string' ? l : (l.displayName ?? l.name ?? l.key ?? '')))
@@ -31,6 +31,8 @@ function normalizePlace(p: any): Place {
     districtName: p.districtName ?? undefined,
     latitude: p.latitude ?? undefined,
     longitude: p.longitude ?? undefined,
+    favoriteCount: p.favoriteCount ?? p.favoritesCount ?? undefined,
+    wishlistCount: p.wishlistCount ?? p.wishlists ?? undefined,
   };
 }
 
@@ -41,7 +43,7 @@ function isOk(raw: any): boolean {
 export async function searchPlaces(req: PlaceSearchRequest): Promise<PlaceSearchResponse> {
   const body = {
     query: req.query || undefined,
-    languageId: 1,
+    languageId: req.langId ?? 1,
     labelIds: req.labelIds?.length ? req.labelIds : undefined,
     matchMode: req.matchMode ?? 'ANY',
     page: req.page ?? 1,

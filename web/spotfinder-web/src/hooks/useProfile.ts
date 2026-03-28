@@ -1,7 +1,8 @@
 'use client';
 
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { getUserProfile, getUserPosts, followUser, unfollowUser, getFollowerIds, getFollowingIds, getUsersByIds } from '@/api/users';
+import { getUserProfile, getUserPosts, followUser, unfollowUser, getFollowerIds, getFollowingIds, getUsersByIds, searchUsers } from '@/api/users';
+import { UserSearchResponse } from '@/api/users';
 import { useAuthStore } from '@/store/authStore';
 import { FeedPage } from '@/lib/types';
 
@@ -50,6 +51,15 @@ export function useFollowList(userId: string, type: 'followers' | 'following') {
   });
 }
 
+export function useUserSearch(query: string, enabled: boolean) {
+  return useQuery<UserSearchResponse>({
+    queryKey: ['userSearch', query],
+    queryFn: () => searchUsers(query),
+    enabled: enabled && query.length >= 2,
+    staleTime: 15_000,
+  });
+}
+
 export function useFollowUser() {
   const queryClient = useQueryClient();
 
@@ -62,7 +72,6 @@ export function useFollowUser() {
       }
     },
     onSuccess: (_, { userId, isFollowing }) => {
-      // Update the user profile cache
       queryClient.setQueryData(['userProfile', userId], (old: any) => {
         if (!old) return old;
         return {
@@ -71,8 +80,20 @@ export function useFollowUser() {
           followersCount: isFollowing ? old.followersCount - 1 : old.followersCount + 1,
         };
       });
-      // Invalidate me query since my following count changes
+      // Unfollow → kişiyi "Takip Edilenler" listesinden anında çıkar
+      queryClient.setQueriesData(
+        { queryKey: ['followList'], exact: false },
+        (old: any) => {
+          if (!Array.isArray(old)) return old;
+          if (isFollowing) {
+            // takipten çıkıldı → listeden kaldır
+            return old.filter((u: any) => u.id !== userId);
+          }
+          return old;
+        },
+      );
       queryClient.invalidateQueries({ queryKey: ['me'] });
+      queryClient.invalidateQueries({ queryKey: ['followList'] });
     },
   });
 }

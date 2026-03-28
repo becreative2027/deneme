@@ -7,8 +7,10 @@ import { Eye, EyeOff, MapPin, Loader2 } from 'lucide-react';
 import { login } from '@/api/auth';
 import { useAuthStore } from '@/store/authStore';
 import { useToast } from '@/components/Toast';
+import { useT } from '@/lib/i18n';
 
 export default function LoginPage() {
+  const t = useT();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -27,7 +29,7 @@ export default function LoginPage() {
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
     if (!email.trim() || !password) {
-      showToast('Email and password are required.', 'warning');
+      showToast(t('auth.required'), 'warning');
       return;
     }
     setLoading(true);
@@ -36,7 +38,7 @@ export default function LoginPage() {
       setAuth(response.token, response.refreshToken, response.user);
       router.replace('/feed');
     } catch (err: any) {
-      showToast(err.message ?? 'Please check your credentials.', 'error');
+      showToast(err.message ?? t('auth.checkCredentials'), 'error');
     } finally {
       setLoading(false);
     }
@@ -49,8 +51,8 @@ export default function LoginPage() {
         <div className="w-16 h-16 bg-[#6c63ff] rounded-2xl flex items-center justify-center mb-4 shadow-lg">
           <MapPin size={30} className="text-white" />
         </div>
-        <h1 className="text-3xl font-extrabold text-gray-900 dark:text-gray-50">Welcome back</h1>
-        <p className="text-gray-500 dark:text-gray-400 mt-1.5 text-[15px]">Sign in to SpotFinder</p>
+        <h1 className="text-3xl font-extrabold text-gray-900 dark:text-gray-50">{t('auth.welcomeBack')}</h1>
+        <p className="text-gray-500 dark:text-gray-400 mt-1.5 text-[15px]">{t('auth.signInTo')}</p>
       </div>
 
       {/* Form */}
@@ -58,7 +60,7 @@ export default function LoginPage() {
         <div>
           <input
             type="email"
-            placeholder="Email"
+            placeholder={t('auth.email')}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             autoComplete="email"
@@ -69,7 +71,7 @@ export default function LoginPage() {
         <div className="relative">
           <input
             type={showPassword ? 'text' : 'password'}
-            placeholder="Password"
+            placeholder={t('auth.password')}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             autoComplete="current-password"
@@ -92,17 +94,17 @@ export default function LoginPage() {
           {loading ? (
             <>
               <Loader2 size={18} className="animate-spin" />
-              Signing in…
+              {t('auth.signingIn')}
             </>
           ) : (
-            'Sign In'
+            t('auth.signIn')
           )}
         </button>
 
         <p className="text-center text-sm text-gray-500 dark:text-gray-400 mt-6">
-          Don&apos;t have an account?{' '}
+          {t('auth.noAccount')}{' '}
           <Link href="/register" className="text-[#6c63ff] font-bold hover:underline">
-            Sign up
+            {t('auth.signUp')}
           </Link>
         </p>
       </form>

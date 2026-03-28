@@ -6,6 +6,7 @@ import { UserProfile } from '@/lib/types';
 import { Avatar } from '@/components/Avatar';
 import { useFollowList, useFollowUser } from '@/hooks/useProfile';
 import { useAuthStore } from '@/store/authStore';
+import { useT } from '@/lib/i18n';
 
 interface Props {
   userId: string;
@@ -25,6 +26,7 @@ function UserRow({
   myFollowingIds: string[];
   onPress?: (id: string) => void;
 }) {
+  const t = useT();
   const isMe = user.id === currentUserId;
   const isFollowing = myFollowingIds.includes(user.id);
   const followMutation = useFollowUser();
@@ -59,12 +61,12 @@ function UserRow({
           {isFollowing ? (
             <>
               <UserCheck size={13} />
-              Takip ediliyor
+              {t('follow.following_btn')}
             </>
           ) : (
             <>
               <UserPlus size={13} />
-              Takip et
+              {t('follow.follow')}
             </>
           )}
         </button>
@@ -74,17 +76,19 @@ function UserRow({
 }
 
 export function FollowListSheet({ userId, type, onClose, onUserPress }: Props) {
+  const t = useT();
   const currentUserId = useAuthStore((s) => s.user?.id ?? '');
   const listQuery = useFollowList(userId, type);
   const myFollowingQuery = useFollowList(currentUserId, 'following');
   const myFollowingIds = myFollowingQuery.data?.map((u) => u.id) ?? [];
 
-  const title = type === 'followers' ? 'Takipçiler' : 'Takip Edilenler';
+  const title = type === 'followers' ? t('follow.followers') : t('follow.following');
+  const emptyText = type === 'followers' ? t('follow.noFollowers') : t('follow.noFollowing');
   const users = listQuery.data ?? [];
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center"
+      className="fixed inset-0 z-[200] flex items-end justify-center"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       {/* Backdrop */}
@@ -117,9 +121,7 @@ export function FollowListSheet({ userId, type, onClose, onUserPress }: Props) {
             </div>
           ) : users.length === 0 ? (
             <div className="flex flex-col items-center gap-2 py-12 px-4">
-              <p className="text-sm text-gray-500">
-                {type === 'followers' ? 'Henüz takipçi yok' : 'Henüz kimse takip edilmiyor'}
-              </p>
+              <p className="text-sm text-gray-500">{emptyText}</p>
             </div>
           ) : (
             <div className="divide-y divide-border-light dark:divide-border-dark pb-6">

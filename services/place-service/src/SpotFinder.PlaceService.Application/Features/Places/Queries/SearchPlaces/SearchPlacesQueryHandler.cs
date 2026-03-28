@@ -179,6 +179,13 @@ public sealed class SearchPlacesQueryHandler
         swDb.Stop();
         long dbTime = swDb.ElapsedMilliseconds;
 
+        // ── Review counts (from app reviews, not Google data) ─────────────────
+        var reviewCountMap = await _db.PlaceReviews
+            .Where(r => placeIds.Contains(r.PlaceId))
+            .GroupBy(r => r.PlaceId)
+            .Select(g => new { PlaceId = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.PlaceId, x => x.Count, ct);
+
         // ── In-memory mapping ─────────────────────────────────────────────────
         var swMap = Stopwatch.StartNew();
 
@@ -195,6 +202,7 @@ public sealed class SearchPlacesQueryHandler
             {
                 translations.TryGetValue(p.Id, out var t);
                 labelsByPlace.TryGetValue(p.Id, out var lbls);
+                reviewCountMap.TryGetValue(p.Id, out var rc);
                 return new PlaceSummaryDto(
                     p.Id,
                     t?.Name ?? string.Empty,
@@ -205,6 +213,7 @@ public sealed class SearchPlacesQueryHandler
                     p.Latitude,
                     p.Longitude,
                     p.Rating,
+                    rc,
                     p.ParkingStatus,
                     lbls ?? []);
             })

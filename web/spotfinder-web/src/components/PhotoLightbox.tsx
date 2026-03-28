@@ -81,10 +81,15 @@ export function PhotoLightbox({ posts, initialIndex, onClose }: PhotoLightboxPro
     router.push(`/places/${placeId}`);
   };
 
+  const goToUser = (userId: string) => {
+    onClose();
+    router.push(`/profile/${userId}`);
+  };
+
   return (
     <div
       className="fixed left-0 right-0 top-0 bg-black flex flex-col"
-      style={{ bottom: 64, zIndex: 48 }}
+      style={{ bottom: 64, zIndex: 150 }}
     >
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 bg-black shrink-0 border-b border-white/10">
@@ -118,13 +123,17 @@ export function PhotoLightbox({ posts, initialIndex, onClose }: PhotoLightboxPro
               className="border-b border-white/10"
             >
               {/* User info */}
-              <div className="flex items-center gap-2.5 px-4 py-3">
+              <button
+                type="button"
+                onClick={() => goToUser(post.userId)}
+                className="flex items-center gap-2.5 px-4 py-3 w-full text-left active:opacity-70 transition-opacity"
+              >
                 <Avatar uri={post.avatarUrl} name={post.displayName} size={34} />
                 <div>
                   <p className="text-white text-sm font-semibold leading-tight">{post.displayName}</p>
                   <p className="text-gray-400 text-xs">@{post.username} · {timeAgo(post.createdAt)}</p>
                 </div>
-              </div>
+              </button>
 
               {/* Square image */}
               {post.imageUrl && (

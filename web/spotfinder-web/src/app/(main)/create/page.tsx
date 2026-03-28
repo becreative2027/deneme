@@ -2,7 +2,7 @@
 
 import React, { useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { Camera, MapPin, X, ChevronDown, ChevronUp, Loader2, Images } from 'lucide-react';
+import { Camera, MapPin, X, ChevronDown, ChevronUp, Loader2, Images, ImageIcon } from 'lucide-react';
 import Image from 'next/image';
 import { createPost, createPostWithImage } from '@/api/posts';
 
@@ -10,9 +10,11 @@ import { usePlaceSearch } from '@/hooks/usePlaces';
 import { useToast } from '@/components/Toast';
 import { useQueryClient } from '@tanstack/react-query';
 import { Place } from '@/lib/types';
+import { useT } from '@/lib/i18n';
 import clsx from 'clsx';
 
 export default function CreatePage() {
+  const t = useT();
   const [caption, setCaption] = useState('');
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -21,7 +23,9 @@ export default function CreatePage() {
   const [showPlacePicker, setShowPlacePicker] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPhotoSheet, setShowPhotoSheet] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
   const isSubmittingRef = useRef(false);
   const { showToast } = useToast();
   const router = useRouter();
@@ -39,6 +43,7 @@ export default function CreatePage() {
     setSelectedPlace(null);
     setPlaceSearch('');
     setShowPlacePicker(false);
+    setShowPhotoSheet(false);
     setUploadProgress(0);
     isSubmittingRef.current = false;
   }, []);
@@ -54,7 +59,7 @@ export default function CreatePage() {
   const handlePost = useCallback(async () => {
     if (isSubmittingRef.current) return;
     if (!selectedPlace) {
-      showToast('Select a place before posting.', 'warning');
+      showToast(t('create.selectFirst'), 'warning');
       return;
     }
 
@@ -80,25 +85,25 @@ export default function CreatePage() {
       queryClient.invalidateQueries({ queryKey: ['feed'] });
       queryClient.invalidateQueries({ queryKey: ['userPosts'] });
 
-      showToast('Post shared!', 'success');
+      showToast(t('create.shared'), 'success');
       resetForm();
       router.push('/feed');
     } catch (err: any) {
-      showToast(err.message ?? 'Post failed. Please try again.', 'error');
+      showToast(err.message ?? t('create.failed'), 'error');
       isSubmittingRef.current = false;
     } finally {
       setIsSubmitting(false);
       setUploadProgress(0);
     }
-  }, [selectedPlace, caption, imageFile, createPost, createPostWithImage, showToast, resetForm, router, queryClient]);
+  }, [selectedPlace, caption, imageFile, showToast, resetForm, router, queryClient, t]);
 
   const isDirty = !!(caption.trim() || imageFile || selectedPlace);
   const captionNearLimit = caption.length > 450;
   const submitLabel = isSubmitting
     ? imageFile
-      ? `Uploading… ${Math.round(uploadProgress * 100)}%`
-      : 'Sharing…'
-    : 'Share Post';
+      ? t('create.uploading', Math.round(uploadProgress * 100))
+      : t('create.sharing')
+    : t('create.share');
 
   return (
     <div className="bg-bg-light dark:bg-bg-dark min-h-full">
@@ -106,20 +111,21 @@ export default function CreatePage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <h1 className="text-[22px] font-extrabold text-text-light dark:text-text-dark">
-            New Post
+            {t('create.title')}
           </h1>
           {isDirty && (
             <button
               onClick={resetForm}
               className="text-sm text-red-500 font-semibold hover:text-red-600 transition-colors"
             >
-              Discard
+              {t('create.discard')}
             </button>
           )}
         </div>
 
         {/* Photo picker */}
         <div>
+          {/* Hidden: gallery picker */}
           <input
             ref={fileInputRef}
             type="file"
@@ -127,8 +133,18 @@ export default function CreatePage() {
             className="hidden"
             onChange={handleImageChange}
           />
+          {/* Hidden: camera capture */}
+          <input
+            ref={cameraInputRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            className="hidden"
+            onChange={handleImageChange}
+          />
+
           <button
-            onClick={() => fileInputRef.current?.click()}
+            onClick={() => !isSubmitting && setShowPhotoSheet(true)}
             disabled={isSubmitting}
             className="w-full aspect-square rounded-xl overflow-hidden bg-white dark:bg-surface-dark border border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center hover:border-[#6c63ff] transition-colors disabled:opacity-60 relative"
           >
@@ -143,14 +159,14 @@ export default function CreatePage() {
                 <div className="absolute inset-0 bg-black/30 rounded-xl flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
                   <div className="flex flex-col items-center gap-1">
                     <Camera size={24} className="text-white" />
-                    <span className="text-white text-sm font-semibold">Change</span>
+                    <span className="text-white text-sm font-semibold">{t('create.change')}</span>
                   </div>
                 </div>
               </>
             ) : (
               <div className="flex flex-col items-center gap-2 text-gray-400">
                 <Images size={40} />
-                <span className="text-sm">Tap to add a photo</span>
+                <span className="text-sm">{t('create.addPhoto')}</span>
               </div>
             )}
           </button>
@@ -166,10 +182,57 @@ export default function CreatePage() {
           )}
         </div>
 
+        {/* Photo source bottom sheet */}
+        {showPhotoSheet && (
+          <div
+            className="fixed inset-0 z-50 flex items-end"
+            onClick={() => setShowPhotoSheet(false)}
+          >
+            <div className="absolute inset-0 bg-black/40" />
+            <div
+              className="relative w-full bg-white dark:bg-surface-dark rounded-t-2xl px-4 pt-4 pb-28"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Handle */}
+              <div className="w-10 h-1 bg-gray-300 dark:bg-gray-600 rounded-full mx-auto mb-5" />
+
+              <button
+                onClick={() => {
+                  setShowPhotoSheet(false);
+                  setTimeout(() => cameraInputRef.current?.click(), 50);
+                }}
+                className="w-full flex items-center gap-4 px-4 py-4 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+              >
+                <div className="w-11 h-11 rounded-full bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center shrink-0">
+                  <Camera size={20} className="text-[#6c63ff]" />
+                </div>
+                <span className="text-[15px] font-semibold text-gray-800 dark:text-gray-100">
+                  {t('create.takePhoto')}
+                </span>
+              </button>
+
+              <button
+                onClick={() => {
+                  setShowPhotoSheet(false);
+                  setTimeout(() => fileInputRef.current?.click(), 50);
+                }}
+                className="w-full flex items-center gap-4 px-4 py-4 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+              >
+                <div className="w-11 h-11 rounded-full bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center shrink-0">
+                  <ImageIcon size={20} className="text-[#6c63ff]" />
+                </div>
+                <span className="text-[15px] font-semibold text-gray-800 dark:text-gray-100">
+                  {t('create.fromGallery')}
+                </span>
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Caption */}
         <div>
           <textarea
-            placeholder="Write a caption…"
+            placeholder={t('create.captionPlaceholder')}
             value={caption}
             onChange={(e) => setCaption(e.target.value)}
             maxLength={500}
@@ -210,7 +273,7 @@ export default function CreatePage() {
                   : 'text-gray-400',
               )}
             >
-              {selectedPlace ? selectedPlace.name : 'Select a place *'}
+              {selectedPlace ? selectedPlace.name : t('create.selectPlace')}
             </span>
             {selectedPlace && (
               <button
@@ -236,7 +299,7 @@ export default function CreatePage() {
               <div className="border-b border-border-light dark:border-border-dark">
                 <input
                   type="text"
-                  placeholder="Search places…"
+                  placeholder={t('create.searchPlaces')}
                   value={placeSearch}
                   onChange={(e) => setPlaceSearch(e.target.value)}
                   autoFocus
@@ -250,9 +313,9 @@ export default function CreatePage() {
                     <Loader2 size={20} className="animate-spin text-[#6c63ff]" />
                   </div>
                 ) : (searchQuery.data?.items ?? []).length === 0 && placeSearch.length > 1 ? (
-                  <p className="text-center text-sm text-gray-400 py-4">No places found</p>
+                  <p className="text-center text-sm text-gray-400 py-4">{t('create.noPlaces')}</p>
                 ) : placeSearch.length <= 1 ? (
-                  <p className="text-center text-sm text-gray-400 py-4">Type to search places</p>
+                  <p className="text-center text-sm text-gray-400 py-4">{t('create.typePlaces')}</p>
                 ) : (
                   (searchQuery.data?.items ?? []).map((place) => (
                     <button
@@ -288,7 +351,7 @@ export default function CreatePage() {
               {submitLabel}
             </>
           ) : (
-            'Share Post'
+            t('create.share')
           )}
         </button>
       </div>

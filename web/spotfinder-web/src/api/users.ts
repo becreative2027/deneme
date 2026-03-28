@@ -1,6 +1,20 @@
 import { apiClient } from './client';
 import { ApiResponse, FeedPage, Post, UserProfile } from '@/lib/types';
 
+export interface UserSearchResult {
+  id: string;
+  username: string;
+  displayName?: string;
+  avatarUrl?: string;
+}
+
+export interface UserSearchResponse {
+  users: UserSearchResult[];
+  totalCount: number;
+  page: number;
+  pageSize: number;
+}
+
 export async function getMe(): Promise<UserProfile> {
   const { data } = await apiClient.get<ApiResponse<any>>('/api/users/me');
   if (!data.success || !data.data) throw new Error('Failed to load profile');
@@ -118,6 +132,24 @@ export async function followUser(userId: string): Promise<void> {
 
 export async function unfollowUser(userId: string): Promise<void> {
   await apiClient.post('/api/social/unfollow', { followingId: userId });
+}
+
+export async function searchUsers(query: string, page = 1, pageSize = 20): Promise<UserSearchResponse> {
+  const { data } = await apiClient.get<any>('/api/users/search', {
+    params: { q: query, page, pageSize },
+  });
+  const raw: any[] = data?.users ?? [];
+  return {
+    users: raw.map((u: any) => ({
+      id: u.id ?? '',
+      username: u.username ?? '',
+      displayName: u.displayName ?? undefined,
+      avatarUrl: u.avatarUrl ?? u.profileImageUrl ?? undefined,
+    })),
+    totalCount: data?.totalCount ?? 0,
+    page: data?.page ?? page,
+    pageSize: data?.pageSize ?? pageSize,
+  };
 }
 
 export async function updateProfile(payload: {

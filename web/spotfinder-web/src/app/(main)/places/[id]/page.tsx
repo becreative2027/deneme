@@ -18,13 +18,17 @@ import {
   ChevronRight,
   Navigation,
   Heart,
+  Bookmark,
 } from 'lucide-react';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { usePlaceDetail } from '@/hooks/usePlaces';
 import { useIsFavorited, useToggleFavorite } from '@/hooks/useFavorites';
+import { useWishlistStore } from '@/store/wishlistStore';
+import { useT } from '@/lib/i18n';
 import { getPlacePosts } from '@/api/places';
 import { ErrorState } from '@/components/ErrorState';
 import { PhotoLightbox } from '@/components/PhotoLightbox';
+import { ReviewsSheet } from '@/components/ReviewsSheet';
 
 function formatRating(n: number): string {
   return n ? n.toFixed(1) : '–';
@@ -32,6 +36,17 @@ function formatRating(n: number): string {
 
 function formatCount(n: number): string {
   if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
+  return String(n);
+}
+
+function formatSocialCount(n: number): string {
+  const thresholds = [100_000, 50_000, 10_000, 5_000, 1_000, 500, 100, 50, 10];
+  for (const t of thresholds) {
+    if (n >= t) {
+      const formatted = t >= 1_000 ? `${t / 1_000}K` : String(t);
+      return `${formatted}+`;
+    }
+  }
   return String(n);
 }
 
@@ -97,10 +112,14 @@ function MenuGallery({ urls }: { urls: string[] }) {
 
 export default function PlaceDetailPage({ params }: { params: { id: string } }) {
   const router = useRouter();
+  const t = useT();
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const [reviewsOpen, setReviewsOpen] = useState(false);
   const { data: place, isLoading, isError, refetch } = usePlaceDetail(params.id);
   const isFavorited = useIsFavorited(params.id);
   const toggleFavorite = useToggleFavorite(params.id);
+  const { hasPlace, togglePlace } = useWishlistStore();
+  const isWishlisted = hasPlace(params.id);
 
   const postsQuery = useInfiniteQuery({
     queryKey: ['placePosts', params.id],
@@ -164,16 +183,31 @@ export default function PlaceDetailPage({ params }: { params: { id: string } }) 
         >
           <ArrowLeft size={20} />
         </button>
-        <button
-          onClick={() => toggleFavorite.mutate()}
-          disabled={toggleFavorite.isPending}
-          className="absolute top-4 right-4 w-9 h-9 bg-black/40 backdrop-blur-sm rounded-full flex items-center justify-center text-white hover:bg-black/60 transition-colors disabled:opacity-60"
-        >
-          <Heart
-            size={20}
-            className={isFavorited ? 'fill-red-500 text-red-500' : 'text-white'}
-          />
-        </button>
+        <div className="absolute top-4 right-4 flex items-center gap-2">
+          {/* Wishlist bookmark */}
+          <button
+            onClick={() => togglePlace(params.id)}
+            title={isWishlisted ? t('wishlist.inWishlist') : t('wishlist.addToWishlist')}
+            className="w-9 h-9 bg-black/40 backdrop-blur-sm rounded-full flex items-center justify-center text-white hover:bg-black/60 transition-colors"
+          >
+            <Bookmark
+              size={20}
+              className={isWishlisted ? 'fill-[#6c63ff] text-[#6c63ff]' : 'text-white'}
+            />
+          </button>
+
+          {/* Favorite heart */}
+          <button
+            onClick={() => toggleFavorite.mutate()}
+            disabled={toggleFavorite.isPending}
+            className="w-9 h-9 bg-black/40 backdrop-blur-sm rounded-full flex items-center justify-center text-white hover:bg-black/60 transition-colors disabled:opacity-60"
+          >
+            <Heart
+              size={20}
+              className={isFavorited ? 'fill-red-500 text-red-500' : 'text-white'}
+            />
+          </button>
+        </div>
       </div>
 
       {/* Body */}
@@ -184,22 +218,48 @@ export default function PlaceDetailPage({ params }: { params: { id: string } }) 
 
         {/* Stats row: rating + post count */}
         <div className="flex items-center gap-4 mt-3">
-          <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            onClick={() => setReviewsOpen(true)}
+            className="flex items-center gap-1.5 active:opacity-70 transition-opacity"
+          >
             <Star size={16} className="text-amber-400 fill-amber-400" />
             <span className="text-[15px] font-bold text-gray-800 dark:text-gray-200">
               {formatRating(place.averageRating)}
             </span>
-            <span className="text-sm text-gray-500">
-              ({formatCount(place.reviewCount)} reviews)
+            <span className="text-sm text-[#6c63ff] font-medium underline underline-offset-2">
+              ({formatCount(place.reviewCount)} {t('reviews.rating')})
             </span>
-          </div>
+          </button>
           {allPosts.length > 0 && (
             <div className="flex items-center gap-1 text-sm text-gray-500">
               <Grid3X3 size={14} />
-              <span>{formatCount(allPosts.length)} posts</span>
+              <span>{formatCount(allPosts.length)} {t('place.posts')}</span>
             </div>
           )}
         </div>
+
+        {/* Social counts: favorites + wishlist */}
+        {((place.favoriteCount ?? 0) > 0 || (place.wishlistCount ?? 0) > 0) && (
+          <div className="flex items-center gap-4 mt-2.5">
+            {(place.favoriteCount ?? 0) > 0 && (
+              <div className="flex items-center gap-1.5">
+                <Heart size={13} className="text-red-400 fill-red-400 shrink-0" />
+                <span className="text-xs text-gray-500">
+                  {t('place.peopleFavorited', formatSocialCount(place.favoriteCount!))}
+                </span>
+              </div>
+            )}
+            {(place.wishlistCount ?? 0) > 0 && (
+              <div className="flex items-center gap-1.5">
+                <Bookmark size={13} className="text-[#6c63ff] fill-[#6c63ff] shrink-0" />
+                <span className="text-xs text-gray-500">
+                  {t('place.peopleWishlisted', formatSocialCount(place.wishlistCount!))}
+                </span>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Location */}
         <div className="flex items-start gap-1.5 mt-3">
@@ -357,6 +417,10 @@ export default function PlaceDetailPage({ params }: { params: { id: string } }) 
           initialIndex={lightboxIndex}
           onClose={() => setLightboxIndex(null)}
         />
+      )}
+
+      {reviewsOpen && (
+        <ReviewsSheet placeId={params.id} onClose={() => setReviewsOpen(false)} />
       )}
     </div>
   );

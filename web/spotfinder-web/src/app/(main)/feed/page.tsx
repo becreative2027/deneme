@@ -9,17 +9,13 @@ import { PostCard } from '@/components/PostCard';
 import { PostSkeleton } from '@/components/SkeletonLoader';
 import { ErrorState } from '@/components/ErrorState';
 import { EmptyState } from '@/components/EmptyState';
+import { useT } from '@/lib/i18n';
 import clsx from 'clsx';
 
 type FeedTab = 'following' | 'explore' | 'personalized';
 
-const TABS: { key: FeedTab; label: string }[] = [
-  { key: 'following', label: 'Following' },
-  { key: 'explore', label: 'Explore' },
-  { key: 'personalized', label: 'For You' },
-];
-
 export default function FeedPage() {
+  const t = useT();
   const [activeTab, setActiveTab] = useState<FeedTab>('following');
   const router = useRouter();
   const loadMoreRef = useRef<HTMLDivElement>(null);
@@ -28,6 +24,12 @@ export default function FeedPage() {
   const explore = useExploreFeed();
   const personalized = usePersonalizedFeed();
   const likeMutation = useLikePost();
+
+  const TABS: { key: FeedTab; label: string }[] = [
+    { key: 'following', label: t('feed.following') },
+    { key: 'explore', label: t('feed.explore') },
+    { key: 'personalized', label: t('feed.forYou') },
+  ];
 
   const activeQuery =
     activeTab === 'following' ? following
@@ -104,7 +106,7 @@ export default function FeedPage() {
         </div>
       ) : activeQuery.isError ? (
         <ErrorState
-          message="Could not load feed."
+          message={t('feed.error')}
           onRetry={() => activeQuery.refetch()}
         />
       ) : (
@@ -112,8 +114,8 @@ export default function FeedPage() {
           {allPosts.length === 0 ? (
             <EmptyState
               icon={Newspaper}
-              title="No posts yet"
-              subtitle="Follow people or explore to see content here."
+              title={t('feed.empty.title')}
+              subtitle={t('feed.empty.subtitle')}
             />
           ) : (
             <>
@@ -137,7 +139,7 @@ export default function FeedPage() {
               )}
 
               {!activeQuery.hasNextPage && allPosts.length > 0 && (
-                <p className="text-center text-xs text-gray-400 py-6">You&apos;re all caught up</p>
+                <p className="text-center text-xs text-gray-400 py-6">{t('feed.allCaughtUp')}</p>
               )}
             </>
           )}

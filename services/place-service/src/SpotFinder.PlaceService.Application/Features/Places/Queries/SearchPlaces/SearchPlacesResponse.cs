@@ -16,6 +16,7 @@ public sealed record PlaceSummaryDto(
     double? Latitude,
     double? Longitude,
     decimal? Rating,
+    int ReviewCount,
     string ParkingStatus,
     IReadOnlyList<LabelSummaryDto> Labels);
 

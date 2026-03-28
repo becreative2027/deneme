@@ -84,6 +84,13 @@ public sealed class Place : AggregateRoot<Guid>
         UpdatedAt = DateTime.UtcNow;
     }
 
+    public void SetRatingStats(decimal average, int count)
+    {
+        Rating = Math.Round(average, 1);
+        UserRatingsTotal = count;
+        UpdatedAt = DateTime.UtcNow;
+    }
+
     public void SoftDelete()
     {
         IsDeleted = true;

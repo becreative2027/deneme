@@ -6,7 +6,7 @@ import { PlaceSearchRequest } from '@/lib/types';
 
 export function usePlaceSearch(params: PlaceSearchRequest, enabled: boolean) {
   return useQuery({
-    queryKey: ['placeSearch', params.query, params.labelIds, params.matchMode],
+    queryKey: ['placeSearch', params.query, params.labelIds, params.matchMode, params.langId],
     queryFn: () => searchPlaces(params),
     enabled,
     staleTime: 30_000,

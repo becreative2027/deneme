@@ -7,6 +7,7 @@ import { Eye, EyeOff, MapPin, Loader2 } from 'lucide-react';
 import { register } from '@/api/auth';
 import { useAuthStore } from '@/store/authStore';
 import { useToast } from '@/components/Toast';
+import { useT } from '@/lib/i18n';
 
 interface FormState {
   displayName: string;
@@ -17,6 +18,7 @@ interface FormState {
 }
 
 export default function RegisterPage() {
+  const t = useT();
   const [form, setForm] = useState<FormState>({
     displayName: '',
     username: '',
@@ -39,15 +41,15 @@ export default function RegisterPage() {
     const { displayName, username, email, password, confirmPassword } = form;
 
     if (!username.trim() || !email.trim() || !displayName.trim() || !password) {
-      showToast('All fields are required.', 'warning');
+      showToast(t('auth.allRequired'), 'warning');
       return;
     }
     if (password !== confirmPassword) {
-      showToast('Passwords do not match.', 'warning');
+      showToast(t('auth.passwordMismatch'), 'warning');
       return;
     }
     if (password.length < 8) {
-      showToast('Password must be at least 8 characters.', 'warning');
+      showToast(t('auth.passwordTooShort'), 'warning');
       return;
     }
 
@@ -62,7 +64,7 @@ export default function RegisterPage() {
       setAuth(response.token, response.refreshToken, response.user);
       router.replace('/feed');
     } catch (err: any) {
-      showToast(err.message ?? 'Registration failed. Please try again.', 'error');
+      showToast(err.message ?? t('auth.regFailed'), 'error');
     } finally {
       setLoading(false);
     }
@@ -70,20 +72,15 @@ export default function RegisterPage() {
 
   const fields: Array<{
     key: keyof FormState;
-    label: string;
+    labelKey: string;
     type?: string;
     autoComplete?: string;
   }> = [
-    { key: 'displayName', label: 'Display name', autoComplete: 'name' },
-    { key: 'username', label: 'Username', autoComplete: 'username' },
-    { key: 'email', label: 'Email', type: 'email', autoComplete: 'email' },
-    { key: 'password', label: 'Password', type: 'password', autoComplete: 'new-password' },
-    {
-      key: 'confirmPassword',
-      label: 'Confirm password',
-      type: 'password',
-      autoComplete: 'new-password',
-    },
+    { key: 'displayName', labelKey: 'auth.displayName', autoComplete: 'name' },
+    { key: 'username', labelKey: 'auth.username', autoComplete: 'username' },
+    { key: 'email', labelKey: 'auth.email', type: 'email', autoComplete: 'email' },
+    { key: 'password', labelKey: 'auth.password', type: 'password', autoComplete: 'new-password' },
+    { key: 'confirmPassword', labelKey: 'auth.confirmPassword', type: 'password', autoComplete: 'new-password' },
   ];
 
   return (
@@ -93,21 +90,19 @@ export default function RegisterPage() {
         <div className="w-16 h-16 bg-[#6c63ff] rounded-2xl flex items-center justify-center mb-4 shadow-lg">
           <MapPin size={30} className="text-white" />
         </div>
-        <h1 className="text-3xl font-extrabold text-gray-900 dark:text-gray-50">Create account</h1>
-        <p className="text-gray-500 dark:text-gray-400 mt-1.5 text-[15px]">
-          Join SpotFinder today
-        </p>
+        <h1 className="text-3xl font-extrabold text-gray-900 dark:text-gray-50">{t('auth.createAccount')}</h1>
+        <p className="text-gray-500 dark:text-gray-400 mt-1.5 text-[15px]">{t('auth.joinToday')}</p>
       </div>
 
       {/* Form */}
       <form onSubmit={handleRegister} className="flex-1 px-7 space-y-3.5 pb-8">
-        {fields.map(({ key, label, type, autoComplete }) => {
+        {fields.map(({ key, labelKey, type, autoComplete }) => {
           const isPasswordField = type === 'password';
           return (
             <div key={key} className="relative">
               <input
                 type={isPasswordField && showPassword ? 'text' : (type ?? 'text')}
-                placeholder={label}
+                placeholder={t(labelKey)}
                 value={form[key]}
                 onChange={(e) => update(key, e.target.value)}
                 autoComplete={autoComplete}
@@ -135,17 +130,17 @@ export default function RegisterPage() {
           {loading ? (
             <>
               <Loader2 size={18} className="animate-spin" />
-              Creating account…
+              {t('auth.creatingAccount')}
             </>
           ) : (
-            'Create Account'
+            t('auth.createAccountBtn')
           )}
         </button>
 
         <p className="text-center text-sm text-gray-500 dark:text-gray-400 mt-4">
-          Already have an account?{' '}
+          {t('auth.hasAccount')}{' '}
           <Link href="/login" className="text-[#6c63ff] font-bold hover:underline">
-            Sign in
+            {t('auth.signIn')}
           </Link>
         </p>
       </form>

@@ -6,6 +6,7 @@ using SpotFinder.BuildingBlocks.Api;
 using SpotFinder.IdentityService.Application.Features.Users.Commands.UpdateProfile;
 using SpotFinder.IdentityService.Application.Features.Users.Queries.GetUserById;
 using SpotFinder.IdentityService.Application.Features.Users.Queries.GetUsersByIds;
+using SpotFinder.IdentityService.Application.Features.Users.Queries.SearchUsers;
 
 namespace SpotFinder.IdentityService.API.Controllers;
 
@@ -13,6 +14,21 @@ namespace SpotFinder.IdentityService.API.Controllers;
 public sealed class UsersController : BaseController
 {
     public UsersController(ISender sender) : base(sender) { }
+
+    [HttpGet("search")]
+    [ProducesResponseType(typeof(SearchUsersResponse), StatusCodes.Status200OK)]
+    public async Task<IActionResult> Search(
+        [FromQuery] string q,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20,
+        CancellationToken ct = default)
+    {
+        if (string.IsNullOrWhiteSpace(q) || q.Trim().Length < 2)
+            return Ok(new SearchUsersResponse([], 0, page, pageSize));
+
+        var result = await Sender.Send(new SearchUsersQuery(q, page, pageSize), ct);
+        return Ok(result);
+    }
 
     [HttpGet("me")]
     [ProducesResponseType(typeof(ApiResponse<UserDto>), StatusCodes.Status200OK)]
