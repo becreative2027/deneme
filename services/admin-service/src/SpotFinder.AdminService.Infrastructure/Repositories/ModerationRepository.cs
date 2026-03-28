@@ -24,6 +24,10 @@ public sealed class ModerationRepository : IModerationRepository
         return PagedResult<ModerationItem>.Create(items, total, page, pageSize);
     }
 
+    public async Task<bool> HasReportedAsync(string reporterId, ModerationTargetType targetType, Guid targetId, CancellationToken ct = default)
+        => await _context.ModerationItems.AnyAsync(
+            m => m.ReporterId == reporterId && m.TargetType == targetType && m.TargetId == targetId, ct);
+
     public async Task AddAsync(ModerationItem item, CancellationToken ct = default)
         => await _context.ModerationItems.AddAsync(item, ct);
 

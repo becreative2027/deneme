@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -32,10 +33,13 @@ public sealed class AdminPlacesController : BaseController
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Update(Guid id, [FromBody] AdminUpdatePlaceRequest request, CancellationToken ct)
     {
+        var updatedBy = User.FindFirstValue(ClaimTypes.Email)
+                     ?? User.FindFirstValue(ClaimTypes.NameIdentifier)
+                     ?? User.Identity?.Name;
         var cmd = new AdminUpdatePlaceCommand(
             id, request.CountryId, request.CityId, request.DistrictId,
             request.Latitude, request.Longitude, request.GooglePlaceId,
-            request.ParkingStatus, request.Rating, request.UpdatedBy);
+            request.ParkingStatus, request.Rating, updatedBy);
 
         var result = await Sender.Send(cmd, ct);
         if (!result.IsSuccess)
@@ -47,8 +51,11 @@ public sealed class AdminPlacesController : BaseController
     [HttpDelete("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> Delete(Guid id, [FromQuery] string? deletedBy, CancellationToken ct)
+    public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
     {
+        var deletedBy = User.FindFirstValue(ClaimTypes.Email)
+                     ?? User.FindFirstValue(ClaimTypes.NameIdentifier)
+                     ?? User.Identity?.Name;
         var result = await Sender.Send(new AdminDeletePlaceCommand(id, deletedBy), ct);
         if (!result.IsSuccess)
             return FailResult(string.Join("; ", result.Errors), 404);
@@ -65,5 +72,4 @@ public sealed record AdminUpdatePlaceRequest(
     double?  Longitude,
     string?  GooglePlaceId,
     string?  ParkingStatus,
-    decimal? Rating,
-    string?  UpdatedBy);
+    decimal? Rating);

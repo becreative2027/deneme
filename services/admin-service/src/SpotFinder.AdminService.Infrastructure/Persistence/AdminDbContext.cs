@@ -8,7 +8,9 @@ public sealed class AdminDbContext : DbContext, IUnitOfWork
 {
     public AdminDbContext(DbContextOptions<AdminDbContext> options) : base(options) { }
 
-    public DbSet<ModerationItem> ModerationItems => Set<ModerationItem>();
+    public DbSet<ModerationItem>    ModerationItems    => Set<ModerationItem>();
+    public DbSet<FeedbackItem>      FeedbackItems      => Set<FeedbackItem>();
+    public DbSet<PlaceNotification> PlaceNotifications => Set<PlaceNotification>();
     public DbSet<AuditLog>       AuditLogs       => Set<AuditLog>();
     public DbSet<ImportJob>      ImportJobs      => Set<ImportJob>();
 

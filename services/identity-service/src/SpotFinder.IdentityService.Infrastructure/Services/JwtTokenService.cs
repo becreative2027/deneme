@@ -14,17 +14,21 @@ public sealed class JwtTokenService : IJwtTokenService
     private readonly IConfiguration _configuration;
     public JwtTokenService(IConfiguration configuration) => _configuration = configuration;
 
-    public string GenerateAccessToken(User user)
+    public string GenerateAccessToken(User user, IReadOnlyList<Guid>? ownedPlaceIds = null)
     {
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:SecretKey"]!));
         var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-        var claims = new[]
+        var claims = new List<Claim>
         {
-            new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
-            new Claim(JwtRegisteredClaimNames.Email, user.Email),
-            new Claim(ClaimTypes.Role, user.Role.ToString()),
-            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+            new(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
+            new(JwtRegisteredClaimNames.Email, user.Email),
+            new(ClaimTypes.Role, user.Role.ToString()),
+            new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
+
+        if (ownedPlaceIds is { Count: > 0 })
+            claims.Add(new Claim("owned_places", string.Join(",", ownedPlaceIds)));
+
         var token = new JwtSecurityToken(
             issuer: _configuration["Jwt:Issuer"],
             audience: _configuration["Jwt:Audience"],

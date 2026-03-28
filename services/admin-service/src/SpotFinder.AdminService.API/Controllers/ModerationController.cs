@@ -10,6 +10,7 @@ using SpotFinder.BuildingBlocks.Application;
 namespace SpotFinder.AdminService.API.Controllers;
 
 [Authorize(Roles = "Admin,SuperAdmin")]
+[Route("api/admin/moderation")]
 public sealed class ModerationController : BaseController
 {
     public ModerationController(ISender sender) : base(sender) { }
