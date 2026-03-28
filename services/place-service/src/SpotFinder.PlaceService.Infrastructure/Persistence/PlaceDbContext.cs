@@ -11,6 +11,7 @@ public sealed class PlaceDbContext : DbContext, IUnitOfWork
     public DbSet<Place> Places => Set<Place>();
     public DbSet<PlaceTranslation> PlaceTranslations => Set<PlaceTranslation>();
     public DbSet<PlaceScore> PlaceScores => Set<PlaceScore>();
+    public DbSet<PlaceReview> PlaceReviews => Set<PlaceReview>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

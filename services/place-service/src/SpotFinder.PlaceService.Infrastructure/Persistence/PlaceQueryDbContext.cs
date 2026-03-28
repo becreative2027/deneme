@@ -16,6 +16,7 @@ public sealed class PlaceQueryDbContext : DbContext
     public DbSet<PlaceRow> Places => Set<PlaceRow>();
     public DbSet<PlaceTranslationRow> PlaceTranslations => Set<PlaceTranslationRow>();
     public DbSet<PlaceScoreRow> PlaceScores => Set<PlaceScoreRow>();
+    public DbSet<PlaceReviewRow> PlaceReviews => Set<PlaceReviewRow>();
 
     // label schema
     public DbSet<PlaceLabelRow> PlaceLabels => Set<PlaceLabelRow>();
@@ -27,6 +28,10 @@ public sealed class PlaceQueryDbContext : DbContext
     // geo schema (read-only, for city/district name resolution)
     public DbSet<CityTranslationRow> CityTranslations => Set<CityTranslationRow>();
     public DbSet<DistrictTranslationRow> DistrictTranslations => Set<DistrictTranslationRow>();
+
+    // social schema (read-only counts)
+    public DbSet<SocialFavoriteRow> SocialFavorites => Set<SocialFavoriteRow>();
+    public DbSet<SocialWishlistRow> SocialWishlists => Set<SocialWishlistRow>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -47,6 +52,13 @@ public sealed class PlaceQueryDbContext : DbContext
             b.Property(x => x.Rating).HasColumnName("rating").HasPrecision(2, 1);
             b.Property(x => x.UserRatingsTotal).HasColumnName("user_ratings_total");
             b.Property(x => x.ParkingStatus).HasColumnName("parking_status");
+            b.Property(x => x.MenuUrl).HasColumnName("menu_url");
+            b.Property(x => x.MenuImageUrls)
+                .HasColumnName("menu_image_urls")
+                .HasColumnType("jsonb")
+                .HasConversion(
+                    v => System.Text.Json.JsonSerializer.Serialize(v, (System.Text.Json.JsonSerializerOptions?)null),
+                    v => System.Text.Json.JsonSerializer.Deserialize<List<string>>(v, (System.Text.Json.JsonSerializerOptions?)null) ?? new List<string>());
             b.Property(x => x.IsDeleted).HasColumnName("is_deleted");
             b.Property(x => x.CreatedAt).HasColumnName("created_at");
             b.HasQueryFilter(x => !x.IsDeleted);
@@ -73,6 +85,14 @@ public sealed class PlaceQueryDbContext : DbContext
             b.Property(x => x.TrendScore).HasColumnName("trend_score").HasPrecision(5, 2);
             b.Property(x => x.FinalScore).HasColumnName("final_score").HasPrecision(5, 2);
             b.Property(x => x.UpdatedAt).HasColumnName("updated_at");
+        });
+
+        modelBuilder.Entity<PlaceReviewRow>(b =>
+        {
+            b.ToTable("place_reviews", "place");
+            b.HasKey(x => x.Id);
+            b.Property(x => x.Id).HasColumnName("id");
+            b.Property(x => x.PlaceId).HasColumnName("place_id");
         });
 
         // ── label schema ──────────────────────────────────────────────────────
@@ -144,6 +164,24 @@ public sealed class PlaceQueryDbContext : DbContext
             b.Property(x => x.DistrictId).HasColumnName("district_id");
             b.Property(x => x.LanguageId).HasColumnName("language_id");
             b.Property(x => x.Name).HasColumnName("name");
+        });
+
+        // ── social schema (read-only) ─────────────────────────────────────────
+
+        modelBuilder.Entity<SocialFavoriteRow>(b =>
+        {
+            b.ToTable("user_favorites", "social");
+            b.HasKey(x => new { x.UserId, x.PlaceId });
+            b.Property(x => x.UserId).HasColumnName("user_id");
+            b.Property(x => x.PlaceId).HasColumnName("place_id");
+        });
+
+        modelBuilder.Entity<SocialWishlistRow>(b =>
+        {
+            b.ToTable("user_wishlists", "social");
+            b.HasKey(x => new { x.UserId, x.PlaceId });
+            b.Property(x => x.UserId).HasColumnName("user_id");
+            b.Property(x => x.PlaceId).HasColumnName("place_id");
         });
     }
 }

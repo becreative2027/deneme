@@ -26,6 +26,7 @@ public static class DependencyInjection
         services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<PlaceDbContext>());
         services.AddScoped<IPlaceRepository, PlaceRepository>();
         services.AddScoped<IPlaceScoreRepository, PlaceScoreRepository>();
+        services.AddScoped<IPlaceReviewRepository, PlaceReviewRepository>();
         return services;
     }
 }

@@ -13,6 +13,8 @@ public sealed class PlaceRow
     public decimal? Rating { get; set; }
     public int? UserRatingsTotal { get; set; }
     public string ParkingStatus { get; set; } = "unavailable";
+    public string? MenuUrl { get; set; }
+    public List<string> MenuImageUrls { get; set; } = new();
     public bool IsDeleted { get; set; }
     public DateTime CreatedAt { get; set; }
 }

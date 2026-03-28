@@ -5,6 +5,7 @@ namespace SpotFinder.PlaceService.Application.Features.Places.Queries.SearchPlac
 
 /// <summary>POST /api/places/search</summary>
 public sealed record SearchPlacesQuery(
+    string?    Query      = null,
     int        LanguageId = 1,
     int?       CityId     = null,
     int?       DistrictId = null,
