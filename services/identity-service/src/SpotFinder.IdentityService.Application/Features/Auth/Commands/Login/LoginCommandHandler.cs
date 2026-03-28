@@ -1,5 +1,6 @@
 using SpotFinder.BuildingBlocks.Application;
 using SpotFinder.IdentityService.Domain.Entities;
+using SpotFinder.IdentityService.Domain.Enums;
 using SpotFinder.IdentityService.Domain.Repositories;
 using SpotFinder.IdentityService.Domain.Services;
 
@@ -9,6 +10,7 @@ public sealed class LoginCommandHandler : ICommandHandler<LoginCommand, LoginRes
 {
     private readonly IUserRepository _userRepository;
     private readonly IRefreshTokenRepository _refreshTokenRepository;
+    private readonly IPlaceOwnershipRepository _ownershipRepository;
     private readonly IPasswordHasher _passwordHasher;
     private readonly IJwtTokenService _jwtTokenService;
     private readonly IUnitOfWork _unitOfWork;
@@ -16,12 +18,14 @@ public sealed class LoginCommandHandler : ICommandHandler<LoginCommand, LoginRes
     public LoginCommandHandler(
         IUserRepository userRepository,
         IRefreshTokenRepository refreshTokenRepository,
+        IPlaceOwnershipRepository ownershipRepository,
         IPasswordHasher passwordHasher,
         IJwtTokenService jwtTokenService,
         IUnitOfWork unitOfWork)
     {
         _userRepository = userRepository;
         _refreshTokenRepository = refreshTokenRepository;
+        _ownershipRepository = ownershipRepository;
         _passwordHasher = passwordHasher;
         _jwtTokenService = jwtTokenService;
         _unitOfWork = unitOfWork;
@@ -38,7 +42,12 @@ public sealed class LoginCommandHandler : ICommandHandler<LoginCommand, LoginRes
         if (!user.IsActive)
             throw new UnauthorizedAccessException("Account is deactivated.");
 
-        var accessToken = _jwtTokenService.GenerateAccessToken(user);
+        // Include owned place IDs in JWT for PlaceOwner role
+        List<Guid>? ownedPlaceIds = null;
+        if (user.Role == UserRole.PlaceOwner)
+            ownedPlaceIds = await _ownershipRepository.GetPlaceIdsByUserAsync(user.Id, cancellationToken);
+
+        var accessToken = _jwtTokenService.GenerateAccessToken(user, ownedPlaceIds);
         var refreshTokenValue = _jwtTokenService.GenerateRefreshToken();
         var refreshToken = RefreshToken.Create(user.Id, refreshTokenValue, DateTime.UtcNow.AddDays(30));
 

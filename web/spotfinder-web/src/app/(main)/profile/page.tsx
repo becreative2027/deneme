@@ -3,7 +3,7 @@
 import React, { useCallback, useRef, useEffect, useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { LogOut, Images, Pencil, Grid3X3, List, X, Check, Camera, Heart, MapPin, Settings, Globe } from 'lucide-react';
+import { LogOut, Images, Pencil, Grid3X3, List, X, Check, Camera, Heart, MapPin, Settings, Globe, MessageSquarePlus } from 'lucide-react';
 import { Post } from '@/lib/types';
 import { useMe, useUserPosts } from '@/hooks/useProfile';
 import { useLikePost } from '@/hooks/useFeed';
@@ -22,6 +22,7 @@ import { EmptyState } from '@/components/EmptyState';
 import { useToast } from '@/components/Toast';
 import { PhotoLightbox } from '@/components/PhotoLightbox';
 import { FollowListSheet } from '@/components/FollowListSheet';
+import { FeedbackSheet } from '@/components/FeedbackSheet';
 import { useT } from '@/lib/i18n';
 import { useLocaleStore, Locale } from '@/store/localeStore';
 
@@ -136,6 +137,7 @@ export default function ProfilePage() {
   const [followSheet, setFollowSheet] = useState<'followers' | 'following' | null>(null);
   const [editOpen, setEditOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [editName, setEditName] = useState('');
   const [editBio, setEditBio] = useState('');
   const [editAvatarFile, setEditAvatarFile] = useState<File | null>(null);
@@ -250,6 +252,13 @@ export default function ProfilePage() {
         <div className="flex items-start justify-between mb-4">
           <Avatar uri={profile.avatarUrl} name={profile.displayName} size={72} />
           <div className="flex items-center gap-1">
+            <button
+              onClick={() => setFeedbackOpen(true)}
+              className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors rounded-full hover:bg-gray-100 dark:hover:bg-gray-800"
+              title="Geri Bildirim"
+            >
+              <MessageSquarePlus size={18} />
+            </button>
             <button
               onClick={() => setSettingsOpen(true)}
               className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors rounded-full hover:bg-gray-100 dark:hover:bg-gray-800"
@@ -509,6 +518,9 @@ export default function ProfilePage() {
           </div>
         </div>
       )}
+
+      {/* Feedback sheet */}
+      {feedbackOpen && <FeedbackSheet onClose={() => setFeedbackOpen(false)} />}
 
       {/* Settings sheet */}
       {settingsOpen && <SettingsSheet onClose={() => setSettingsOpen(false)} />}

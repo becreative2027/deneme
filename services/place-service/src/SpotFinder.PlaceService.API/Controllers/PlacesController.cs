@@ -1,9 +1,11 @@
 using FluentValidation;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SpotFinder.BuildingBlocks.Api;
 using SpotFinder.PlaceService.Application.Features.Places.Commands.AddOrUpdateReview;
 using SpotFinder.PlaceService.Application.Features.Places.Commands.CreatePlace;
+using SpotFinder.PlaceService.Application.Features.Places.Commands.DeleteReview;
 using SpotFinder.PlaceService.Application.Features.Places.Queries.GetPlaceById;
 using SpotFinder.PlaceService.Application.Features.Places.Queries.GetPlaceDetail;
 using SpotFinder.PlaceService.Application.Features.Places.Queries.GetPlaceReviews;
@@ -98,6 +100,17 @@ public sealed class PlacesController : BaseController
     {
         var result = await Sender.Send(new GetPlaceReviewsQuery(id, page, pageSize), ct);
         return Ok(result);
+    }
+
+    /// <summary>Admin: Delete a review by id.</summary>
+    [HttpDelete("{id:guid}/reviews/{reviewId:guid}")]
+    [Authorize(Roles = "Admin,SuperAdmin")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> DeleteReview(Guid id, Guid reviewId, CancellationToken ct)
+    {
+        var deleted = await Sender.Send(new DeleteReviewCommand(id, reviewId), ct);
+        return deleted ? NoContent() : NotFound();
     }
 }
 
