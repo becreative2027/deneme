@@ -3,9 +3,10 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { X, Heart, MapPin } from 'lucide-react';
+import { X, Heart, MapPin, Flag } from 'lucide-react';
 import { Post } from '@/lib/types';
 import { Avatar } from './Avatar';
+import { ReportModal } from './ReportModal';
 import { useLikePost } from '@/hooks/useFeed';
 
 function timeAgo(iso: string): string {
@@ -42,6 +43,7 @@ export function PhotoLightbox({ posts, initialIndex, onClose }: PhotoLightboxPro
   const [likeState, setLikeState] = useState<
     Record<string, { isLiked: boolean; likeCount: number }>
   >({});
+  const [reportingPostId, setReportingPostId] = useState<string | null>(null);
 
   useEffect(() => {
     const el = itemRefs.current[initialIndex];
@@ -150,7 +152,7 @@ export function PhotoLightbox({ posts, initialIndex, onClose }: PhotoLightboxPro
 
               {/* Footer */}
               <div className="px-4 py-3 space-y-2">
-                {/* Like button */}
+                {/* Like + Report row */}
                 <div className="flex items-center gap-1.5">
                   <button
                     onClick={() => handleLike(post)}
@@ -166,6 +168,13 @@ export function PhotoLightbox({ posts, initialIndex, onClose }: PhotoLightboxPro
                       }`}
                     />
                     <span className="text-sm text-gray-300">{likeCount}</span>
+                  </button>
+                  <button
+                    onClick={() => setReportingPostId(post.id)}
+                    className="ml-auto p-1 text-gray-600 hover:text-red-400 transition-colors"
+                    title="Şikayet Et"
+                  >
+                    <Flag size={16} />
                   </button>
                 </div>
 
@@ -195,6 +204,14 @@ export function PhotoLightbox({ posts, initialIndex, onClose }: PhotoLightboxPro
           );
         })}
       </div>
+
+      {reportingPostId && (
+        <ReportModal
+          targetType="Post"
+          targetId={reportingPostId}
+          onClose={() => setReportingPostId(null)}
+        />
+      )}
     </div>
   );
 }

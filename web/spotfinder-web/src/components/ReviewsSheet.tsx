@@ -1,11 +1,12 @@
 'use client';
 
 import React, { useState } from 'react';
-import { X, Star, PenLine } from 'lucide-react';
+import { X, Star, PenLine, Flag } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getPlaceReviews, addOrUpdateReview, ReviewDto } from '@/api/reviews';
 import { useAuthStore } from '@/store/authStore';
 import { Avatar } from './Avatar';
+import { ReportModal } from './ReportModal';
 import { useT } from '@/lib/i18n';
 
 function timeAgo(iso: string, t: (key: string, ...args: any[]) => string): string {
@@ -47,6 +48,7 @@ function StarPicker({ value, onChange }: { value: number; onChange: (v: number) 
 
 function ReviewCard({ review, isMe }: { review: ReviewDto; isMe: boolean }) {
   const t = useT();
+  const [reporting, setReporting] = useState(false);
   return (
     <div className={`px-4 py-3 border-b border-border-light dark:border-border-dark ${isMe ? 'bg-violet-50 dark:bg-violet-900/10' : ''}`}>
       <div className="flex items-start gap-3">
@@ -58,6 +60,15 @@ function ReviewCard({ review, isMe }: { review: ReviewDto; isMe: boolean }) {
               {isMe && <span className="ml-1.5 text-[10px] font-bold text-[#6c63ff] bg-violet-100 dark:bg-violet-900/30 px-1.5 py-0.5 rounded-full">{t('reviews.me')}</span>}
             </span>
             <span className="text-xs text-gray-400">@{review.username}</span>
+            {!isMe && (
+              <button
+                onClick={() => setReporting(true)}
+                className="ml-auto p-1 text-gray-300 hover:text-red-400 transition-colors"
+                title="Şikayet Et"
+              >
+                <Flag size={14} />
+              </button>
+            )}
           </div>
           <div className="flex items-center gap-2 mt-1">
             <StarRow rating={review.rating} size={13} />
@@ -68,6 +79,13 @@ function ReviewCard({ review, isMe }: { review: ReviewDto; isMe: boolean }) {
           )}
         </div>
       </div>
+      {reporting && (
+        <ReportModal
+          targetType="Review"
+          targetId={review.id}
+          onClose={() => setReporting(false)}
+        />
+      )}
     </div>
   );
 }

@@ -26,8 +26,17 @@ public sealed class PlaceReviewRepository : IPlaceReviewRepository
         return (items, total);
     }
 
+    public Task<PlaceReview?> GetByIdAsync(Guid reviewId, CancellationToken ct = default)
+        => _db.PlaceReviews.FindAsync([reviewId], ct).AsTask();
+
     public async Task AddAsync(PlaceReview review, CancellationToken ct = default)
         => await _db.PlaceReviews.AddAsync(review, ct);
+
+    public Task RemoveAsync(PlaceReview review, CancellationToken ct = default)
+    {
+        _db.PlaceReviews.Remove(review);
+        return Task.CompletedTask;
+    }
 
     public async Task<(decimal Average, int Count)> GetRatingStatsAsync(Guid placeId, CancellationToken ct = default)
     {

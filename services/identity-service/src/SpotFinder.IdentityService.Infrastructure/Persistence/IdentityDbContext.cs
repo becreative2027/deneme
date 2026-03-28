@@ -11,6 +11,7 @@ public sealed class IdentityDbContext : DbContext, IUnitOfWork
     public DbSet<User> Users => Set<User>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public DbSet<UserProfile> Profiles => Set<UserProfile>();
+    public DbSet<PlaceOwnership> PlaceOwnerships => Set<PlaceOwnership>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

@@ -11,7 +11,7 @@ public sealed class GetPendingModerationQueryHandler : IQueryHandler<GetPendingM
     public async Task<PagedResult<ModerationItemDto>> Handle(GetPendingModerationQuery request, CancellationToken cancellationToken)
     {
         var result = await _moderationRepository.GetPendingAsync(request.TargetType, request.Page, request.PageSize, cancellationToken);
-        var dtos = result.Items.Select(i => new ModerationItemDto(i.Id, i.TargetType.ToString(), i.TargetId, i.Status.ToString(), i.CreatedAt)).ToList();
+        var dtos = result.Items.Select(i => new ModerationItemDto(i.Id, i.TargetType.ToString(), i.TargetId, i.Status.ToString(), i.ReporterId, i.ReporterNote, i.CreatedAt)).ToList();
         return PagedResult<ModerationItemDto>.Create(dtos, result.TotalCount, result.Page, result.PageSize);
     }
 }

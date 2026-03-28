@@ -14,6 +14,9 @@ public sealed class AdminPlaceWrite
     public int?         UserRatingsTotal    { get; set; }
     public string       ParkingStatus       { get; set; } = "unavailable";
     public string?      Source              { get; set; }
+    public string?      CoverImageUrl       { get; set; }
+    public string?      MenuUrl             { get; set; }
+    public List<string> MenuImageUrls       { get; set; } = [];
     public bool         IsDeleted           { get; set; }
     public DateTime     CreatedAt           { get; set; } = DateTime.UtcNow;
     public DateTime?    UpdatedAt           { get; set; }

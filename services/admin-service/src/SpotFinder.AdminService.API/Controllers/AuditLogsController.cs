@@ -8,12 +8,13 @@ using SpotFinder.BuildingBlocks.Application;
 namespace SpotFinder.AdminService.API.Controllers;
 
 [Authorize(Roles = "Admin,SuperAdmin")]
+[Route("api/admin/audit-logs")]
 public sealed class AuditLogsController : BaseController
 {
     public AuditLogsController(ISender sender) : base(sender) { }
 
     [HttpGet]
-    [ProducesResponseType(typeof(ApiResponse<PagedResult<AuditLogDto>>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(PagedResult<AuditLogDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAll(
         [FromQuery] Guid? adminId,
         [FromQuery] int page = 1,

@@ -37,8 +37,11 @@ public sealed class AdminUpdatePlaceCommandHandler(
         if (cmd.Latitude.HasValue)     place.Latitude      = cmd.Latitude;
         if (cmd.Longitude.HasValue)    place.Longitude     = cmd.Longitude;
         if (cmd.GooglePlaceId != null) place.GooglePlaceId = cmd.GooglePlaceId;
-        if (cmd.ParkingStatus != null) place.ParkingStatus = cmd.ParkingStatus;
-        if (cmd.Rating.HasValue)       place.Rating        = cmd.Rating;
+        if (cmd.ParkingStatus != null)  place.ParkingStatus = cmd.ParkingStatus;
+        if (cmd.Rating.HasValue)        place.Rating        = cmd.Rating;
+        if (cmd.CoverImageUrl != null)  place.CoverImageUrl = cmd.CoverImageUrl;
+        if (cmd.MenuUrl != null)        place.MenuUrl       = cmd.MenuUrl;
+        if (cmd.MenuImageUrls != null)  place.MenuImageUrls = cmd.MenuImageUrls;
 
         place.UpdatedAt = DateTime.UtcNow;
         place.UpdatedBy = cmd.UpdatedBy;

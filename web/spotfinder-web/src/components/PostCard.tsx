@@ -3,9 +3,10 @@
 import React, { memo, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Heart, MessageCircle, MapPin } from 'lucide-react';
+import { Heart, MessageCircle, MapPin, Flag } from 'lucide-react';
 import { Post } from '@/lib/types';
 import { Avatar } from './Avatar';
+import { ReportModal } from './ReportModal';
 import clsx from 'clsx';
 
 interface Props {
@@ -40,6 +41,7 @@ function formatCount(n: number): string {
 
 export const PostCard = memo(function PostCard({ post, onLike, onPressPlace, onPressUser }: Props) {
   const [imgError, setImgError] = useState(false);
+  const [reporting, setReporting] = useState(false);
 
   return (
     <article className="bg-white dark:bg-surface-dark mb-2 border-b border-border-light dark:border-border-dark">
@@ -116,7 +118,23 @@ export const PostCard = memo(function PostCard({ post, onLike, onPressPlace, onP
             {formatCount(post.commentCount)}
           </span>
         </button>
+
+        <button
+          className="ml-auto flex items-center gap-1 hover:opacity-70 transition-opacity"
+          onClick={() => setReporting(true)}
+          title="Şikayet Et"
+        >
+          <Flag size={16} className="text-gray-300 hover:text-red-400 transition-colors" />
+        </button>
       </div>
+
+      {reporting && (
+        <ReportModal
+          targetType="Post"
+          targetId={post.id}
+          onClose={() => setReporting(false)}
+        />
+      )}
     </article>
   );
 });
