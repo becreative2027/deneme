@@ -72,3 +72,24 @@ if (mode == "schema")
         Console.WriteLine($"  {schema}.{table}: {count} rows");
     }
 }
+else if (mode == "verify-social")
+{
+    Console.WriteLine("\nSocial counts verification:");
+
+    var checks = new (string label, string query)[]
+    {
+        ("identity.users",        "SELECT COUNT(*) FROM identity.users"),
+        ("place.places",          "SELECT COUNT(*) FROM place.places WHERE is_deleted = FALSE"),
+        ("social.user_favorites", "SELECT COUNT(*) FROM social.user_favorites"),
+        ("social.user_wishlists", "SELECT COUNT(*) FROM social.user_wishlists"),
+        ("top fav place count",   "SELECT MAX(cnt) FROM (SELECT COUNT(*) AS cnt FROM social.user_favorites GROUP BY place_id) t"),
+        ("top wish place count",  "SELECT MAX(cnt) FROM (SELECT COUNT(*) AS cnt FROM social.user_wishlists GROUP BY place_id) t"),
+    };
+
+    foreach (var (label, query) in checks)
+    {
+        await using var cmd = new NpgsqlCommand(query, conn);
+        var result = await cmd.ExecuteScalarAsync();
+        Console.WriteLine($"  {label,-30}: {result}");
+    }
+}

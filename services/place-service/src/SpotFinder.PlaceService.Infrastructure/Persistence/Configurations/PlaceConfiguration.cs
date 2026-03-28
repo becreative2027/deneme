@@ -13,6 +13,14 @@ public sealed class PlaceConfiguration : IEntityTypeConfiguration<Place>
         builder.Property(p => p.Id).HasDefaultValueSql("gen_random_uuid()");
         builder.Property(p => p.GooglePlaceId).HasMaxLength(500);
         builder.Property(p => p.CoverImageUrl).HasColumnName("cover_image_url");
+        builder.Property(p => p.MenuUrl).HasColumnName("menu_url");
+        builder.Property(p => p.MenuImageUrls)
+            .HasColumnName("menu_image_urls")
+            .HasColumnType("jsonb")
+            .HasDefaultValueSql("'[]'::jsonb")
+            .HasConversion(
+                v => System.Text.Json.JsonSerializer.Serialize(v, (System.Text.Json.JsonSerializerOptions?)null),
+                v => System.Text.Json.JsonSerializer.Deserialize<List<string>>(v, (System.Text.Json.JsonSerializerOptions?)null) ?? new List<string>());
         builder.Property(p => p.ParkingStatus).HasDefaultValue("unavailable").HasMaxLength(20);
         builder.Property(p => p.Rating).HasPrecision(2, 1);
         builder.Property(p => p.CreatedAt).HasDefaultValueSql("NOW()");

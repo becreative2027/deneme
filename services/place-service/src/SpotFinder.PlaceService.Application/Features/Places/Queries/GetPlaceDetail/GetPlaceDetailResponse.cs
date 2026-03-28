@@ -15,9 +15,14 @@ public sealed record PlaceDetailResponse(
     double? Longitude,
     decimal? Rating,
     int? UserRatingsTotal,
+    int ReviewCount,
     string ParkingStatus,
+    string? MenuUrl,
+    IReadOnlyList<string> MenuImageUrls,
     PlaceScoreDto? Score,
-    IReadOnlyList<PlaceLabelDto> Labels);
+    IReadOnlyList<PlaceLabelDto> Labels,
+    int FavoriteCount,
+    int WishlistCount);
 
 public sealed record PlaceScoreDto(
     decimal? PopularityScore,

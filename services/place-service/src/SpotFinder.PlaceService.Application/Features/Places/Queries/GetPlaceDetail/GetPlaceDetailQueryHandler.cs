@@ -88,6 +88,17 @@ public sealed class GetPlaceDetailQueryHandler
                 pl.Weight)
         ).ToListAsync(ct);
 
+        // ── App review count (distinct from Google's UserRatingsTotal) ─────────
+        var reviewCount = await _db.PlaceReviews
+            .CountAsync(r => r.PlaceId == request.PlaceId, ct);
+
+        // ── Social counts ─────────────────────────────────────────────────────
+        var favoriteCount = await _db.SocialFavorites
+            .CountAsync(f => f.PlaceId == request.PlaceId, ct);
+
+        var wishlistCount = await _db.SocialWishlists
+            .CountAsync(w => w.PlaceId == request.PlaceId, ct);
+
         var scoreDto = score is null ? null : new PlaceScoreDto(
             score.PopularityScore,
             score.QualityScore,
@@ -109,9 +120,14 @@ public sealed class GetPlaceDetailQueryHandler
             place.Longitude,
             place.Rating,
             place.UserRatingsTotal,
+            reviewCount,
             place.ParkingStatus,
+            place.MenuUrl,
+            place.MenuImageUrls,
             scoreDto,
-            labels);
+            labels,
+            favoriteCount,
+            wishlistCount);
 
         sw.Stop();
         _logger.LogInformation(
