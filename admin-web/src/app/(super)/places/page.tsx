@@ -429,7 +429,7 @@ export default function PlacesPage() {
       setTotal(data.totalCount);
 
       // Load districts for all distinct cityIds on this page
-      const cityIds = [...new Set(data.items.map((pl) => pl.cityId).filter(Boolean))] as number[];
+      const cityIds = Array.from(new Set(data.items.map((pl) => pl.cityId).filter(Boolean))) as number[];
       const results = await Promise.all(cityIds.map((cid) => getDistricts(cid)));
       const dMap: Record<number, string> = {};
       results.flat().forEach((d) => { dMap[d.id] = d.name; });

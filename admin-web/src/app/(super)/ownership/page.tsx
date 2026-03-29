@@ -47,7 +47,7 @@ function CreatePlaceOwner() {
     try {
       const res = await createPlaceOwnerUser(email.trim(), username.trim(), password, selectedPlace.id);
       setResult({ type: 'ok', text: `Hesap oluşturuldu. Kullanıcı ID: ${res.userId}` });
-      setOwnedPlaceIds((prev) => new Set([...prev, selectedPlace.id.toLowerCase()]));
+      setOwnedPlaceIds((prev) => new Set(Array.from(prev).concat(selectedPlace.id.toLowerCase())));
       setEmail(''); setUsername(''); setPassword(''); setSelectedPlace(null); setPlaceSearch('');
     } catch (err: any) {
       const msg = err?.response?.data?.message ?? 'İşlem başarısız.';
