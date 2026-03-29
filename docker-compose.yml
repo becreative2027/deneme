@@ -172,6 +172,10 @@ services:
       - ReverseProxy__Clusters__social-cluster__Destinations__destination1__Address=http://spotfinder-social:8080
       - ReverseProxy__Clusters__content-cluster__Destinations__destination1__Address=http://spotfinder-content:8080
       - ReverseProxy__Clusters__feed-cluster__Destinations__destination1__Address=http://spotfinder-feed:8080
+      - Cors__Origins__0=http://159.89.13.168:3000
+      - Cors__Origins__1=http://159.89.13.168:3001
+      - Cors__Origins__2=http://localhost:3000
+      - Cors__Origins__3=http://localhost:3001
 
   web:
     build:
