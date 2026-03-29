@@ -19,106 +19,6 @@ services:
       timeout: 5s
       retries: 5
 
-  api-gateway:
-    build:
-      context: .
-      dockerfile: gateway/api-gateway/SpotFinder.ApiGateway/Dockerfile
-    container_name: spotfinder-api-gateway
-    ports:
-      - "5000:8080"
-    depends_on:
-      postgres:
-        condition: service_healthy
-    environment:
-      - ASPNETCORE_ENVIRONMENT=Development
-
-  identity-service:
-    build:
-      context: .
-      dockerfile: services/identity-service/src/SpotFinder.IdentityService.API/Dockerfile
-    container_name: spotfinder-identity
-    ports:
-      - "5001:8080"
-    depends_on:
-      postgres:
-        condition: service_healthy
-    environment:
-      - ASPNETCORE_ENVIRONMENT=Development
-      - ConnectionStrings__IdentityDb=Host=postgres;Port=5432;Database=spotfinder_identity;Username=postgres;Password=postgres
-
-  geo-service:
-    build:
-      context: .
-      dockerfile: services/geo-service/src/SpotFinder.GeoService.API/Dockerfile
-    container_name: spotfinder-geo
-    ports:
-      - "5002:8080"
-    depends_on:
-      postgres:
-        condition: service_healthy
-    environment:
-      - ASPNETCORE_ENVIRONMENT=Development
-      - ConnectionStrings__GeoDb=Host=postgres;Port=5432;Database=spotfinder_geo;Username=postgres;Password=postgres
-
-  place-service:
-    build:
-      context: .
-      dockerfile: services/place-service/src/SpotFinder.PlaceService.API/Dockerfile
-    container_name: spotfinder-place
-    ports:
-      - "5003:8080"
-    depends_on:
-      postgres:
-        condition: service_healthy
-    environment:
-      - ASPNETCORE_ENVIRONMENT=Development
-      - ConnectionStrings__PlaceDb=Host=postgres;Port=5432;Database=spotfinder_place;Username=postgres;Password=postgres
-
-  label-service:
-    build:
-      context: .
-      dockerfile: services/label-service/src/SpotFinder.LabelService.API/Dockerfile
-    container_name: spotfinder-label
-    ports:
-      - "5004:8080"
-    depends_on:
-      postgres:
-        condition: service_healthy
-    environment:
-      - ASPNETCORE_ENVIRONMENT=Development
-      - ConnectionStrings__LabelDb=Host=postgres;Port=5432;Database=spotfinder_label;Username=postgres;Password=postgres
-
-  search-service:
-    build:
-      context: .
-      dockerfile: services/search-service/src/SpotFinder.SearchService.API/Dockerfile
-    container_name: spotfinder-search
-    ports:
-      - "5005:8080"
-    depends_on:
-      postgres:
-        condition: service_healthy
-    environment:
-      - ASPNETCORE_ENVIRONMENT=Development
-      - ConnectionStrings__SearchDb=Host=postgres;Port=5432;Database=spotfinder_search;Username=postgres;Password=postgres
-
-  admin-service:
-    build:
-      context: .
-      dockerfile: services/admin-service/src/SpotFinder.AdminService.API/Dockerfile
-    container_name: spotfinder-admin
-    ports:
-      - "5006:8080"
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    environment:
-      - ASPNETCORE_ENVIRONMENT=Development
-      - ConnectionStrings__AdminDb=Host=postgres;Port=5432;Database=spotfinder_admin;Username=postgres;Password=postgres
-      - ConnectionStrings__Redis=redis:6379
-
   redis:
     image: redis:7-alpine
     container_name: spotfinder-redis
@@ -129,6 +29,175 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+
+  identity-service:
+    build:
+      context: .
+      dockerfile: services/identity-service/src/SpotFinder.IdentityService.API/Dockerfile
+    container_name: spotfinder-identity
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__IdentityDb=Host=postgres;Port=5432;Database=spotfinder_identity;Username=postgres;Password=postgres
+
+  geo-service:
+    build:
+      context: .
+      dockerfile: services/geo-service/src/SpotFinder.GeoService.API/Dockerfile
+    container_name: spotfinder-geo
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__GeoDb=Host=postgres;Port=5432;Database=spotfinder_geo;Username=postgres;Password=postgres
+
+  place-service:
+    build:
+      context: .
+      dockerfile: services/place-service/src/SpotFinder.PlaceService.API/Dockerfile
+    container_name: spotfinder-place
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__PlaceDb=Host=postgres;Port=5432;Database=spotfinder_place;Username=postgres;Password=postgres
+
+  label-service:
+    build:
+      context: .
+      dockerfile: services/label-service/src/SpotFinder.LabelService.API/Dockerfile
+    container_name: spotfinder-label
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__LabelDb=Host=postgres;Port=5432;Database=spotfinder_label;Username=postgres;Password=postgres
+
+  search-service:
+    build:
+      context: .
+      dockerfile: services/search-service/src/SpotFinder.SearchService.API/Dockerfile
+    container_name: spotfinder-search
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__SearchDb=Host=postgres;Port=5432;Database=spotfinder_search;Username=postgres;Password=postgres
+
+  admin-service:
+    build:
+      context: .
+      dockerfile: services/admin-service/src/SpotFinder.AdminService.API/Dockerfile
+    container_name: spotfinder-admin
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__AdminDb=Host=postgres;Port=5432;Database=spotfinder_admin;Username=postgres;Password=postgres
+      - ConnectionStrings__Redis=redis:6379
+
+  social-graph-service:
+    build:
+      context: .
+      dockerfile: services/social-graph-service/src/SpotFinder.SocialGraphService.API/Dockerfile
+    container_name: spotfinder-social
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__SocialDb=Host=postgres;Port=5432;Database=spotfinder_social;Username=postgres;Password=postgres
+
+  content-service:
+    build:
+      context: .
+      dockerfile: services/content-service/src/SpotFinder.ContentService.API/Dockerfile
+    container_name: spotfinder-content
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__ContentDb=Host=postgres;Port=5432;Database=spotfinder_content;Username=postgres;Password=postgres
+
+  feed-service:
+    build:
+      context: .
+      dockerfile: services/feed-service/src/SpotFinder.FeedService.API/Dockerfile
+    container_name: spotfinder-feed
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__FeedDb=Host=postgres;Port=5432;Database=spotfinder_feed;Username=postgres;Password=postgres
+      - ConnectionStrings__Redis=redis:6379
+
+  api-gateway:
+    build:
+      context: .
+      dockerfile: gateway/api-gateway/SpotFinder.ApiGateway/Dockerfile
+    container_name: spotfinder-api-gateway
+    ports:
+      - "5000:8080"
+    depends_on:
+      - identity-service
+      - geo-service
+      - place-service
+      - label-service
+      - search-service
+      - admin-service
+      - social-graph-service
+      - content-service
+      - feed-service
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ReverseProxy__Clusters__identity-cluster__Destinations__destination1__Address=http://spotfinder-identity:8080
+      - ReverseProxy__Clusters__geo-cluster__Destinations__destination1__Address=http://spotfinder-geo:8080
+      - ReverseProxy__Clusters__place-cluster__Destinations__destination1__Address=http://spotfinder-place:8080
+      - ReverseProxy__Clusters__label-cluster__Destinations__destination1__Address=http://spotfinder-label:8080
+      - ReverseProxy__Clusters__search-cluster__Destinations__destination1__Address=http://spotfinder-search:8080
+      - ReverseProxy__Clusters__admin-cluster__Destinations__destination1__Address=http://spotfinder-admin:8080
+      - ReverseProxy__Clusters__social-cluster__Destinations__destination1__Address=http://spotfinder-social:8080
+      - ReverseProxy__Clusters__content-cluster__Destinations__destination1__Address=http://spotfinder-content:8080
+      - ReverseProxy__Clusters__feed-cluster__Destinations__destination1__Address=http://spotfinder-feed:8080
+
+  web:
+    build:
+      context: ./web/spotfinder-web
+      dockerfile: Dockerfile
+    container_name: spotfinder-web
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api-gateway
+    environment:
+      - NEXT_PUBLIC_API_URL=http://api-gateway:8080
+
+  admin-web:
+    build:
+      context: ./admin-web
+      dockerfile: Dockerfile
+    container_name: spotfinder-admin-web
+    ports:
+      - "3001:3001"
+    depends_on:
+      - api-gateway
+    environment:
+      - NEXT_PUBLIC_API_URL=http://api-gateway:8080
+      - NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=dnwylcwex
+      - NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET=spotfinder_posts
 
 volumes:
   postgres-data:
