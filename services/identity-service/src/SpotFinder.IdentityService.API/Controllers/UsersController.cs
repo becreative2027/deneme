@@ -11,6 +11,7 @@ using SpotFinder.IdentityService.Application.Features.Users.Queries.SearchUsers;
 using SpotFinder.IdentityService.Domain.Entities;
 using SpotFinder.IdentityService.Domain.Enums;
 using SpotFinder.IdentityService.Domain.Repositories;
+using SpotFinder.IdentityService.Domain.Services;
 
 namespace SpotFinder.IdentityService.API.Controllers;
 
@@ -20,13 +21,15 @@ public sealed class UsersController : BaseController
     private readonly IUserRepository _userRepository;
     private readonly IPlaceOwnershipRepository _ownershipRepository;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IPasswordHasher _passwordHasher;
 
-    public UsersController(ISender sender, IUserRepository userRepository, IPlaceOwnershipRepository ownershipRepository, IUnitOfWork unitOfWork)
+    public UsersController(ISender sender, IUserRepository userRepository, IPlaceOwnershipRepository ownershipRepository, IUnitOfWork unitOfWork, IPasswordHasher passwordHasher)
         : base(sender)
     {
         _userRepository = userRepository;
         _ownershipRepository = ownershipRepository;
         _unitOfWork = unitOfWork;
+        _passwordHasher = passwordHasher;
     }
 
     [HttpGet("search")]
@@ -116,6 +119,47 @@ public sealed class UsersController : BaseController
         return NoContent();
     }
 
+    [HttpPost("place-owner")]
+    [Authorize(Roles = "Admin,SuperAdmin")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> CreatePlaceOwner([FromBody] CreatePlaceOwnerRequest request, CancellationToken ct)
+    {
+        // Her mekana yalnızca 1 admin atanabilir
+        var existing = await _ownershipRepository.GetByPlaceIdAsync(request.PlaceId, ct);
+        if (existing.Count > 0)
+            return Conflict(new { message = "Bu mekanın zaten bir admin hesabı var." });
+
+        if (await _userRepository.ExistsByEmailAsync(request.Email, ct))
+            return Conflict(new { message = "Bu e-posta adresi zaten kullanımda." });
+
+        if (await _userRepository.ExistsByUsernameAsync(request.Username, ct))
+            return Conflict(new { message = "Bu kullanıcı adı zaten alınmış." });
+
+        var passwordHash = _passwordHasher.Hash(request.Password);
+        var newUser = Domain.Entities.User.Create(Guid.NewGuid(), request.Email, request.Username, passwordHash);
+        newUser.SetRole(UserRole.PlaceOwner);
+
+        await _userRepository.AddAsync(newUser, ct);
+
+        var grantedBy = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var ownership = PlaceOwnership.Grant(newUser.Id, request.PlaceId, grantedBy);
+        await _ownershipRepository.AddAsync(ownership, ct);
+
+        await _unitOfWork.SaveChangesAsync(ct);
+
+        return Ok(new { userId = newUser.Id, email = newUser.Email });
+    }
+
+    [HttpGet("ownership/owned-place-ids")]
+    [Authorize(Roles = "Admin,SuperAdmin")]
+    [ProducesResponseType(typeof(List<Guid>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetAllOwnedPlaceIds(CancellationToken ct)
+    {
+        var ids = await _ownershipRepository.GetAllOwnedPlaceIdsAsync(ct);
+        return Ok(ids);
+    }
+
     [HttpGet("{userId:guid}/owned-places")]
     [Authorize(Roles = "Admin,SuperAdmin")]
     [ProducesResponseType(typeof(List<Guid>), StatusCodes.Status200OK)]
@@ -143,3 +187,4 @@ public sealed record BatchUsersRequest(IReadOnlyList<Guid> Ids);
 public sealed record UpdateProfileRequest(string? DisplayName, string? Bio, string? ProfileImageUrl);
 public sealed record GrantOwnershipRequest(Guid UserId, Guid PlaceId);
 public sealed record SetRoleRequest(UserRole Role);
+public sealed record CreatePlaceOwnerRequest(string Email, string Username, string Password, Guid PlaceId);
