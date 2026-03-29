@@ -1,5 +1,6 @@
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using SpotFinder.BuildingBlocks.Api;
 using SpotFinder.ContentService.Application;
@@ -51,6 +52,24 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<ContentDbContext>();
     db.Database.EnsureCreated();
+    await db.Database.ExecuteSqlRawAsync(@"
+        CREATE TABLE IF NOT EXISTS content.user_interests (
+            user_id    UUID          NOT NULL,
+            label_id   INTEGER       NOT NULL,
+            score      NUMERIC(8,2)  NOT NULL DEFAULT 0,
+            updated_at TIMESTAMP     NOT NULL DEFAULT NOW(),
+            PRIMARY KEY (user_id, label_id)
+        );
+        CREATE INDEX IF NOT EXISTS idx_user_interests_user  ON content.user_interests (user_id);
+        CREATE INDEX IF NOT EXISTS idx_user_interests_label ON content.user_interests (label_id);
+        CREATE TABLE IF NOT EXISTS content.trending_scores (
+            place_id   UUID          NOT NULL,
+            score      NUMERIC(10,2) NOT NULL DEFAULT 0,
+            updated_at TIMESTAMP     NOT NULL DEFAULT NOW(),
+            PRIMARY KEY (place_id)
+        );
+        CREATE INDEX IF NOT EXISTS idx_trending_scores_score ON content.trending_scores (score DESC);
+    ");
 }
 
 if (app.Environment.IsDevelopment()) { app.UseSwagger(); app.UseSwaggerUI(); }
