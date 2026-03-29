@@ -1,7 +1,7 @@
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using SpotFinder.BuildingBlocks.Api;
 using SpotFinder.SocialGraphService.Application;
 using SpotFinder.SocialGraphService.Infrastructure;
 using SpotFinder.SocialGraphService.Infrastructure.Persistence;
@@ -45,22 +45,16 @@ builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
-// Auto-create user_favorites table if not exists
-await using (var scope = app.Services.CreateAsyncScope())
+app.UseGlobalExceptionHandler();
+
+using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<SocialDbContext>();
-    await db.Database.ExecuteSqlRawAsync(@"
-        CREATE TABLE IF NOT EXISTS social.user_favorites (
-            user_id    uuid        NOT NULL,
-            place_id   uuid        NOT NULL,
-            created_at timestamptz NOT NULL DEFAULT NOW(),
-            CONSTRAINT pk_user_favorites PRIMARY KEY (user_id, place_id)
-        )
-    ");
+    db.Database.EnsureCreated();
 }
 
 if (app.Environment.IsDevelopment()) { app.UseSwagger(); app.UseSwaggerUI(); }
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
-await app.RunAsync();
+app.Run();
