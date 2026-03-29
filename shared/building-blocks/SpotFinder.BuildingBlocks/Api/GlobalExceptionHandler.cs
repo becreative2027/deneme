@@ -13,7 +13,7 @@ public static class GlobalExceptionHandlerExtensions
         {
             try
             {
-                await next(context);
+                await next();
             }
             catch (Exception ex)
             {
