@@ -9,6 +9,7 @@ public sealed class SocialDbContext : DbContext
 
     public DbSet<UserFollow>    UserFollows    => Set<UserFollow>();
     public DbSet<UserFavorite>  UserFavorites  => Set<UserFavorite>();
+    public DbSet<UserWishlist>  UserWishlists  => Set<UserWishlist>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
