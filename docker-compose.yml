@@ -183,19 +183,20 @@ services:
     depends_on:
       - api-gateway
     environment:
-      - NEXT_PUBLIC_API_URL=http://api-gateway:8080
+      - API_URL=http://spotfinder-api-gateway:8080
 
   admin-web:
     build:
       context: ./admin-web
       dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_API_URL=http://159.89.13.168:5000
     container_name: spotfinder-admin-web
     ports:
       - "3001:3001"
     depends_on:
       - api-gateway
     environment:
-      - NEXT_PUBLIC_API_URL=http://api-gateway:8080
       - NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=dnwylcwex
       - NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET=spotfinder_posts
 
