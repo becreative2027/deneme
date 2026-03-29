@@ -1,8 +1,10 @@
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using SpotFinder.BuildingBlocks.Api;
 using SpotFinder.AdminService.Application;
 using SpotFinder.AdminService.Infrastructure;
+using SpotFinder.AdminService.Infrastructure.Persistence;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -41,6 +43,15 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 builder.Services.AddAuthorization();
 
 var app = builder.Build();
+
+app.UseGlobalExceptionHandler();
+
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AdminDbContext>();
+    db.Database.EnsureCreated();
+}
+
 if (app.Environment.IsDevelopment()) { app.UseSwagger(); app.UseSwaggerUI(); }
 app.UseAuthentication();
 app.UseAuthorization();

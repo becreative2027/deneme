@@ -12,12 +12,13 @@ public sealed class AuthController : BaseController
     public AuthController(ISender sender) : base(sender) { }
 
     [HttpPost("register")]
-    [ProducesResponseType(typeof(ApiResponse<RegisterResult>), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ApiResponse<LoginResult>), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Register([FromBody] RegisterCommand command, CancellationToken ct)
     {
-        var result = await Sender.Send(command, ct);
-        return StatusCode(StatusCodes.Status201Created, ApiResponse<RegisterResult>.Ok(result));
+        await Sender.Send(command, ct);
+        var loginResult = await Sender.Send(new LoginCommand(command.Email, command.Password), ct);
+        return StatusCode(StatusCodes.Status201Created, ApiResponse<LoginResult>.Ok(loginResult));
     }
 
     [HttpPost("login")]

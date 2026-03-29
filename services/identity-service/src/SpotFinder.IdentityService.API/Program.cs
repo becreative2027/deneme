@@ -1,6 +1,7 @@
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using SpotFinder.BuildingBlocks.Api;
 using SpotFinder.IdentityService.Application;
 using SpotFinder.IdentityService.Infrastructure;
 using SpotFinder.IdentityService.Infrastructure.Persistence;
@@ -45,6 +46,8 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 builder.Services.AddAuthorization();
 
 var app = builder.Build();
+
+app.UseGlobalExceptionHandler();
 
 // Ensure DB tables exist (EnsureCreated only creates missing tables/schema)
 using (var scope = app.Services.CreateScope())
