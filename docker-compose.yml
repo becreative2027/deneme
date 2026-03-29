@@ -177,13 +177,13 @@ services:
     build:
       context: ./web/spotfinder-web
       dockerfile: Dockerfile
+      args:
+        - API_URL=http://api-gateway:8080
     container_name: spotfinder-web
     ports:
       - "3000:3000"
     depends_on:
       - api-gateway
-    environment:
-      - API_URL=http://spotfinder-api-gateway:8080
 
   admin-web:
     build:
