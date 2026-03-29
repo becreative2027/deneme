@@ -179,6 +179,8 @@ services:
       dockerfile: Dockerfile
       args:
         - API_URL=http://api-gateway:8080
+        - NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=dnwylcwex
+        - NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET=spotfinder_posts
     container_name: spotfinder-web
     ports:
       - "3000:3000"
