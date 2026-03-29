@@ -52,7 +52,7 @@ services:
         condition: service_healthy
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
-      - ConnectionStrings__GeoDb=Host=postgres;Port=5432;Database=spotfinder_geo;Username=postgres;Password=postgres
+      - ConnectionStrings__GeoDb=Host=postgres;Port=5432;Database=spotfinder;Username=postgres;Password=postgres
 
   place-service:
     build:
@@ -64,7 +64,7 @@ services:
         condition: service_healthy
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
-      - ConnectionStrings__PlaceDb=Host=postgres;Port=5432;Database=spotfinder_place;Username=postgres;Password=postgres
+      - ConnectionStrings__PlaceDb=Host=postgres;Port=5432;Database=spotfinder;Username=postgres;Password=postgres
 
   label-service:
     build:
@@ -76,7 +76,7 @@ services:
         condition: service_healthy
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
-      - ConnectionStrings__LabelDb=Host=postgres;Port=5432;Database=spotfinder_label;Username=postgres;Password=postgres
+      - ConnectionStrings__LabelDb=Host=postgres;Port=5432;Database=spotfinder;Username=postgres;Password=postgres
 
   search-service:
     build:
@@ -88,7 +88,7 @@ services:
         condition: service_healthy
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
-      - ConnectionStrings__SearchDb=Host=postgres;Port=5432;Database=spotfinder_search;Username=postgres;Password=postgres
+      - ConnectionStrings__SearchDb=Host=postgres;Port=5432;Database=spotfinder;Username=postgres;Password=postgres
 
   admin-service:
     build:
@@ -102,7 +102,7 @@ services:
         condition: service_healthy
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
-      - ConnectionStrings__AdminDb=Host=postgres;Port=5432;Database=spotfinder_admin;Username=postgres;Password=postgres
+      - ConnectionStrings__AdminDb=Host=postgres;Port=5432;Database=spotfinder;Username=postgres;Password=postgres
       - ConnectionStrings__Redis=redis:6379
 
   social-graph-service:
@@ -115,7 +115,7 @@ services:
         condition: service_healthy
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
-      - ConnectionStrings__SocialDb=Host=postgres;Port=5432;Database=spotfinder_social;Username=postgres;Password=postgres
+      - ConnectionStrings__SocialDb=Host=postgres;Port=5432;Database=spotfinder;Username=postgres;Password=postgres
 
   content-service:
     build:
@@ -127,7 +127,7 @@ services:
         condition: service_healthy
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
-      - ConnectionStrings__ContentDb=Host=postgres;Port=5432;Database=spotfinder_content;Username=postgres;Password=postgres
+      - ConnectionStrings__ContentDb=Host=postgres;Port=5432;Database=spotfinder;Username=postgres;Password=postgres
 
   feed-service:
     build:
@@ -141,7 +141,7 @@ services:
         condition: service_healthy
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
-      - ConnectionStrings__FeedDb=Host=postgres;Port=5432;Database=spotfinder_feed;Username=postgres;Password=postgres
+      - ConnectionStrings__FeedDb=Host=postgres;Port=5432;Database=spotfinder;Username=postgres;Password=postgres
       - ConnectionStrings__Redis=redis:6379
 
   api-gateway:

@@ -1,9 +1,6 @@
 -- SpotFinder database initialization
--- Creates all required databases for each service
+-- Identity gets its own DB (auth separation)
+-- All other services share 'spotfinder' DB with separate schemas
 
 CREATE DATABASE spotfinder_identity;
-CREATE DATABASE spotfinder_geo;
-CREATE DATABASE spotfinder_place;
-CREATE DATABASE spotfinder_label;
-CREATE DATABASE spotfinder_search;
-CREATE DATABASE spotfinder_admin;
+CREATE DATABASE spotfinder;
