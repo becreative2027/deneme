@@ -16,7 +16,8 @@ export async function getPlaces(page = 1, pageSize = 20): Promise<PagedResult<Pl
     items: rawItems.map((p: any) => ({
       id: p.id,
       name: p.name ?? '—',
-      cityName: p.cityName ?? (p.cityId ? `Şehir #${p.cityId}` : undefined),
+      cityName: p.cityName,
+      districtName: p.districtName,
       cityId: p.cityId,
       districtId: p.districtId,
       rating: p.rating,
@@ -24,6 +25,9 @@ export async function getPlaces(page = 1, pageSize = 20): Promise<PagedResult<Pl
       longitude: p.longitude,
       parkingStatus: p.parkingStatus,
       isDeleted: p.isDeleted ?? false,
+      labels: Array.isArray(p.labels)
+        ? p.labels.map((l: any) => ({ id: l.id, name: l.name }))
+        : [],
     })),
     totalCount: inner?.totalCount ?? inner?.total ?? 0,
     page,
@@ -44,6 +48,10 @@ export interface AdminCreatePlaceInput {
   parkingStatus?: string;
   name: string;
   languageId?: number;
+  // Media — applied via updatePlaceMedia after creation
+  coverImageUrl?: string;
+  menuUrl?: string;
+  menuImageUrls?: string[];
 }
 
 export async function createPlaceAdmin(input: AdminCreatePlaceInput): Promise<string> {
@@ -160,7 +168,38 @@ export async function getOwnedPlaces(userId: string): Promise<string[]> {
   return data;
 }
 
+export async function getAllOwnedPlaceIds(): Promise<string[]> {
+  const { data } = await adminClient.get('/api/users/ownership/owned-place-ids');
+  return data;
+}
+
+export async function createPlaceOwnerUser(
+  email: string,
+  username: string,
+  password: string,
+  placeId: string,
+): Promise<{ userId: string; email: string }> {
+  const { data } = await adminClient.post('/api/users/place-owner', { email, username, password, placeId });
+  return data;
+}
+
+
 // ── Geo ───────────────────────────────────────────────────────────────────
+
+export interface GeoCity { id: number; name: string; }
+export interface GeoDistrict { id: number; name: string; }
+
+export async function getCities(countryId = 1): Promise<GeoCity[]> {
+  const { data } = await adminClient.get(`/api/cities/by-country/${countryId}?langId=1`);
+  const inner = data?.data ?? data;
+  return (Array.isArray(inner) ? inner : []).map((c: any) => ({ id: c.id, name: c.name }));
+}
+
+export async function getDistricts(cityId: number): Promise<GeoDistrict[]> {
+  const { data } = await adminClient.get(`/api/districts/by-city/${cityId}?langId=1`);
+  const inner = data?.data ?? data;
+  return (Array.isArray(inner) ? inner : []).map((d: any) => ({ id: d.id, name: d.name }));
+}
 
 export async function createCityAdmin(countryId: number, name: string): Promise<number> {
   const { data } = await adminClient.post('/api/admin/geo/cities', { countryId, name });
