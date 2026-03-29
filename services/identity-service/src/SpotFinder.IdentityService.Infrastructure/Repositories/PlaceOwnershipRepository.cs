@@ -21,6 +21,12 @@ public sealed class PlaceOwnershipRepository : IPlaceOwnershipRepository
            .Where(o => o.PlaceId == placeId)
            .ToListAsync(ct);
 
+    public Task<List<Guid>> GetAllOwnedPlaceIdsAsync(CancellationToken ct = default) =>
+        _db.PlaceOwnerships
+           .Select(o => o.PlaceId)
+           .Distinct()
+           .ToListAsync(ct);
+
     public async Task AddAsync(PlaceOwnership ownership, CancellationToken ct = default) =>
         await _db.PlaceOwnerships.AddAsync(ownership, ct);
 

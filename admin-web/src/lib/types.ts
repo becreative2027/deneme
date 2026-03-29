@@ -12,10 +12,13 @@ export interface AuthState {
   user: AdminUser | null;
 }
 
+export interface PlaceTag { id: number; name: string; }
+
 export interface Place {
   id: string;
   name: string;
   cityName?: string;
+  districtName?: string;
   cityId?: number;
   districtId?: number;
   rating?: number;
@@ -26,6 +29,7 @@ export interface Place {
   longitude?: number;
   parkingStatus?: string;
   isDeleted: boolean;
+  labels?: PlaceTag[];
 }
 
 export interface PlaceLabel {

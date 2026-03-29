@@ -1,12 +1,87 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { MapPin, Loader2, Trash2, Pencil, Plus, X, ChevronRight, Star, Tag } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { MapPin, Loader2, Trash2, Pencil, Plus, X, Star, Tag, ImagePlus, Link2, Upload } from 'lucide-react';
 import {
-  getPlaces, deletePlaceAdmin, createPlaceAdmin, updatePlaceAdmin,
-  getFilters, assignLabelToPlace,
+  getPlaces, deletePlaceAdmin, createPlaceAdmin, updatePlaceAdmin, updatePlaceMedia,
+  getFilters, assignLabelToPlace, getCities, getDistricts,
 } from '@/api/admin';
+import type { GeoCity, GeoDistrict } from '@/api/admin';
+import { uploadImage } from '@/lib/upload';
 import type { Place, FilterCategory } from '@/lib/types';
+
+// ── Image Upload Input ─────────────────────────────────────────────────────
+
+function ImageUploadField({
+  label,
+  value,
+  onChange,
+  placeholder,
+}: {
+  label: string;
+  value: string;
+  onChange: (url: string) => void;
+  placeholder?: string;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [uploadError, setUploadError] = useState('');
+
+  async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    setUploadError('');
+    setProgress(0);
+    try {
+      const result = await uploadImage(file, setProgress);
+      onChange(result.url);
+    } catch (err: any) {
+      setUploadError(err.message ?? 'Yükleme başarısız.');
+    } finally {
+      setUploading(false);
+      if (inputRef.current) inputRef.current.value = '';
+    }
+  }
+
+  return (
+    <div>
+      <label className="text-xs font-semibold text-gray-500 mb-1 block">{label}</label>
+      {value && (
+        <div className="relative mb-2 w-full h-28 rounded-xl overflow-hidden border border-gray-200 bg-gray-50">
+          <img src={value} alt="" className="w-full h-full object-cover" onError={e => (e.currentTarget.style.display = 'none')} />
+          <button
+            type="button"
+            onClick={() => onChange('')}
+            className="absolute top-1.5 right-1.5 bg-white/90 rounded-full p-0.5 shadow hover:bg-white"
+          >
+            <X size={13} className="text-gray-600" />
+          </button>
+        </div>
+      )}
+      <div className="flex gap-2">
+        <input
+          value={value}
+          onChange={e => onChange(e.target.value)}
+          placeholder={placeholder ?? 'https://...'}
+          className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand/30"
+        />
+        <button
+          type="button"
+          onClick={() => inputRef.current?.click()}
+          disabled={uploading}
+          title="Bilgisayardan yükle"
+          className="shrink-0 px-3 py-2 border border-dashed border-brand text-brand rounded-lg hover:bg-brand/5 transition-colors disabled:opacity-50 flex items-center gap-1 text-xs font-semibold"
+        >
+          {uploading ? <><Loader2 size={13} className="animate-spin" />{progress}%</> : <><Upload size={13} />Yükle</>}
+        </button>
+        <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={handleFile} />
+      </div>
+      {uploadError && <p className="text-[11px] text-red-500 mt-1">{uploadError}</p>}
+    </div>
+  );
+}
 
 // ── Create / Edit Modal ────────────────────────────────────────────────────
 
@@ -20,24 +95,75 @@ function PlaceModal({
   onSaved: () => void;
 }) {
   const editing = !!place;
+
+  // Basic fields
   const [name, setName] = useState('');
-  const [cityId, setCityId] = useState('');
-  const [districtId, setDistrictId] = useState('');
+  const [cityId, setCityId] = useState<number | ''>('');
+  const [districtId, setDistrictId] = useState<number | ''>('');
   const [lat, setLat] = useState('');
   const [lng, setLng] = useState('');
   const [parking, setParking] = useState('unavailable');
+
+  // Media fields
+  const [coverUrl, setCoverUrl] = useState('');
+  const [menuUrl, setMenuUrl] = useState('');
+  const [menuImages, setMenuImages] = useState<string[]>([]);
+  const [newMenuImg, setNewMenuImg] = useState('');
+  const menuImgRef = useRef<HTMLInputElement>(null);
+  const [menuImgUploading, setMenuImgUploading] = useState(false);
+  const [menuImgProgress, setMenuImgProgress] = useState(0);
+
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
+  const [cities, setCities] = useState<GeoCity[]>([]);
+  const [districts, setDistricts] = useState<GeoDistrict[]>([]);
+  const [loadingCities, setLoadingCities] = useState(true);
+  const [loadingDistricts, setLoadingDistricts] = useState(false);
+
+  useEffect(() => {
+    getCities(1).then(setCities).finally(() => setLoadingCities(false));
+  }, []);
+
+  useEffect(() => {
+    if (!cityId) { setDistricts([]); setDistrictId(''); return; }
+    setLoadingDistricts(true);
+    setDistrictId('');
+    getDistricts(cityId as number).then(setDistricts).finally(() => setLoadingDistricts(false));
+  }, [cityId]);
+
   useEffect(() => {
     if (place) {
-      setCityId(String(place.cityId ?? ''));
-      setDistrictId(String(place.districtId ?? ''));
+      setCityId(place.cityId ?? '');
+      setDistrictId(place.districtId ?? '');
       setLat(String(place.latitude ?? ''));
       setLng(String(place.longitude ?? ''));
       setParking(place.parkingStatus ?? 'unavailable');
     }
   }, [place]);
+
+  async function handleMenuImageFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setMenuImgUploading(true);
+    setMenuImgProgress(0);
+    try {
+      const result = await uploadImage(file, setMenuImgProgress);
+      setMenuImages(prev => [...prev, result.url]);
+    } catch (err: any) {
+      setError(err.message ?? 'Menü görseli yüklenemedi.');
+    } finally {
+      setMenuImgUploading(false);
+      if (menuImgRef.current) menuImgRef.current.value = '';
+    }
+  }
+
+  function addMenuImageUrl() {
+    const url = newMenuImg.trim();
+    if (!url || menuImages.includes(url)) return;
+    setMenuImages(prev => [...prev, url]);
+    setNewMenuImg('');
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -46,85 +172,153 @@ function PlaceModal({
     try {
       if (editing && place) {
         await updatePlaceAdmin(place.id, {
-          cityId: cityId ? Number(cityId) : undefined,
-          districtId: districtId ? Number(districtId) : undefined,
+          cityId: cityId || undefined,
+          districtId: districtId || undefined,
           latitude: lat ? Number(lat) : undefined,
           longitude: lng ? Number(lng) : undefined,
           parkingStatus: parking,
         });
+        if (coverUrl || menuUrl || menuImages.length > 0) {
+          await updatePlaceMedia(place.id, coverUrl || null, menuUrl || null, menuImages);
+        }
       } else {
         if (!name.trim()) { setError('İsim zorunludur.'); setSaving(false); return; }
-        await createPlaceAdmin({
+        const placeId = await createPlaceAdmin({
           name: name.trim(),
-          cityId: cityId ? Number(cityId) : undefined,
-          districtId: districtId ? Number(districtId) : undefined,
+          cityId: cityId || undefined,
+          districtId: districtId || undefined,
           latitude: lat ? Number(lat) : undefined,
           longitude: lng ? Number(lng) : undefined,
           parkingStatus: parking,
         });
+        if (placeId && (coverUrl || menuUrl || menuImages.length > 0)) {
+          await updatePlaceMedia(String(placeId), coverUrl || null, menuUrl || null, menuImages);
+        }
       }
       onSaved();
       onClose();
     } catch (err: any) {
-      setError(err?.response?.data?.errors?.join(', ') ?? 'Bir hata oluştu.');
+      setError(err?.response?.data?.errors?.join(', ') ?? err?.response?.data?.message ?? 'Bir hata oluştu.');
     } finally {
       setSaving(false);
     }
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md mx-4">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] flex flex-col">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 shrink-0">
           <h2 className="font-bold text-gray-900">{editing ? 'Mekan Düzenle' : 'Yeni Mekan Ekle'}</h2>
           <button onClick={onClose}><X size={18} className="text-gray-400 hover:text-gray-700" /></button>
         </div>
-        <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
-          {!editing && (
-            <div>
-              <label className="text-xs font-semibold text-gray-500 mb-1 block">Mekan Adı *</label>
-              <input
-                value={name}
-                onChange={e => setName(e.target.value)}
-                placeholder="Örn: Cafe Nero"
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand/30"
-              />
+
+        <form onSubmit={handleSubmit} className="overflow-y-auto px-6 py-5 space-y-5 flex-1">
+
+          {/* ── Temel Bilgiler ── */}
+          <fieldset className="space-y-3">
+            <legend className="text-xs font-bold text-gray-400 uppercase tracking-wide">Temel Bilgiler</legend>
+            {!editing && (
+              <div>
+                <label className="text-xs font-semibold text-gray-500 mb-1 block">Mekan Adı *</label>
+                <input value={name} onChange={e => setName(e.target.value)} placeholder="Örn: Cafe Nero"
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand/30" />
+              </div>
+            )}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs font-semibold text-gray-500 mb-1 block">Şehir</label>
+                <select value={cityId} onChange={e => setCityId(e.target.value ? Number(e.target.value) : '')}
+                  disabled={loadingCities}
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand/30 disabled:opacity-50">
+                  <option value="">{loadingCities ? 'Yükleniyor…' : 'Şehir seçin'}</option>
+                  {cities.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-gray-500 mb-1 block">İlçe</label>
+                <select value={districtId} onChange={e => setDistrictId(e.target.value ? Number(e.target.value) : '')}
+                  disabled={!cityId || loadingDistricts}
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand/30 disabled:opacity-50">
+                  <option value="">{loadingDistricts ? 'Yükleniyor…' : !cityId ? 'Önce şehir seçin' : 'İlçe seçin'}</option>
+                  {districts.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-gray-500 mb-1 block">Enlem</label>
+                <input type="number" step="any" value={lat} onChange={e => setLat(e.target.value)}
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand/30" />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-gray-500 mb-1 block">Boylam</label>
+                <input type="number" step="any" value={lng} onChange={e => setLng(e.target.value)}
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand/30" />
+              </div>
             </div>
-          )}
-          <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-xs font-semibold text-gray-500 mb-1 block">Şehir ID</label>
-              <input type="number" value={cityId} onChange={e => setCityId(e.target.value)}
+              <label className="text-xs font-semibold text-gray-500 mb-1 block">Otopark</label>
+              <select value={parking} onChange={e => setParking(e.target.value)}
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand/30">
+                <option value="unavailable">Yok</option>
+                <option value="free">Ücretsiz</option>
+                <option value="paid">Ücretli</option>
+                <option value="valet">Vale</option>
+              </select>
+            </div>
+          </fieldset>
+
+          {/* ── Medya ── */}
+          <fieldset className="space-y-4 border-t border-gray-100 pt-4">
+            <legend className="text-xs font-bold text-gray-400 uppercase tracking-wide flex items-center gap-1.5">
+              <ImagePlus size={13} /> Medya
+            </legend>
+
+            <ImageUploadField
+              label="Kapak Fotoğrafı"
+              value={coverUrl}
+              onChange={setCoverUrl}
+              placeholder="https://... veya bilgisayardan yükle"
+            />
+
+            <div>
+              <label className="text-xs font-semibold text-gray-500 mb-1 block flex items-center gap-1"><Link2 size={11} /> Menü URL</label>
+              <input value={menuUrl} onChange={e => setMenuUrl(e.target.value)}
+                placeholder="https://restaurant.com/menu"
                 className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand/30" />
             </div>
+
             <div>
-              <label className="text-xs font-semibold text-gray-500 mb-1 block">İlçe ID</label>
-              <input type="number" value={districtId} onChange={e => setDistrictId(e.target.value)}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand/30" />
+              <label className="text-xs font-semibold text-gray-500 mb-2 block">Menü Fotoğrafları</label>
+              {menuImages.length > 0 && (
+                <div className="grid grid-cols-4 gap-1.5 mb-2">
+                  {menuImages.map((url, i) => (
+                    <div key={i} className="relative aspect-square rounded-lg overflow-hidden border border-gray-200 bg-gray-50">
+                      <img src={url} alt="" className="w-full h-full object-cover" onError={e => (e.currentTarget.style.display = 'none')} />
+                      <button type="button" onClick={() => setMenuImages(prev => prev.filter((_, idx) => idx !== i))}
+                        className="absolute top-0.5 right-0.5 bg-white/90 rounded-full p-0.5 shadow">
+                        <X size={10} className="text-gray-600" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div className="flex gap-2">
+                <input value={newMenuImg} onChange={e => setNewMenuImg(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addMenuImageUrl(); } }}
+                  placeholder="URL ekle ve Enter'a bas"
+                  className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand/30" />
+                <button type="button" onClick={() => menuImgRef.current?.click()} disabled={menuImgUploading}
+                  title="Bilgisayardan yükle"
+                  className="shrink-0 px-3 py-2 border border-dashed border-brand text-brand rounded-lg hover:bg-brand/5 text-xs font-semibold flex items-center gap-1 disabled:opacity-50">
+                  {menuImgUploading ? <><Loader2 size={12} className="animate-spin" />{menuImgProgress}%</> : <><Upload size={12} />Yükle</>}
+                </button>
+                <input ref={menuImgRef} type="file" accept="image/*" className="hidden" onChange={handleMenuImageFile} />
+              </div>
             </div>
-            <div>
-              <label className="text-xs font-semibold text-gray-500 mb-1 block">Enlem</label>
-              <input type="number" step="any" value={lat} onChange={e => setLat(e.target.value)}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand/30" />
-            </div>
-            <div>
-              <label className="text-xs font-semibold text-gray-500 mb-1 block">Boylam</label>
-              <input type="number" step="any" value={lng} onChange={e => setLng(e.target.value)}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand/30" />
-            </div>
-          </div>
-          <div>
-            <label className="text-xs font-semibold text-gray-500 mb-1 block">Otopark</label>
-            <select value={parking} onChange={e => setParking(e.target.value)}
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand/30">
-              <option value="unavailable">Yok</option>
-              <option value="free">Ücretsiz</option>
-              <option value="paid">Ücretli</option>
-              <option value="valet">Vale</option>
-            </select>
-          </div>
-          {error && <p className="text-xs text-red-500">{error}</p>}
-          <div className="flex justify-end gap-2 pt-2">
+          </fieldset>
+
+          {error && <p className="text-xs text-red-500 bg-red-50 rounded-lg px-3 py-2">{error}</p>}
+
+          <div className="flex justify-end gap-2 pt-1">
             <button type="button" onClick={onClose}
               className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900">İptal</button>
             <button type="submit" disabled={saving}
@@ -212,9 +406,20 @@ export default function PlacesPage() {
   const [total, setTotal] = useState(0);
   const [search, setSearch] = useState('');
 
+  // Geo lookup maps
+  const [cityMap, setCityMap] = useState<Record<number, string>>({});
+  const [districtMap, setDistrictMap] = useState<Record<number, string>>({});
+
   const [showCreate, setShowCreate] = useState(false);
   const [editPlace, setEditPlace] = useState<Place | undefined>();
   const [labelPlace, setLabelPlace] = useState<Place | undefined>();
+
+  // Load cities once
+  useEffect(() => {
+    getCities(1).then((cs) => {
+      setCityMap(Object.fromEntries(cs.map((c) => [c.id, c.name])));
+    });
+  }, []);
 
   async function load(p: number) {
     setLoading(true);
@@ -222,6 +427,13 @@ export default function PlacesPage() {
       const data = await getPlaces(p, 20);
       setPlaces(data.items);
       setTotal(data.totalCount);
+
+      // Load districts for all distinct cityIds on this page
+      const cityIds = [...new Set(data.items.map((pl) => pl.cityId).filter(Boolean))] as number[];
+      const results = await Promise.all(cityIds.map((cid) => getDistricts(cid)));
+      const dMap: Record<number, string> = {};
+      results.flat().forEach((d) => { dMap[d.id] = d.name; });
+      setDistrictMap((prev) => ({ ...prev, ...dMap }));
     } finally {
       setLoading(false);
     }
@@ -278,7 +490,8 @@ export default function PlacesPage() {
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
                 <th className="text-left px-4 py-3 font-semibold text-gray-600">Mekan</th>
-                <th className="text-left px-4 py-3 font-semibold text-gray-600">Şehir</th>
+                <th className="text-left px-4 py-3 font-semibold text-gray-600">Şehir / İlçe</th>
+                <th className="text-left px-4 py-3 font-semibold text-gray-600">Etiketler</th>
                 <th className="text-left px-4 py-3 font-semibold text-gray-600">Puan</th>
                 <th className="text-left px-4 py-3 font-semibold text-gray-600">Durum</th>
                 <th className="px-4 py-3 text-right font-semibold text-gray-600">İşlemler</th>
@@ -294,7 +507,30 @@ export default function PlacesPage() {
                     </div>
                     <p className="text-xs text-gray-400 mt-0.5 ml-5 font-mono">{p.id}</p>
                   </td>
-                  <td className="px-4 py-3 text-gray-500">{p.cityName ?? '—'}</td>
+                  <td className="px-4 py-3">
+                    <span className="text-gray-800 text-sm">{p.cityId ? (cityMap[p.cityId] ?? `Şehir #${p.cityId}`) : '—'}</span>
+                    {p.districtId && (
+                      <span className="block text-xs text-gray-400">
+                        {districtMap[p.districtId] ?? `İlçe #${p.districtId}`}
+                      </span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex flex-wrap gap-1">
+                      {(p.labels ?? []).map((lbl) => (
+                        <span
+                          key={lbl.id}
+                          title={lbl.name}
+                          className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-brand/10 text-brand text-[10px] font-semibold cursor-default whitespace-nowrap"
+                        >
+                          {lbl.name.length > 12 ? lbl.name.slice(0, 11) + '…' : lbl.name}
+                        </span>
+                      ))}
+                      {(!p.labels || p.labels.length === 0) && (
+                        <span className="text-xs text-gray-300">—</span>
+                      )}
+                    </div>
+                  </td>
                   <td className="px-4 py-3">
                     {p.rating != null ? (
                       <span className="flex items-center gap-1 text-yellow-500 font-medium">
