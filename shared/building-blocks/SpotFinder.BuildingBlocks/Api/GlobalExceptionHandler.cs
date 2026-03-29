@@ -1,9 +1,7 @@
 using System.Net;
 using System.Text.Json;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Logging;
 
 namespace SpotFinder.BuildingBlocks.Api;
 
@@ -11,18 +9,14 @@ public static class GlobalExceptionHandlerExtensions
 {
     public static IApplicationBuilder UseGlobalExceptionHandler(this IApplicationBuilder app)
     {
-        app.UseExceptionHandler(errApp =>
+        app.Use(async (context, next) =>
         {
-            errApp.Run(async context =>
+            try
             {
-                var feature = context.Features.Get<IExceptionHandlerFeature>();
-                var ex = feature?.Error;
-                if (ex is null) return;
-
-                var logger = context.RequestServices
-                    .GetService(typeof(ILogger<IExceptionHandlerFeature>)) as ILogger;
-                logger?.LogError(ex, "Unhandled exception: {Message}", ex.Message);
-
+                await next(context);
+            }
+            catch (Exception ex)
+            {
                 context.Response.ContentType = "application/json";
                 context.Response.StatusCode = ex switch
                 {
@@ -40,7 +34,7 @@ public static class GlobalExceptionHandlerExtensions
                     type    = ex.GetType().Name
                 });
                 await context.Response.WriteAsync(body);
-            });
+            }
         });
         return app;
     }
