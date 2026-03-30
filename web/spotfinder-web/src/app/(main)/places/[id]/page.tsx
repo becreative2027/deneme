@@ -65,19 +65,40 @@ function parkingLabel(status: string): { text: string; color: string } {
   }
 }
 
+function isImageUrl(url: string) {
+  const lower = url.toLowerCase();
+  return /\.(jpg|jpeg|png|webp|gif|avif|svg)(\?.*)?$/.test(lower);
+}
+
 function MenuGallery({ urls }: { urls: string[] }) {
   const [idx, setIdx] = useState(0);
   if (urls.length === 0) return null;
+  const imageUrls = urls.filter(isImageUrl);
+  const linkUrls  = urls.filter(u => !isImageUrl(u));
   return (
+    <div className="space-y-2">
+      {linkUrls.map((url, i) => (
+        <a
+          key={i}
+          href={url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1.5 text-sm text-[#6c63ff] font-semibold"
+        >
+          <ExternalLink size={14} />
+          Menüyü görüntüle
+        </a>
+      ))}
+      {imageUrls.length > 0 && (
     <div className="relative w-full aspect-[4/3] bg-gray-100 dark:bg-gray-800 rounded-xl overflow-hidden">
       <Image
-        src={urls[idx]}
+        src={imageUrls[idx]}
         alt={`Menu page ${idx + 1}`}
         fill
         className="object-contain"
         sizes="480px"
       />
-      {urls.length > 1 && (
+      {imageUrls.length > 1 && (
         <>
           <button
             onClick={() => setIdx((i) => Math.max(0, i - 1))}
@@ -87,14 +108,14 @@ function MenuGallery({ urls }: { urls: string[] }) {
             <ChevronLeft size={18} />
           </button>
           <button
-            onClick={() => setIdx((i) => Math.min(urls.length - 1, i + 1))}
-            disabled={idx === urls.length - 1}
+            onClick={() => setIdx((i) => Math.min(imageUrls.length - 1, i + 1))}
+            disabled={idx === imageUrls.length - 1}
             className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-black/50 rounded-full flex items-center justify-center text-white disabled:opacity-30"
           >
             <ChevronRight size={18} />
           </button>
           <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
-            {urls.map((_, i) => (
+            {imageUrls.map((_, i) => (
               <button
                 key={i}
                 onClick={() => setIdx(i)}
@@ -105,6 +126,8 @@ function MenuGallery({ urls }: { urls: string[] }) {
             ))}
           </div>
         </>
+      )}
+    </div>
       )}
     </div>
   );
