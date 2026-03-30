@@ -1,9 +1,9 @@
 'use client';
 
-import { useState } from 'react';
-import { Loader2, Search, Star, Trash2, MessageSquare } from 'lucide-react';
-import { getPlaceReviews, deleteReviewAdmin } from '@/api/admin';
-import type { Review } from '@/lib/types';
+import { useState, useEffect } from 'react';
+import { Loader2, Star, Trash2, MessageSquare, ChevronDown } from 'lucide-react';
+import { getPlaceReviews, deleteReviewAdmin, getPlaces } from '@/api/admin';
+import type { Review, Place } from '@/lib/types';
 
 function Stars({ n }: { n: number }) {
   return (
@@ -16,8 +16,9 @@ function Stars({ n }: { n: number }) {
 }
 
 export default function ReviewsPage() {
-  const [placeId, setPlaceId] = useState('');
-  const [inputId, setInputId] = useState('');
+  const [places, setPlaces] = useState<Place[]>([]);
+  const [placesLoading, setPlacesLoading] = useState(true);
+  const [selectedPlaceId, setSelectedPlaceId] = useState('');
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
@@ -25,37 +26,45 @@ export default function ReviewsPage() {
   const [deleting, setDeleting] = useState<string | null>(null);
   const [error, setError] = useState('');
 
+  useEffect(() => {
+    getPlaces(1, 200)
+      .then(r => setPlaces(r.items))
+      .catch(() => {})
+      .finally(() => setPlacesLoading(false));
+  }, []);
+
   async function load(pid: string, p: number) {
-    if (!pid.trim()) return;
+    if (!pid) return;
     setLoading(true);
     setError('');
     try {
-      const data = await getPlaceReviews(pid.trim(), p, 20);
-      // API returns { items, totalCount } or { reviews, total }
+      const data = await getPlaceReviews(pid, p, 20);
       const items: Review[] = data.items ?? data.reviews ?? data ?? [];
       const tot: number = data.totalCount ?? data.total ?? items.length;
       setReviews(items);
       setTotal(tot);
     } catch {
-      setError('Yorumlar yüklenemedi. Mekan ID\'yi kontrol edin.');
+      setError('Yorumlar yüklenemedi.');
       setReviews([]);
     } finally {
       setLoading(false);
     }
   }
 
-  function handleSearch(e: React.FormEvent) {
-    e.preventDefault();
+  function handleSelect(e: React.ChangeEvent<HTMLSelectElement>) {
+    const pid = e.target.value;
+    setSelectedPlaceId(pid);
     setPage(1);
-    setPlaceId(inputId);
-    load(inputId, 1);
+    setReviews([]);
+    setTotal(0);
+    if (pid) load(pid, 1);
   }
 
   async function handleDelete(reviewId: string) {
     if (!confirm('Bu yorumu silmek istediğinize emin misiniz?')) return;
     setDeleting(reviewId);
     try {
-      await deleteReviewAdmin(placeId, reviewId);
+      await deleteReviewAdmin(selectedPlaceId, reviewId);
       setReviews(prev => prev.filter(r => r.id !== reviewId));
       setTotal(prev => prev - 1);
     } finally {
@@ -65,40 +74,47 @@ export default function ReviewsPage() {
 
   function handlePage(newPage: number) {
     setPage(newPage);
-    load(placeId, newPage);
+    load(selectedPlaceId, newPage);
   }
+
+  const selectedPlace = places.find(p => p.id === selectedPlaceId);
 
   return (
     <div className="p-8">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Yorumlar</h1>
-        <p className="text-sm text-gray-500 mt-0.5">Mekan ID ile yorumları görüntüle ve yönet</p>
+        <p className="text-sm text-gray-500 mt-0.5">Mekan seçerek yorumları görüntüle ve yönet</p>
       </div>
 
-      {/* Place ID search */}
-      <form onSubmit={handleSearch} className="flex gap-3 mb-6">
-        <input
-          value={inputId}
-          onChange={e => setInputId(e.target.value)}
-          placeholder="Mekan UUID girin..."
-          className="flex-1 max-w-md border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand/30 font-mono"
-        />
-        <button
-          type="submit"
-          className="flex items-center gap-2 bg-brand text-white text-sm font-semibold px-5 py-2.5 rounded-xl hover:bg-brand/90 transition-colors"
-        >
-          <Search size={15} />
-          Getir
-        </button>
-      </form>
+      {/* Place selector */}
+      <div className="mb-6 max-w-md">
+        <label className="block text-sm font-medium text-gray-700 mb-1.5">Mekan Seç</label>
+        <div className="relative">
+          <select
+            value={selectedPlaceId}
+            onChange={handleSelect}
+            disabled={placesLoading}
+            className="w-full appearance-none border border-gray-200 rounded-xl px-4 py-2.5 text-sm pr-10 focus:outline-none focus:ring-2 focus:ring-brand/30 bg-white disabled:opacity-50"
+          >
+            <option value="">{placesLoading ? 'Mekanlar yükleniyor…' : 'Mekan seçin…'}</option>
+            {places.map(p => (
+              <option key={p.id} value={p.id}>
+                {p.name}{p.districtName ? ` · ${p.districtName}` : ''}{p.cityName ? `, ${p.cityName}` : ''}
+              </option>
+            ))}
+          </select>
+          <ChevronDown size={15} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+        </div>
+      </div>
 
       {error && (
         <div className="mb-4 bg-red-50 border border-red-200 text-red-600 text-sm px-4 py-3 rounded-xl">{error}</div>
       )}
 
       {/* Stats bar */}
-      {placeId && !loading && reviews.length > 0 && (
+      {selectedPlaceId && !loading && reviews.length > 0 && (
         <div className="flex items-center gap-4 mb-4">
+          <span className="text-sm font-semibold text-gray-700">{selectedPlace?.name}</span>
           <div className="flex items-center gap-1.5 text-sm text-gray-600">
             <MessageSquare size={14} />
             <span><strong className="text-gray-900">{total}</strong> yorum</span>
@@ -161,15 +177,15 @@ export default function ReviewsPage() {
               className="text-sm text-gray-500 hover:text-gray-800 disabled:opacity-30">Sonraki →</button>
           </div>
         </>
-      ) : placeId ? (
+      ) : selectedPlaceId && !loading ? (
         <div className="text-center py-20 text-gray-400">
           <MessageSquare size={36} className="mx-auto mb-3 opacity-30" />
           <p className="text-sm">Bu mekana ait yorum bulunamadı.</p>
         </div>
       ) : (
         <div className="text-center py-20 text-gray-400">
-          <Search size={36} className="mx-auto mb-3 opacity-30" />
-          <p className="text-sm">Yukarıya bir mekan ID girin.</p>
+          <MessageSquare size={36} className="mx-auto mb-3 opacity-30" />
+          <p className="text-sm">Yukarıdan bir mekan seçin.</p>
         </div>
       )}
     </div>
