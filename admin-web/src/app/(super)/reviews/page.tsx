@@ -27,7 +27,7 @@ export default function ReviewsPage() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    getPlaces(1, 200)
+    getPlaces(1, 100)
       .then(r => setPlaces(r.items))
       .catch(() => {})
       .finally(() => setPlacesLoading(false));
