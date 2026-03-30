@@ -64,8 +64,13 @@ export default function MyPlacePage() {
   async function handleSaveMedia() {
     if (!placeId) return;
     setSaving(true); setSaveMsg('');
+    // Auto-add any pending URL in the input field
+    const finalMenuImages = newMenuImg.trim()
+      ? [...menuImages, newMenuImg.trim()]
+      : menuImages;
+    if (newMenuImg.trim()) { setMenuImages(finalMenuImages); setNewMenuImg(''); }
     try {
-      await updatePlaceMedia(placeId, coverUrl || null, menuUrl || null, menuImages);
+      await updatePlaceMedia(placeId, coverUrl || null, menuUrl || null, finalMenuImages);
       setSaveMsg('Kaydedildi ✓');
       // Update local place state
       setPlace((p: any) => ({ ...p, coverImageUrl: coverUrl, menuUrl, menuImageUrls: menuImages }));
