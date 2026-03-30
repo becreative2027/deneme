@@ -11,16 +11,16 @@ import clsx from 'clsx';
 import { useAdminAuthStore } from '@/store/adminAuthStore';
 
 const NAV = [
-  { href: '/super/dashboard',   label: 'Dashboard',        icon: LayoutDashboard },
-  { href: '/super/places',      label: 'Mekanlar',          icon: MapPin },
-  { href: '/super/reviews',     label: 'Yorumlar',          icon: Star },
-  { href: '/super/labels',      label: 'Etiketler',         icon: Tag },
-  { href: '/super/users',       label: 'Kullanıcılar',      icon: Users },
-  { href: '/super/ownership',   label: 'Mekan Sahipleri',   icon: KeyRound },
-  { href: '/super/moderation',  label: 'Moderasyon',        icon: Shield },
-  { href: '/super/feedback',    label: 'Geri Bildirimler',  icon: MessageSquarePlus },
-  { href: '/super/config',      label: 'Konfigürasyon',     icon: Settings },
-  { href: '/super/audit-logs',  label: 'Audit Logs',        icon: FileText },
+  { href: '/dashboard',   label: 'Dashboard',        icon: LayoutDashboard },
+  { href: '/places',      label: 'Mekanlar',          icon: MapPin },
+  { href: '/reviews',     label: 'Yorumlar',          icon: Star },
+  { href: '/labels',      label: 'Etiketler',         icon: Tag },
+  { href: '/users',       label: 'Kullanıcılar',      icon: Users },
+  { href: '/ownership',   label: 'Mekan Sahipleri',   icon: KeyRound },
+  { href: '/moderation',  label: 'Moderasyon',        icon: Shield },
+  { href: '/feedback',    label: 'Geri Bildirimler',  icon: MessageSquarePlus },
+  { href: '/config',      label: 'Konfigürasyon',     icon: Settings },
+  { href: '/audit-logs',  label: 'Audit Logs',        icon: FileText },
 ];
 
 export default function SuperSidebar() {
