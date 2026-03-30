@@ -33,7 +33,7 @@ export default function LoginPage() {
         return;
       }
 
-      if (isAdminRole(user.role)) router.push('/super/dashboard');
+      if (isAdminRole(user.role)) router.push('/dashboard');
       else if (user.role === 'PlaceOwner') router.push('/place/dashboard');
     } catch (err: any) {
       setError(err?.response?.data?.message ?? err.message ?? 'Giriş başarısız.');
