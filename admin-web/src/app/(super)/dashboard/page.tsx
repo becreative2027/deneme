@@ -27,17 +27,17 @@ export default function SuperDashboardPage() {
   }, []);
 
   const CARDS = [
-    { label: 'Toplam Mekan', icon: MapPin, color: 'bg-violet-100 text-violet-600', value: stats.places, href: '/super/places' },
-    { label: 'Bekleyen Moderasyon', icon: Shield, color: 'bg-orange-100 text-orange-600', value: stats.pendingMod, href: '/super/moderation' },
-    { label: 'Toplam Etiket', icon: Tag, color: 'bg-blue-100 text-blue-600', value: stats.labels, href: '/super/labels' },
+    { label: 'Toplam Mekan', icon: MapPin, color: 'bg-violet-100 text-violet-600', value: stats.places, href: '/places' },
+    { label: 'Bekleyen Moderasyon', icon: Shield, color: 'bg-orange-100 text-orange-600', value: stats.pendingMod, href: '/moderation' },
+    { label: 'Toplam Etiket', icon: Tag, color: 'bg-blue-100 text-blue-600', value: stats.labels, href: '/labels' },
   ];
 
   const QUICK_LINKS = [
-    { label: 'Yeni mekan ekle', href: '/super/places', desc: 'Mekan oluştur ve etiket ata' },
-    { label: 'Kullanıcı rolü değiştir', href: '/super/users', desc: 'Kullanıcı ara ve rol güncelle' },
-    { label: 'Mekan sahipliği ver', href: '/super/ownership', desc: 'PlaceOwner hesabına mekan ata' },
-    { label: 'Yorum sil', href: '/super/reviews', desc: 'Mekan ID ile yorumları yönet' },
-    { label: 'Feature flag yönet', href: '/super/config', desc: 'Runtime config ve flag güncelle' },
+    { label: 'Yeni mekan ekle', href: '/places', desc: 'Mekan oluştur ve etiket ata' },
+    { label: 'Kullanıcı rolü değiştir', href: '/users', desc: 'Kullanıcı ara ve rol güncelle' },
+    { label: 'Mekan sahipliği ver', href: '/ownership', desc: 'PlaceOwner hesabına mekan ata' },
+    { label: 'Yorum sil', href: '/reviews', desc: 'Mekan ID ile yorumları yönet' },
+    { label: 'Feature flag yönet', href: '/config', desc: 'Runtime config ve flag güncelle' },
   ];
 
   return (

@@ -11,7 +11,7 @@ export default function RootPage() {
 
   useEffect(() => {
     if (!token || !user) { router.replace('/login'); return; }
-    if (isAdminRole(user.role)) router.replace('/super/dashboard');
+    if (isAdminRole(user.role)) router.replace('/dashboard');
     else if (user.role === 'PlaceOwner') router.replace('/place/dashboard');
     else router.replace('/login');
   }, [token, user, router]);

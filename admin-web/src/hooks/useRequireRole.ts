@@ -18,7 +18,7 @@ export function useRequireRole(allowed: UserRole[]) {
     }
     if (!allowed.includes(user.role)) {
       if (user.role === 'PlaceOwner') router.replace('/place/dashboard');
-      else router.replace('/super/dashboard');
+      else router.replace('/dashboard');
     }
   }, [token, user]);
 
