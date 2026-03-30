@@ -48,11 +48,6 @@ var app = builder.Build();
 
 app.UseGlobalExceptionHandler();
 
-using (var scope = app.Services.CreateScope())
-{
-    var db = scope.ServiceProvider.GetRequiredService<FeedQueryDbContext>();
-    db.Database.EnsureCreated();
-}
 
 if (app.Environment.IsDevelopment()) { app.UseSwagger(); app.UseSwaggerUI(); }
 app.UseAuthentication();
