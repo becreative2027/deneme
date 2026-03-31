@@ -65,7 +65,9 @@ public sealed class PlaceOwnerController : BaseController
             UpdatedBy:     CallerEmail,
             CoverImageUrl: req.CoverImageUrl,
             MenuUrl:       req.MenuUrl,
-            MenuImageUrls: req.MenuImageUrls);
+            MenuImageUrls: req.MenuImageUrls,
+            PriceLevel:    req.PriceLevel,
+            VenueType:     req.VenueType);
 
         var result = await Sender.Send(cmd, ct);
         if (!result.IsSuccess)
@@ -118,4 +120,6 @@ public sealed class PlaceOwnerController : BaseController
 public sealed record UpdatePlaceMediaRequest(
     string?       CoverImageUrl,
     string?       MenuUrl,
-    List<string>? MenuImageUrls);
+    List<string>? MenuImageUrls,
+    int?          PriceLevel,
+    string?       VenueType);

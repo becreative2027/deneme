@@ -14,6 +14,12 @@ function formatRating(n: number): string {
   return n ? n.toFixed(1) : '–';
 }
 
+const PRICE_SYMBOLS = ['', '₺', '₺₺', '₺₺₺'];
+const VENUE_LABELS: Record<string, string> = {
+  kafe: 'Kafe', restoran: 'Restoran', bar: 'Bar',
+  pastane: 'Pastane', kitabevi_kafe: 'Kitabevi', lounge: 'Lounge', food_court: 'Food Court',
+};
+
 function formatCount(n: number): string {
   if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
   return String(n);
@@ -65,7 +71,18 @@ export const PlaceCard = memo(function PlaceCard({ place, onPress }: Props) {
         <p className="text-[15px] font-bold text-text-light dark:text-text-dark truncate">
           {place.name}
         </p>
-        <p className="text-xs text-[#6c63ff] font-medium mt-0.5">{place.categoryName}</p>
+        <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+          {place.venueType && (
+            <span className="text-xs text-[#6c63ff] font-medium">
+              {VENUE_LABELS[place.venueType] ?? place.venueType}
+            </span>
+          )}
+          {place.priceLevel != null && place.priceLevel > 0 && (
+            <span className="text-xs font-semibold text-gray-500">
+              {PRICE_SYMBOLS[place.priceLevel]}
+            </span>
+          )}
+        </div>
 
         <div className="flex items-center gap-1 mt-1.5">
           <MapPin size={12} className="text-gray-400 flex-shrink-0" />

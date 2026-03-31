@@ -279,11 +279,15 @@ export async function updatePlaceMedia(
   coverImageUrl?: string | null,
   menuUrl?: string | null,
   menuImageUrls?: string[] | null,
+  priceLevel?: number | null,
+  venueType?: string | null,
 ): Promise<void> {
   await adminClient.put(`/api/owner/places/${placeId}`, {
     coverImageUrl: coverImageUrl ?? null,
     menuUrl:       menuUrl       ?? null,
     menuImageUrls: menuImageUrls ?? null,
+    priceLevel:    priceLevel    ?? null,
+    venueType:     venueType     ?? null,
   });
 }
 

@@ -33,6 +33,8 @@ function normalizePlace(p: any): Place {
     longitude: p.longitude ?? undefined,
     favoriteCount: p.favoriteCount ?? p.favoritesCount ?? undefined,
     wishlistCount: p.wishlistCount ?? p.wishlists ?? undefined,
+    priceLevel: p.priceLevel ?? undefined,
+    venueType: p.venueType ?? undefined,
   };
 }
 
@@ -48,6 +50,8 @@ export async function searchPlaces(req: PlaceSearchRequest): Promise<PlaceSearch
     matchMode: req.matchMode ?? 'ANY',
     page: req.page ?? 1,
     pageSize: req.pageSize ?? 20,
+    priceLevels: req.priceLevels?.length ? req.priceLevels : undefined,
+    venueTypes: req.venueTypes?.length ? req.venueTypes : undefined,
   };
   const { data } = await apiClient.post<any>('/api/places/search', body);
   if (!isOk(data)) throw new Error(data?.errors?.join('; ') ?? 'Search failed');

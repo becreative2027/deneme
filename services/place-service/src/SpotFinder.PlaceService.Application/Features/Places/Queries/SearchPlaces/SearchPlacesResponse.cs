@@ -18,6 +18,8 @@ public sealed record PlaceSummaryDto(
     decimal? Rating,
     int ReviewCount,
     string ParkingStatus,
+    int? PriceLevel,
+    string? VenueType,
     IReadOnlyList<LabelSummaryDto> Labels);
 
 /// <summary>Compact label representation used in search results.</summary>

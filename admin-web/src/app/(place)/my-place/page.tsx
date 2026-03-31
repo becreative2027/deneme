@@ -8,7 +8,7 @@ import {
 } from '@/api/admin';
 import {
   Loader2, MapPin, Star, Heart, Bookmark, ImagePlus,
-  Link2, Plus, X, Tag, Check, Save, Pencil,
+  Link2, Plus, X, Tag, Check, Save, Store, DollarSign,
 } from 'lucide-react';
 
 export default function MyPlacePage() {
@@ -26,6 +26,8 @@ export default function MyPlacePage() {
   const [menuUrl,      setMenuUrl]      = useState('');
   const [menuImages,   setMenuImages]   = useState<string[]>([]);
   const [newMenuImg,   setNewMenuImg]   = useState('');
+  const [priceLevel,   setPriceLevel]   = useState<number | null>(null);
+  const [venueType,    setVenueType]    = useState<string>('');
   const [labelSearch,  setLabelSearch]  = useState('');
   const [labelOpen,    setLabelOpen]    = useState(false);
 
@@ -43,6 +45,8 @@ export default function MyPlacePage() {
       setCoverUrl(p?.coverImageUrl ?? '');
       setMenuUrl(p?.menuUrl ?? '');
       setMenuImages(p?.menuImageUrls ?? []);
+      setPriceLevel(p?.priceLevel ?? null);
+      setVenueType(p?.venueType ?? '');
       // Flatten labels from categories
       const cats: any[] = filters?.categories ?? [];
       setAllLabels(cats.flatMap((c: any) =>
@@ -70,7 +74,7 @@ export default function MyPlacePage() {
       : menuImages;
     if (newMenuImg.trim()) { setMenuImages(finalMenuImages); setNewMenuImg(''); }
     try {
-      await updatePlaceMedia(placeId, coverUrl || null, menuUrl || null, finalMenuImages);
+      await updatePlaceMedia(placeId, coverUrl || null, menuUrl || null, finalMenuImages, priceLevel, venueType || null);
       setSaveMsg('Kaydedildi ✓');
       // Update local place state
       setPlace((p: any) => ({ ...p, coverImageUrl: coverUrl, menuUrl, menuImageUrls: menuImages }));
@@ -247,6 +251,48 @@ export default function MyPlacePage() {
             </button>
           </div>
         </div>
+      </Section>
+
+      {/* ── Fiyat Seviyesi ──────────────────────────────────────────────────── */}
+      <Section icon={DollarSign} title="Fiyat Seviyesi">
+        <div className="flex gap-2">
+          {[
+            { val: null, label: 'Belirtilmemiş' },
+            { val: 1,    label: '₺ Uygun'      },
+            { val: 2,    label: '₺₺ Orta'       },
+            { val: 3,    label: '₺₺₺ Üst'       },
+          ].map(({ val, label }) => (
+            <button
+              key={String(val)}
+              onClick={() => setPriceLevel(val)}
+              className={`px-3 py-1.5 text-sm rounded-lg border transition-colors ${
+                priceLevel === val
+                  ? 'bg-brand text-white border-brand'
+                  : 'border-gray-300 text-gray-600 hover:border-brand hover:text-brand'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </Section>
+
+      {/* ── Mekan Türü ──────────────────────────────────────────────────────── */}
+      <Section icon={Store} title="Mekan Türü">
+        <select
+          value={venueType}
+          onChange={(e) => setVenueType(e.target.value)}
+          className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand"
+        >
+          <option value="">Seçiniz…</option>
+          <option value="kafe">Kafe</option>
+          <option value="restoran">Restoran</option>
+          <option value="bar">Bar</option>
+          <option value="pastane">Pastane & Tatlı</option>
+          <option value="kitabevi_kafe">Kitabevi & Kafe</option>
+          <option value="lounge">Lounge & Bar</option>
+          <option value="food_court">Food Court</option>
+        </select>
       </Section>
 
       {/* ── Save media button ────────────────────────────────────────────── */}

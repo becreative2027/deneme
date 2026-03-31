@@ -58,6 +58,8 @@ public sealed class AdminWriteDbContext : DbContext
             e.Property(p => p.CoverImageUrl).HasColumnName("cover_image_url");
             e.Property(p => p.MenuUrl).HasColumnName("menu_url");
             e.Property(p => p.MenuImageUrls).HasColumnName("menu_image_urls").HasColumnType("jsonb");
+            e.Property(p => p.PriceLevel).HasColumnName("price_level");
+            e.Property(p => p.VenueType).HasColumnName("venue_type").HasMaxLength(50);
             e.Property(p => p.IsDeleted).HasColumnName("is_deleted");
             e.Property(p => p.CreatedAt).HasColumnName("created_at");
             e.Property(p => p.UpdatedAt).HasColumnName("updated_at");
