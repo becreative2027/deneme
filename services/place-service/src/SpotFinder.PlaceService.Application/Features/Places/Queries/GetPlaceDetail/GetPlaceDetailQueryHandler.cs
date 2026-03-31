@@ -124,6 +124,8 @@ public sealed class GetPlaceDetailQueryHandler
             place.ParkingStatus,
             place.MenuUrl,
             place.MenuImageUrls,
+            place.PriceLevel,
+            place.VenueType,
             scoreDto,
             labels,
             favoriteCount,

@@ -22,6 +22,8 @@ public sealed class PlaceConfiguration : IEntityTypeConfiguration<Place>
                 v => System.Text.Json.JsonSerializer.Serialize(v, (System.Text.Json.JsonSerializerOptions?)null),
                 v => System.Text.Json.JsonSerializer.Deserialize<List<string>>(v, (System.Text.Json.JsonSerializerOptions?)null) ?? new List<string>());
         builder.Property(p => p.ParkingStatus).HasDefaultValue("unavailable").HasMaxLength(20);
+        builder.Property(p => p.PriceLevel).HasColumnName("price_level");
+        builder.Property(p => p.VenueType).HasColumnName("venue_type").HasMaxLength(50);
         builder.Property(p => p.Rating).HasPrecision(2, 1);
         builder.Property(p => p.CreatedAt).HasDefaultValueSql("NOW()");
         builder.HasIndex(p => p.GooglePlaceId).IsUnique()

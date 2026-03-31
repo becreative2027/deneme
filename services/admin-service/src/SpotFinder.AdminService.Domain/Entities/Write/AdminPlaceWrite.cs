@@ -17,6 +17,8 @@ public sealed class AdminPlaceWrite
     public string?      CoverImageUrl       { get; set; }
     public string?      MenuUrl             { get; set; }
     public List<string> MenuImageUrls       { get; set; } = [];
+    public int?         PriceLevel          { get; set; }
+    public string?      VenueType           { get; set; }
     public bool         IsDeleted           { get; set; }
     public DateTime     CreatedAt           { get; set; } = DateTime.UtcNow;
     public DateTime?    UpdatedAt           { get; set; }

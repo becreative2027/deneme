@@ -15,6 +15,8 @@ public sealed class PlaceRow
     public string ParkingStatus { get; set; } = "unavailable";
     public string? MenuUrl { get; set; }
     public List<string> MenuImageUrls { get; set; } = new();
+    public int? PriceLevel { get; set; }
+    public string? VenueType { get; set; }
     public bool IsDeleted { get; set; }
     public DateTime CreatedAt { get; set; }
 }

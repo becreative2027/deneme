@@ -102,6 +102,20 @@ public sealed class SearchPlacesQueryHandler
             }
         }
 
+        // ── PriceLevel filter ─────────────────────────────────────────────────
+        if (request.PriceLevels is { Count: > 0 })
+        {
+            var levels = request.PriceLevels;
+            query = query.Where(p => p.PriceLevel != null && levels.Contains(p.PriceLevel.Value));
+        }
+
+        // ── VenueType filter ──────────────────────────────────────────────────
+        if (request.VenueTypes is { Count: > 0 })
+        {
+            var types = request.VenueTypes;
+            query = query.Where(p => p.VenueType != null && types.Contains(p.VenueType));
+        }
+
         // ── COUNT (separate query — fast path before expensive pagination) ────
         var totalCount = await query.CountAsync(ct);
 
@@ -139,6 +153,8 @@ public sealed class SearchPlacesQueryHandler
                 p.Longitude,
                 p.Rating,
                 p.ParkingStatus,
+                p.PriceLevel,
+                p.VenueType,
                 p.CreatedAt,
                 FinalScore = (decimal?)ps.FinalScore,
             }
@@ -215,6 +231,8 @@ public sealed class SearchPlacesQueryHandler
                     p.Rating,
                     rc,
                     p.ParkingStatus,
+                    p.PriceLevel,
+                    p.VenueType,
                     lbls ?? []);
             })
             .ToList();

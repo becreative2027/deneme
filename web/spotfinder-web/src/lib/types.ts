@@ -49,6 +49,8 @@ export interface Place {
   longitude?: number;
   favoriteCount?: number;
   wishlistCount?: number;
+  priceLevel?: number;
+  venueType?: string;
 }
 
 export interface FeedPage {
@@ -111,6 +113,8 @@ export interface PlaceSearchRequest {
   pageSize?: number;
   page?: number;
   langId?: number;
+  priceLevels?: number[];
+  venueTypes?: string[];
 }
 
 export interface FilterLabel {

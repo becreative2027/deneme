@@ -19,6 +19,8 @@ public sealed record PlaceDetailResponse(
     string ParkingStatus,
     string? MenuUrl,
     IReadOnlyList<string> MenuImageUrls,
+    int? PriceLevel,
+    string? VenueType,
     PlaceScoreDto? Score,
     IReadOnlyList<PlaceLabelDto> Labels,
     int FavoriteCount,

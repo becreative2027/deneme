@@ -59,6 +59,8 @@ public sealed class PlaceQueryDbContext : DbContext
                 .HasConversion(
                     v => System.Text.Json.JsonSerializer.Serialize(v, (System.Text.Json.JsonSerializerOptions?)null),
                     v => System.Text.Json.JsonSerializer.Deserialize<List<string>>(v, (System.Text.Json.JsonSerializerOptions?)null) ?? new List<string>());
+            b.Property(x => x.PriceLevel).HasColumnName("price_level");
+            b.Property(x => x.VenueType).HasColumnName("venue_type");
             b.Property(x => x.IsDeleted).HasColumnName("is_deleted");
             b.Property(x => x.CreatedAt).HasColumnName("created_at");
             b.HasQueryFilter(x => !x.IsDeleted);

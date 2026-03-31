@@ -17,5 +17,8 @@ public sealed record AdminUpdatePlaceCommand(
     // Media fields (nullable = "no change")
     string?       CoverImageUrl   = null,
     string?       MenuUrl         = null,
-    List<string>? MenuImageUrls   = null)
+    List<string>? MenuImageUrls   = null,
+    // Classification fields (-1 = "clear", null = "no change")
+    int?          PriceLevel      = null,
+    string?       VenueType       = null)
     : IRequest<ApiResult<bool>>;

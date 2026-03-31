@@ -217,9 +217,13 @@ export default function SearchPage() {
     selectedLabels: selectedLabelsArr, setSelectedLabels,
     matchMode, setMatchMode,
     showFilters, setShowFilters,
+    selectedPriceLevels, setSelectedPriceLevels,
+    selectedVenueTypes, setSelectedVenueTypes,
   } = useSearchStore();
 
   const selectedLabels = new Set(selectedLabelsArr);
+  const selectedPriceLevelsSet = new Set(selectedPriceLevels);
+  const selectedVenueTypesSet = new Set(selectedVenueTypes);
 
   const [debouncedQuery, setDebouncedQuery] = useState(query);
   const [expandedCategories, setExpandedCategories] = useState<Set<number>>(new Set());
@@ -243,7 +247,9 @@ export default function SearchPage() {
 
   const hasQuery = debouncedQuery.length >= 2;
   const hasLabels = selectedLabels.size > 0;
-  const isSearchActive = hasQuery || hasLabels;
+  const hasPriceLevels = selectedPriceLevelsSet.size > 0;
+  const hasVenueTypes = selectedVenueTypesSet.size > 0;
+  const isSearchActive = hasQuery || hasLabels || hasPriceLevels || hasVenueTypes;
 
   const showTabs = hasQuery;
 
@@ -257,6 +263,8 @@ export default function SearchPage() {
     matchMode,
     pageSize: 20,
     langId,
+    priceLevels: hasPriceLevels ? Array.from(selectedPriceLevelsSet) : undefined,
+    venueTypes: hasVenueTypes ? Array.from(selectedVenueTypesSet) : undefined,
   };
   const searchQuery = usePlaceSearch(searchParams, isSearchActive);
   const userSearchQuery = useUserSearch(debouncedQuery, hasQuery);
@@ -292,7 +300,8 @@ export default function SearchPage() {
   const handleClear = useCallback(() => { setQuery(''); setDebouncedQuery(''); }, [setQuery]);
   const handleClearAll = useCallback(() => {
     setQuery(''); setDebouncedQuery(''); setSelectedLabels([]); setShowFilters(false);
-  }, [setQuery, setSelectedLabels, setShowFilters]);
+    setSelectedPriceLevels([]); setSelectedVenueTypes([]);
+  }, [setQuery, setSelectedLabels, setShowFilters, setSelectedPriceLevels, setSelectedVenueTypes]);
   const toggleLabel = useCallback((id: number) => {
     setSelectedLabels(
       selectedLabelsArr.includes(id)
@@ -350,15 +359,15 @@ export default function SearchPage() {
             type="button"
             onClick={() => setShowFilters(!showFilters)}
             className={`relative flex items-center justify-center w-11 h-11 rounded-xl border transition-colors flex-shrink-0 ${
-              hasLabels
+              hasLabels || hasPriceLevels || hasVenueTypes
                 ? 'bg-primary border-primary text-white'
                 : 'bg-white dark:bg-surface-dark border-border-light dark:border-border-dark text-gray-500 dark:text-gray-400'
             }`}
           >
             <SlidersHorizontal size={18} />
-            {hasLabels && (
+            {(hasLabels || hasPriceLevels || hasVenueTypes) && (
               <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center px-1">
-                {selectedLabels.size}
+                {selectedLabels.size + selectedPriceLevelsSet.size + selectedVenueTypesSet.size}
               </span>
             )}
           </button>
@@ -367,6 +376,76 @@ export default function SearchPage() {
         {/* Filter panel */}
         {showFilters && (
           <div className="bg-white dark:bg-surface-dark rounded-xl border border-border-light dark:border-border-dark p-3 space-y-3">
+
+            {/* ── Price level ── */}
+            <div>
+              <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider block mb-1.5">Fiyat</span>
+              <div className="flex gap-2 flex-wrap">
+                {([1, 2, 3] as const).map((level) => {
+                  const active = selectedPriceLevelsSet.has(level);
+                  const sym = ['', '₺', '₺₺', '₺₺₺'][level];
+                  return (
+                    <button
+                      key={level}
+                      type="button"
+                      onClick={() =>
+                        setSelectedPriceLevels(
+                          active
+                            ? selectedPriceLevels.filter((l) => l !== level)
+                            : [...selectedPriceLevels, level],
+                        )
+                      }
+                      className={`px-3 py-1 rounded-full text-xs font-semibold border transition-colors ${
+                        active
+                          ? 'bg-primary border-primary text-white'
+                          : 'bg-gray-100 dark:bg-gray-700 border-transparent text-gray-600 dark:text-gray-300 hover:border-primary hover:text-primary'
+                      }`}
+                    >
+                      {sym}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* ── Venue type ── */}
+            <div>
+              <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider block mb-1.5">Mekan Türü</span>
+              <div className="flex gap-2 flex-wrap">
+                {[
+                  { key: 'kafe', label: 'Kafe' },
+                  { key: 'restoran', label: 'Restoran' },
+                  { key: 'bar', label: 'Bar' },
+                  { key: 'pastane', label: 'Pastane' },
+                  { key: 'kitabevi_kafe', label: 'Kitabevi' },
+                  { key: 'lounge', label: 'Lounge' },
+                  { key: 'food_court', label: 'Food Court' },
+                ].map(({ key, label }) => {
+                  const active = selectedVenueTypesSet.has(key);
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() =>
+                        setSelectedVenueTypes(
+                          active
+                            ? selectedVenueTypes.filter((v) => v !== key)
+                            : [...selectedVenueTypes, key],
+                        )
+                      }
+                      className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
+                        active
+                          ? 'bg-primary border-primary text-white'
+                          : 'bg-gray-100 dark:bg-gray-700 border-transparent text-gray-600 dark:text-gray-300 hover:border-primary hover:text-primary'
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{t('search.matchMode')}</span>
               <div className="flex rounded-lg overflow-hidden border border-border-light dark:border-border-dark">
@@ -421,8 +500,12 @@ export default function SearchPage() {
               </div>
             ))}
 
-            {hasLabels && (
-              <button type="button" onClick={() => setSelectedLabels([])} className="w-full text-xs text-red-500 font-semibold py-1 hover:underline">
+            {(hasLabels || hasPriceLevels || hasVenueTypes) && (
+              <button
+                type="button"
+                onClick={() => { setSelectedLabels([]); setSelectedPriceLevels([]); setSelectedVenueTypes([]); }}
+                className="w-full text-xs text-red-500 font-semibold py-1 hover:underline"
+              >
                 {t('search.clearFilters')}
               </button>
             )}

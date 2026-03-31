@@ -42,6 +42,9 @@ public sealed class AdminUpdatePlaceCommandHandler(
         if (cmd.CoverImageUrl != null)  place.CoverImageUrl = cmd.CoverImageUrl;
         if (cmd.MenuUrl != null)        place.MenuUrl       = cmd.MenuUrl;
         if (cmd.MenuImageUrls != null)  place.MenuImageUrls = cmd.MenuImageUrls;
+        // PriceLevel: -1 = clear to null, positive = set value, null = no change
+        if (cmd.PriceLevel.HasValue)    place.PriceLevel    = cmd.PriceLevel == -1 ? null : cmd.PriceLevel;
+        if (cmd.VenueType != null)      place.VenueType     = cmd.VenueType == "" ? null : cmd.VenueType;
 
         place.UpdatedAt = DateTime.UtcNow;
         place.UpdatedBy = cmd.UpdatedBy;
