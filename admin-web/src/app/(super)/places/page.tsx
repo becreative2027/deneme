@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { MapPin, Loader2, Trash2, Pencil, Plus, X, Star, Tag, ImagePlus, Link2, Upload } from 'lucide-react';
 import {
   getPlaces, deletePlaceAdmin, createPlaceAdmin, updatePlaceAdmin, updatePlaceMedia,
-  getFilters, assignLabelToPlace, getCities, getDistricts,
+  getFilters, assignLabelToPlace, removeLabelFromPlace, getCities, getDistricts,
 } from '@/api/admin';
 import type { GeoCity, GeoDistrict } from '@/api/admin';
 import { uploadImage } from '@/lib/upload';
@@ -338,20 +338,28 @@ function PlaceModal({
 function LabelAssignDrawer({ place, onClose }: { place: Place; onClose: () => void }) {
   const [categories, setCategories] = useState<FilterCategory[]>([]);
   const [loading, setLoading] = useState(true);
-  const [assigning, setAssigning] = useState<number | null>(null);
-  const [done, setDone] = useState<Set<number>>(new Set());
+  const [busy, setBusy] = useState<number | null>(null);
+  // Start with currently assigned label IDs from the place object
+  const [assigned, setAssigned] = useState<Set<number>>(
+    new Set((place.labels ?? []).map(l => l.id))
+  );
 
   useEffect(() => {
     getFilters(1).then(d => setCategories(d.categories ?? [])).finally(() => setLoading(false));
   }, []);
 
-  async function handleAssign(labelId: number) {
-    setAssigning(labelId);
+  async function handleToggle(labelId: number) {
+    setBusy(labelId);
     try {
-      await assignLabelToPlace(labelId, place.id);
-      setDone(prev => new Set(prev).add(labelId));
+      if (assigned.has(labelId)) {
+        await removeLabelFromPlace(labelId, place.id);
+        setAssigned(prev => { const s = new Set(prev); s.delete(labelId); return s; });
+      } else {
+        await assignLabelToPlace(labelId, place.id);
+        setAssigned(prev => new Set(prev).add(labelId));
+      }
     } finally {
-      setAssigning(null);
+      setBusy(null);
     }
   }
 
@@ -372,22 +380,30 @@ function LabelAssignDrawer({ place, onClose }: { place: Place; onClose: () => vo
             <div key={cat.id} className="mb-4">
               <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">{cat.displayName}</p>
               <div className="space-y-1">
-                {cat.labels.map(label => (
-                  <div key={label.id} className="flex items-center justify-between py-1.5 px-2 rounded-lg hover:bg-gray-50">
-                    <span className="text-sm text-gray-700">{label.displayName}</span>
-                    <button
-                      onClick={() => handleAssign(label.id)}
-                      disabled={assigning === label.id || done.has(label.id)}
-                      className={`text-xs font-semibold px-3 py-1 rounded-full transition-colors ${
-                        done.has(label.id)
-                          ? 'bg-green-100 text-green-600'
-                          : 'bg-brand/10 text-brand hover:bg-brand hover:text-white'
-                      }`}
-                    >
-                      {assigning === label.id ? '...' : done.has(label.id) ? '✓' : 'Ata'}
-                    </button>
-                  </div>
-                ))}
+                {cat.labels.map(label => {
+                  const isAssigned = assigned.has(label.id);
+                  const isBusy = busy === label.id;
+                  return (
+                    <div key={label.id} className="flex items-center justify-between py-1.5 px-2 rounded-lg hover:bg-gray-50">
+                      <span className={`text-sm ${isAssigned ? 'text-gray-900 font-medium' : 'text-gray-500'}`}>
+                        {label.displayName}
+                      </span>
+                      <button
+                        onClick={() => handleToggle(label.id)}
+                        disabled={isBusy}
+                        className={`text-xs font-semibold px-3 py-1 rounded-full transition-colors min-w-[60px] text-center ${
+                          isBusy
+                            ? 'bg-gray-100 text-gray-400'
+                            : isAssigned
+                            ? 'bg-red-50 text-red-500 hover:bg-red-500 hover:text-white'
+                            : 'bg-brand/10 text-brand hover:bg-brand hover:text-white'
+                        }`}
+                      >
+                        {isBusy ? '...' : isAssigned ? 'Kaldır' : 'Ata'}
+                      </button>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           ))}
