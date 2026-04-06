@@ -53,9 +53,9 @@ export const PostCard = memo(function PostCard({ post, onLike, onPressPlace, onP
         <Avatar uri={post.avatarUrl} name={post.displayName} size={36} />
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold text-text-light dark:text-text-dark leading-tight truncate">
-            {post.displayName}
+            {post.displayName || post.username || 'Kullanıcı'}
           </p>
-          <p className="text-xs text-gray-400 leading-tight">@{post.username}</p>
+          <p className="text-xs text-gray-400 leading-tight">@{post.username || 'kullanici'}</p>
         </div>
         <span className="text-[11px] text-gray-400 flex-shrink-0">
           {formatRelativeTime(post.createdAt)}
