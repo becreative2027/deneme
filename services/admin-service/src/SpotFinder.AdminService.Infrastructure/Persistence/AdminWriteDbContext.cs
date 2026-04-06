@@ -145,7 +145,6 @@ public sealed class AdminWriteDbContext : DbContext
             e.Property(pl => pl.LabelId).HasColumnName("label_id");
             e.Property(pl => pl.Weight).HasColumnName("weight").HasPrecision(3, 2);
             e.Property(pl => pl.CreatedAt).HasColumnName("created_at");
-            e.Property(pl => pl.CreatedBy).HasColumnName("created_by");
         });
 
         // ── geo.cities ────────────────────────────────────────────────────

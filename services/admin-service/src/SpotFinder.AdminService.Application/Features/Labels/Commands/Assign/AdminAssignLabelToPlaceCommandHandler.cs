@@ -37,7 +37,6 @@ public sealed class AdminAssignLabelToPlaceCommandHandler(
             LabelId   = cmd.LabelId,
             Weight    = cmd.Weight,
             CreatedAt = DateTime.UtcNow,
-            CreatedBy = cmd.CreatedBy,
         });
 
         audit.Log(cmd.CreatedBy, "CREATE", "PlaceLabel",
