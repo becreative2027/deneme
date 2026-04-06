@@ -6,5 +6,4 @@ public sealed class AdminPlaceLabelWrite
     public int       LabelId    { get; set; }
     public decimal   Weight     { get; set; } = 1.0m;
     public DateTime  CreatedAt  { get; set; } = DateTime.UtcNow;
-    public string?   CreatedBy  { get; set; }
 }
