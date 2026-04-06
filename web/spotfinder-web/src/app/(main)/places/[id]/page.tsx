@@ -54,12 +54,16 @@ function parkingLabel(status: string): { text: string; color: string } {
   switch (status.toLowerCase()) {
     case 'available':
     case 'free':
-      return { text: 'Parking available', color: 'text-green-600 dark:text-green-400' };
+      return { text: 'Otopark mevcut', color: 'text-green-600 dark:text-green-400' };
+    case 'valet':
+      return { text: 'Vale park', color: 'text-blue-600 dark:text-blue-400' };
     case 'paid':
-      return { text: 'Paid parking nearby', color: 'text-amber-600 dark:text-amber-400' };
+      return { text: 'Ücretli otopark', color: 'text-amber-600 dark:text-amber-400' };
+    case 'limited':
+      return { text: 'Sınırlı otopark', color: 'text-amber-500 dark:text-amber-400' };
     case 'unavailable':
     case 'none':
-      return { text: 'No parking', color: 'text-red-500' };
+      return { text: 'Otopark yok', color: 'text-red-500' };
     default:
       return { text: status, color: 'text-gray-500' };
   }
