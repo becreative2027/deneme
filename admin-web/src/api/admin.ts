@@ -129,6 +129,10 @@ export async function assignLabelToPlace(labelId: number, placeId: string, weigh
   await adminClient.post(`/api/admin/labels/${labelId}/places/${placeId}`, { weight });
 }
 
+export async function removeLabelFromPlace(labelId: number, placeId: string): Promise<void> {
+  await adminClient.delete(`/api/owner/places/${placeId}/labels/${labelId}`);
+}
+
 // ── Users ─────────────────────────────────────────────────────────────────
 
 export interface AdminUserRow {
