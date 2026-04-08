@@ -3,7 +3,7 @@
 import React, { useCallback, useRef, useEffect, useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Images, Loader2, MapPin, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Images, Loader2, MapPin, ChevronRight, ChevronDown } from 'lucide-react';
 import { Post } from '@/lib/types';
 import { useUserProfile, useUserPosts, useFollowUser } from '@/hooks/useProfile';
 import { useLikePost } from '@/hooks/useFeed';
@@ -66,15 +66,16 @@ function PlaceGroupCard({
   onPressPlace: (placeId: string) => void;
   onPressPhoto: (posts: Post[], index: number) => void;
 }) {
+  const [expanded, setExpanded] = useState(false);
   const photoPosts = group.posts.filter((p) => p.imageUrl);
   const allPosts = group.posts;
 
   return (
     <div className="bg-white dark:bg-surface-dark mb-2 rounded-2xl overflow-hidden mx-3 shadow-sm">
-      {/* Place header */}
+      {/* Place header — toggle expand/collapse */}
       <button
         type="button"
-        onClick={() => onPressPlace(group.placeId)}
+        onClick={() => setExpanded((v) => !v)}
         className="w-full flex items-center gap-2.5 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors text-left"
       >
         <div className="w-8 h-8 rounded-xl bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center flex-shrink-0">
@@ -84,45 +85,61 @@ function PlaceGroupCard({
           <p className="text-sm font-bold text-text-light dark:text-text-dark truncate">{group.placeName}</p>
           <p className="text-xs text-gray-400 truncate">{group.placeCity}</p>
         </div>
-        <div className="flex items-center gap-1 flex-shrink-0">
+        <div className="flex items-center gap-1.5 flex-shrink-0">
           <span className="text-xs text-gray-400">{allPosts.length} gönderi</span>
-          <ChevronRight size={14} className="text-gray-400" />
+          {expanded
+            ? <ChevronDown size={15} className="text-gray-400" />
+            : <ChevronRight size={15} className="text-gray-400" />}
         </div>
       </button>
 
-      {/* Photo grid */}
-      {photoPosts.length > 0 && (
-        <div className="grid grid-cols-3 gap-0.5 px-0.5 pb-0.5">
-          {photoPosts.slice(0, 6).map((post, i) => (
-            <button
-              key={post.id}
-              type="button"
-              onClick={() => onPressPhoto(photoPosts, i)}
-              className="relative aspect-square bg-gray-100 dark:bg-gray-800 overflow-hidden"
-            >
-              <Image
-                src={post.imageUrl!}
-                alt={post.caption ?? group.placeName}
-                fill
-                className="object-cover"
-                sizes="(max-width: 480px) 33vw, 140px"
-              />
-              {/* +N overlay on last cell if more photos exist */}
-              {i === 5 && photoPosts.length > 6 && (
-                <div className="absolute inset-0 bg-black/55 flex items-center justify-center">
-                  <span className="text-white text-base font-bold">+{photoPosts.length - 6}</span>
-                </div>
-              )}
-            </button>
-          ))}
-        </div>
-      )}
+      {/* Collapsible content */}
+      {expanded && (
+        <>
+          {/* Photo grid */}
+          {photoPosts.length > 0 && (
+            <div className="grid grid-cols-3 gap-0.5 px-0.5 pb-0.5">
+              {photoPosts.slice(0, 6).map((post, i) => (
+                <button
+                  key={post.id}
+                  type="button"
+                  onClick={() => onPressPhoto(photoPosts, i)}
+                  className="relative aspect-square bg-gray-100 dark:bg-gray-800 overflow-hidden"
+                >
+                  <Image
+                    src={post.imageUrl!}
+                    alt={post.caption ?? group.placeName}
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 480px) 33vw, 140px"
+                  />
+                  {i === 5 && photoPosts.length > 6 && (
+                    <div className="absolute inset-0 bg-black/55 flex items-center justify-center">
+                      <span className="text-white text-base font-bold">+{photoPosts.length - 6}</span>
+                    </div>
+                  )}
+                </button>
+              ))}
+            </div>
+          )}
 
-      {/* Text-only posts indicator (no photo) */}
-      {photoPosts.length === 0 && (
-        <div className="px-4 pb-3">
-          <p className="text-xs text-gray-400 italic">Fotoğraf yok · {allPosts.length} metin gönderi</p>
-        </div>
+          {/* Text-only posts */}
+          {photoPosts.length === 0 && (
+            <div className="px-4 pb-3">
+              <p className="text-xs text-gray-400 italic">Fotoğraf yok · {allPosts.length} metin gönderi</p>
+            </div>
+          )}
+
+          {/* Navigate to place */}
+          <button
+            type="button"
+            onClick={() => onPressPlace(group.placeId)}
+            className="w-full flex items-center justify-center gap-1 py-2.5 border-t border-border-light dark:border-border-dark text-xs font-semibold text-[#6c63ff] hover:bg-violet-50 dark:hover:bg-violet-900/10 transition-colors"
+          >
+            <MapPin size={12} />
+            Mekana git
+          </button>
+        </>
       )}
     </div>
   );
