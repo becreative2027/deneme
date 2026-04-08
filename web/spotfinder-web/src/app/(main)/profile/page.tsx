@@ -9,7 +9,6 @@ import { useMe, useUserPosts } from '@/hooks/useProfile';
 import { useLikePost } from '@/hooks/useFeed';
 import { useMyFavoritePlaces } from '@/hooks/useFavorites';
 import { useAuthStore } from '@/store/authStore';
-import { logout as apiLogout } from '@/api/auth';
 import { updateProfile } from '@/api/users';
 import { uploadImage } from '@/lib/cloudinary';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -194,11 +193,8 @@ export default function ProfilePage() {
     setEditAvatarPreview(URL.createObjectURL(file));
   };
 
-  const handleLogout = useCallback(async () => {
+  const handleLogout = useCallback(() => {
     if (!confirm(t('profile.signOutConfirm'))) return;
-    try {
-      await apiLogout();
-    } catch {}
     doLogout();
     router.replace('/login');
   }, [doLogout, router, t]);
