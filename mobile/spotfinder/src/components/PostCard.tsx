@@ -36,8 +36,8 @@ export const PostCard = memo(function PostCard({ post, onLike, onPressPlace, onP
       <Pressable style={s.header} onPress={() => onPressUser?.(post.userId)}>
         <Avatar uri={post.avatarUrl} name={post.displayName} size={36} />
         <View style={s.headerText}>
-          <Text style={s.displayName}>{post.displayName}</Text>
-          <Text style={s.username}>@{post.username}</Text>
+          <Text style={s.displayName}>{post.displayName || post.username || 'Kullanıcı'}</Text>
+          <Text style={s.username}>@{post.username || 'kullanici'}</Text>
         </View>
         <Text style={s.time}>{formatRelativeTime(post.createdAt)}</Text>
       </Pressable>
