@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
 import { getMe, getUserProfile, getUserPosts, followUser, unfollowUser, updateProfile, getFollowerIds, getFollowingIds, getUsersByIds } from '../api/users';
+import { useAuthStore } from '../store/authStore';
 import { FeedPage, UserProfile } from '../types';
 
 export function useMe() {
@@ -13,7 +14,22 @@ export function useMe() {
 export function useUserProfile(userId: string) {
   return useQuery({
     queryKey: ['users', userId],
-    queryFn: () => getUserProfile(userId),
+    queryFn: async () => {
+      const profile = await getUserProfile(userId);
+      // Backend may not populate isFollowing — check explicitly via following list
+      if (profile.isFollowing === undefined || profile.isFollowing === null) {
+        const meId = useAuthStore.getState().user?.id;
+        if (meId && meId !== userId) {
+          try {
+            const followingIds = await getFollowingIds(meId);
+            profile.isFollowing = followingIds.includes(userId);
+          } catch {
+            profile.isFollowing = false;
+          }
+        }
+      }
+      return profile;
+    },
     enabled: !!userId,
     staleTime: 1000 * 60,
   });
@@ -35,7 +51,26 @@ export function useFollowUser() {
   return useMutation({
     mutationFn: ({ userId, isFollowing }: { userId: string; isFollowing: boolean }) =>
       isFollowing ? unfollowUser(userId) : followUser(userId),
-    onSuccess: (_data, { userId }) => {
+    onMutate: async ({ userId, isFollowing }) => {
+      await qc.cancelQueries({ queryKey: ['users', userId] });
+      const prev = qc.getQueryData<UserProfile>(['users', userId]);
+      qc.setQueryData<UserProfile>(['users', userId], (old) =>
+        old
+          ? {
+              ...old,
+              isFollowing: !isFollowing,
+              followersCount: old.followersCount + (isFollowing ? -1 : 1),
+            }
+          : old,
+      );
+      return { prev, userId };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.prev) {
+        qc.setQueryData(['users', context.userId], context.prev);
+      }
+    },
+    onSettled: (_data, _err, { userId }) => {
       qc.invalidateQueries({ queryKey: ['users', userId] });
     },
   });

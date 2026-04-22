@@ -144,7 +144,12 @@ function WriteForm({
         )}
       </TouchableOpacity>
       {mutation.isError && (
-        <Text style={s.errorText}>Bir hata oluştu, tekrar dene.</Text>
+        <Text style={s.errorText}>
+          {(mutation.error as any)?.response?.data?.message ??
+            (mutation.error as any)?.response?.data?.title ??
+            (mutation.error as any)?.message ??
+            'Bir hata oluştu, tekrar dene.'}
+        </Text>
       )}
     </View>
   );
