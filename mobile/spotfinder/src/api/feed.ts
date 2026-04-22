@@ -1,11 +1,10 @@
 import { apiClient } from './client';
-import { ApiResponse, FeedPage, Post } from '../types';
+import { FeedPage, Post } from '../types';
 
-// Backend returns a nested structure: { user: { id, username, displayName, profileImageUrl },
-// place: { id, name }, media: string[], hasMore: bool }
+// Backend returns: { posts: [...], nextCursor: string|null, hasMore: bool }
 // This normalizer maps it to the flat Post shape the UI expects.
 function normalizeFeedPage(raw: any): FeedPage {
-  const items: Post[] = (raw.items ?? []).map((item: any) => ({
+  const items: Post[] = (raw.posts ?? []).map((item: any) => ({
     id:           item.id,
     userId:       item.user?.id       ?? '',
     username:     item.user?.username ?? '',
@@ -23,31 +22,28 @@ function normalizeFeedPage(raw: any): FeedPage {
   }));
   return {
     items,
-    cursor:      raw.cursor ?? undefined,
+    cursor:      raw.nextCursor ?? undefined,
     hasNextPage: raw.hasMore ?? false,
   };
 }
 
 export async function getFollowingFeed(cursor?: string, pageSize = 20): Promise<FeedPage> {
-  const { data } = await apiClient.get<ApiResponse<any>>('/api/feed/following', {
+  const { data } = await apiClient.get<any>('/api/feed/following', {
     params: { cursor, pageSize },
   });
-  if (!data.success || !data.data) throw new Error(data.errors?.join('; ') ?? 'Feed error');
-  return normalizeFeedPage(data.data);
+  return normalizeFeedPage(data);
 }
 
 export async function getExploreFeed(cursor?: string, pageSize = 20): Promise<FeedPage> {
-  const { data } = await apiClient.get<ApiResponse<any>>('/api/feed/explore', {
+  const { data } = await apiClient.get<any>('/api/feed/explore', {
     params: { cursor, pageSize },
   });
-  if (!data.success || !data.data) throw new Error(data.errors?.join('; ') ?? 'Feed error');
-  return normalizeFeedPage(data.data);
+  return normalizeFeedPage(data);
 }
 
 export async function getPersonalizedFeed(cursor?: string, pageSize = 20): Promise<FeedPage> {
-  const { data } = await apiClient.get<ApiResponse<any>>('/api/feed/personalized', {
+  const { data } = await apiClient.get<any>('/api/feed/personalized', {
     params: { cursor, pageSize },
   });
-  if (!data.success || !data.data) throw new Error(data.errors?.join('; ') ?? 'Feed error');
-  return normalizeFeedPage(data.data);
+  return normalizeFeedPage(data);
 }
