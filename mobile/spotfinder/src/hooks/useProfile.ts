@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
-import { getMe, getUserProfile, getUserPosts, followUser, unfollowUser, updateProfile } from '../api/users';
+import { getMe, getUserProfile, getUserPosts, followUser, unfollowUser, updateProfile, getFollowerIds, getFollowingIds, getUsersByIds } from '../api/users';
 import { FeedPage, UserProfile } from '../types';
 
 export function useMe() {
@@ -14,6 +14,7 @@ export function useUserProfile(userId: string) {
   return useQuery({
     queryKey: ['users', userId],
     queryFn: () => getUserProfile(userId),
+    enabled: !!userId,
     staleTime: 1000 * 60,
   });
 }
@@ -24,6 +25,7 @@ export function useUserPosts(userId: string) {
     queryFn: ({ pageParam }) => getUserPosts(userId, pageParam),
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (last: FeedPage) => (last.hasNextPage ? last.cursor : undefined),
+    enabled: !!userId,
     staleTime: 1000 * 60,
   });
 }
@@ -36,6 +38,21 @@ export function useFollowUser() {
     onSuccess: (_data, { userId }) => {
       qc.invalidateQueries({ queryKey: ['users', userId] });
     },
+  });
+}
+
+export function useFollowList(userId: string, type: 'followers' | 'following') {
+  return useQuery({
+    queryKey: ['followList', userId, type],
+    queryFn: async () => {
+      const ids = type === 'followers'
+        ? await getFollowerIds(userId)
+        : await getFollowingIds(userId);
+      if (ids.length === 0) return [];
+      return getUsersByIds(ids);
+    },
+    enabled: !!userId,
+    staleTime: 30_000,
   });
 }
 
