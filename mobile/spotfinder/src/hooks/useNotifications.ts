@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
+import Constants from 'expo-constants';
 import { registerDevice } from '../api/notifications';
 import { routeNotification, NotificationPayload } from '../navigation/navigationRef';
 
@@ -27,7 +28,14 @@ async function requestAndRegister(): Promise<void> {
 
   if (finalStatus !== 'granted') return;
 
-  const { data: pushToken } = await Notifications.getExpoPushTokenAsync();
+  // Push tokens only work on physical devices; skip on simulator
+  const isSimulator = !Constants.isDevice;
+  if (isSimulator) return;
+
+  const projectId = Constants.expoConfig?.extra?.eas?.projectId ?? Constants.easConfig?.projectId;
+  if (!projectId) return; // no project ID configured — skip silently
+
+  const { data: pushToken } = await Notifications.getExpoPushTokenAsync({ projectId });
   await registerDevice(pushToken);
 
   if (Platform.OS === 'android') {

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types';
 import { useAuthStore } from '../store/authStore';
@@ -13,6 +13,7 @@ import { NotificationReceiver } from '../components/NotificationReceiver';
 import { AuthNavigator } from './AuthNavigator';
 import { MainNavigator } from './MainNavigator';
 import { SplashScreen } from '../screens/SplashScreen';
+import { useWishlistStore } from '../store/wishlistStore';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -27,6 +28,7 @@ function NotificationRegistrar() {
 
 export function RootNavigator() {
   const { isAuthenticated, setHydrated, isHydrated, logout } = useAuthStore();
+  const hydrateWishlist = useWishlistStore((s) => s.hydrate);
   const [isBooting, setIsBooting] = useState(true);
 
   useEffect(() => {
@@ -41,6 +43,7 @@ export function RootNavigator() {
       } catch {
         await logout();
       } finally {
+        await hydrateWishlist();
         setHydrated();
         setIsBooting(false);
       }
@@ -51,16 +54,16 @@ export function RootNavigator() {
     return <SplashScreen />;
   }
 
+  const navTheme = {
+    ...DefaultTheme,
+    colors: { ...DefaultTheme.colors, background: '#ffffff' },
+  };
+
   return (
-    <NavigationContainer
-      ref={navigationRef}
-      linking={linking}
-    >
+    <NavigationContainer ref={navigationRef} linking={linking} theme={navTheme}>
       {isAuthenticated && (
         <>
-          {/* Registers push token with backend */}
           <NotificationRegistrar />
-          {/* Handles foreground (toast) + tap (deep link) notification events */}
           <NotificationReceiver />
         </>
       )}
