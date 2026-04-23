@@ -42,6 +42,10 @@ public sealed class UserRepository : IUserRepository
         return (users, total);
     }
 
+    public async Task<User?> GetByExternalIdAsync(string provider, string externalId, CancellationToken ct = default)
+        => await _context.Users.FirstOrDefaultAsync(
+            u => u.ExternalProvider == provider && u.ExternalId == externalId, ct);
+
     public async Task AddAsync(User user, CancellationToken ct = default)
         => await _context.Users.AddAsync(user, ct);
 

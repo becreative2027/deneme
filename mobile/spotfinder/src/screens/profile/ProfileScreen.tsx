@@ -275,7 +275,12 @@ export function ProfileScreen({ route, navigation }: Props) {
         {/* Actions */}
         <View style={s.actionsRow}>
           {isOwnProfile ? (
-            <AmberButton label="Profili düzenle" variant="ghost" style={{ flex: 1 }} />
+            <AmberButton
+              label="Profili düzenle"
+              variant="ghost"
+              style={{ flex: 1 }}
+              onPress={() => navigation.push('EditProfile')}
+            />
           ) : (
             <>
               <AmberButton

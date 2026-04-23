@@ -13,7 +13,9 @@ public sealed class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(u => u.Id).HasColumnName("id");
         builder.Property(u => u.Email).HasColumnName("email").IsRequired().HasMaxLength(256);
         builder.Property(u => u.Username).HasColumnName("username").IsRequired().HasMaxLength(50);
-        builder.Property(u => u.PasswordHash).HasColumnName("password_hash").IsRequired();
+        builder.Property(u => u.PasswordHash).HasColumnName("password_hash");
+        builder.Property(u => u.ExternalProvider).HasColumnName("external_provider").HasMaxLength(20);
+        builder.Property(u => u.ExternalId).HasColumnName("external_id").HasMaxLength(255);
         builder.Property(u => u.Role).HasColumnName("role").IsRequired();
         builder.Property(u => u.IsActive).HasColumnName("is_active");
         builder.Property(u => u.IsEmailVerified).HasColumnName("is_email_verified");

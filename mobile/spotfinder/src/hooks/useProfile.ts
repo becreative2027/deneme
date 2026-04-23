@@ -94,7 +94,7 @@ export function useFollowList(userId: string, type: 'followers' | 'following') {
 export function useUpdateProfile() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (payload: Partial<Pick<UserProfile, 'displayName' | 'bio'>>) =>
+    mutationFn: (payload: Partial<Pick<UserProfile, 'displayName' | 'bio' | 'avatarUrl'>>) =>
       updateProfile(payload),
     onSuccess: (updated) => {
       qc.setQueryData(['users', 'me'], updated);

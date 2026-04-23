@@ -26,3 +26,19 @@ export async function logout(): Promise<void> {
   // Best-effort — server invalidates refresh token
   await apiClient.post('/api/auth/logout').catch(() => {});
 }
+
+export async function oauthLogin(
+  provider: 'apple' | 'google',
+  identityToken: string,
+  email?: string,
+  displayName?: string,
+): Promise<AuthResponse> {
+  const { data } = await apiClient.post<ApiResponse<any>>('/api/auth/oauth', {
+    provider,
+    identityToken,
+    email,
+    displayName,
+  });
+  if (!data.success || !data.data) throw new Error(data.errors?.join('; ') ?? 'OAuth login failed');
+  return mapAuthResponse(data.data, email);
+}

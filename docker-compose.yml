@@ -1,22 +1,6 @@
 version: '3.9'
 
 services:
-  postgres:
-    image: postgres:16-alpine
-    container_name: spotfinder-postgres
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: postgres
-    volumes:
-      - postgres-data:/var/lib/postgresql/data
-      - ./scripts/init-databases.sql:/docker-entrypoint-initdb.d/init.sql
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
   redis:
     image: redis:7-alpine
     container_name: spotfinder-redis
@@ -33,60 +17,45 @@ services:
       context: .
       dockerfile: services/identity-service/src/SpotFinder.IdentityService.API/Dockerfile
     container_name: spotfinder-identity
-    depends_on:
-      postgres:
-        condition: service_healthy
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
-      - ConnectionStrings__IdentityDb=Host=postgres;Port=5432;Database=spotfinder_identity;Username=postgres;Password=postgres
+      - ConnectionStrings__IdentityDb=Host=private-spotfinder-db-do-user-35196135-0.l.db.ondigitalocean.com;Port=25060;Database=spotfinder_identity;Username=doadmin;Password=DO_DB_PASSWORD_REDACTED;SSL Mode=Require;Trust Server Certificate=true
 
   geo-service:
     build:
       context: .
       dockerfile: services/geo-service/src/SpotFinder.GeoService.API/Dockerfile
     container_name: spotfinder-geo
-    depends_on:
-      postgres:
-        condition: service_healthy
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
-      - ConnectionStrings__GeoDb=Host=postgres;Port=5432;Database=spotfinder;Username=postgres;Password=postgres
+      - ConnectionStrings__GeoDb=Host=private-spotfinder-db-do-user-35196135-0.l.db.ondigitalocean.com;Port=25060;Database=spotfinder;Username=doadmin;Password=DO_DB_PASSWORD_REDACTED;SSL Mode=Require;Trust Server Certificate=true
 
   place-service:
     build:
       context: .
       dockerfile: services/place-service/src/SpotFinder.PlaceService.API/Dockerfile
     container_name: spotfinder-place
-    depends_on:
-      postgres:
-        condition: service_healthy
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
-      - ConnectionStrings__PlaceDb=Host=postgres;Port=5432;Database=spotfinder;Username=postgres;Password=postgres
+      - ConnectionStrings__PlaceDb=Host=private-spotfinder-db-do-user-35196135-0.l.db.ondigitalocean.com;Port=25060;Database=spotfinder;Username=doadmin;Password=DO_DB_PASSWORD_REDACTED;SSL Mode=Require;Trust Server Certificate=true
 
   label-service:
     build:
       context: .
       dockerfile: services/label-service/src/SpotFinder.LabelService.API/Dockerfile
     container_name: spotfinder-label
-    depends_on:
-      postgres:
-        condition: service_healthy
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
-      - ConnectionStrings__LabelDb=Host=postgres;Port=5432;Database=spotfinder;Username=postgres;Password=postgres
+      - ConnectionStrings__LabelDb=Host=private-spotfinder-db-do-user-35196135-0.l.db.ondigitalocean.com;Port=25060;Database=spotfinder;Username=doadmin;Password=DO_DB_PASSWORD_REDACTED;SSL Mode=Require;Trust Server Certificate=true
 
   search-service:
     build:
       context: .
       dockerfile: services/search-service/src/SpotFinder.SearchService.API/Dockerfile
     container_name: spotfinder-search
-    depends_on:
-      postgres:
-        condition: service_healthy
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
-      - ConnectionStrings__SearchDb=Host=postgres;Port=5432;Database=spotfinder;Username=postgres;Password=postgres
+      - ConnectionStrings__SearchDb=Host=private-spotfinder-db-do-user-35196135-0.l.db.ondigitalocean.com;Port=25060;Database=spotfinder;Username=doadmin;Password=DO_DB_PASSWORD_REDACTED;SSL Mode=Require;Trust Server Certificate=true
 
   admin-service:
     build:
@@ -94,13 +63,11 @@ services:
       dockerfile: services/admin-service/src/SpotFinder.AdminService.API/Dockerfile
     container_name: spotfinder-admin
     depends_on:
-      postgres:
-        condition: service_healthy
       redis:
         condition: service_healthy
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
-      - ConnectionStrings__AdminDb=Host=postgres;Port=5432;Database=spotfinder;Username=postgres;Password=postgres
+      - ConnectionStrings__AdminDb=Host=private-spotfinder-db-do-user-35196135-0.l.db.ondigitalocean.com;Port=25060;Database=spotfinder;Username=doadmin;Password=DO_DB_PASSWORD_REDACTED;SSL Mode=Require;Trust Server Certificate=true
       - ConnectionStrings__Redis=redis:6379
 
   social-graph-service:
@@ -108,24 +75,18 @@ services:
       context: .
       dockerfile: services/social-graph-service/src/SpotFinder.SocialGraphService.API/Dockerfile
     container_name: spotfinder-social
-    depends_on:
-      postgres:
-        condition: service_healthy
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
-      - ConnectionStrings__SocialDb=Host=postgres;Port=5432;Database=spotfinder;Username=postgres;Password=postgres
+      - ConnectionStrings__SocialDb=Host=private-spotfinder-db-do-user-35196135-0.l.db.ondigitalocean.com;Port=25060;Database=spotfinder;Username=doadmin;Password=DO_DB_PASSWORD_REDACTED;SSL Mode=Require;Trust Server Certificate=true
 
   content-service:
     build:
       context: .
       dockerfile: services/content-service/src/SpotFinder.ContentService.API/Dockerfile
     container_name: spotfinder-content
-    depends_on:
-      postgres:
-        condition: service_healthy
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
-      - ConnectionStrings__ContentDb=Host=postgres;Port=5432;Database=spotfinder;Username=postgres;Password=postgres
+      - ConnectionStrings__ContentDb=Host=private-spotfinder-db-do-user-35196135-0.l.db.ondigitalocean.com;Port=25060;Database=spotfinder;Username=doadmin;Password=DO_DB_PASSWORD_REDACTED;SSL Mode=Require;Trust Server Certificate=true
 
   feed-service:
     build:
@@ -133,13 +94,11 @@ services:
       dockerfile: services/feed-service/src/SpotFinder.FeedService.API/Dockerfile
     container_name: spotfinder-feed
     depends_on:
-      postgres:
-        condition: service_healthy
       redis:
         condition: service_healthy
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
-      - ConnectionStrings__FeedDb=Host=postgres;Port=5432;Database=spotfinder;Username=postgres;Password=postgres
+      - ConnectionStrings__FeedDb=Host=private-spotfinder-db-do-user-35196135-0.l.db.ondigitalocean.com;Port=25060;Database=spotfinder;Username=doadmin;Password=DO_DB_PASSWORD_REDACTED;SSL Mode=Require;Trust Server Certificate=true
       - ConnectionStrings__Redis=redis:6379
 
   api-gateway:
@@ -203,6 +162,3 @@ services:
     environment:
       - NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=dnwylcwex
       - NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET=spotfinder_posts
-
-volumes:
-  postgres-data:
