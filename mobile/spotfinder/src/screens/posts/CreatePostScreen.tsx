@@ -23,6 +23,7 @@ import { useToast } from '../../components/Toast';
 import { useAnalytics } from '../../hooks/useAnalytics';
 import { processImageForUpload } from '../../utils/imageUtils';
 import { uploadImage } from '../../api/upload';
+import { attachPostMedia } from '../../api/posts';
 import { haptic } from '../../utils/haptics';
 import { UploadProgressBar } from '../../components/UploadProgressBar';
 import { Place } from '../../types';
@@ -144,18 +145,19 @@ export function CreatePostScreen() {
     isSubmittingRef.current = true;
 
     try {
-      // Phase 8.2: upload image to CDN first, then create post with URL
+      // Step 1: Upload image to Cloudinary (0% → 60%)
       let imageUrl: string | undefined;
       if (imageUri) {
         setIsUploading(true);
         setUploadProgress(0);
         try {
-          // Phase 8.3: XHR upload with real-time progress reporting
           imageUrl = await uploadImage(imageUri, (fraction) => {
-            setUploadProgress(fraction);
+            setUploadProgress(fraction * 0.6);
           });
-        } catch {
-          showToast('Image upload failed. Post will be shared without photo.', 'warning');
+          setUploadProgress(0.6);
+        } catch (err: any) {
+          console.warn('[Upload error]', err?.message ?? err);
+          showToast('Fotoğraf yüklenemedi. Gönderi fotoğrafsız paylaşılacak.', 'warning');
           haptic.warning();
         } finally {
           setIsUploading(false);
@@ -163,22 +165,32 @@ export function CreatePostScreen() {
         }
       }
 
+      // Step 2: Create post record (without imageUrl in body — mirrors web flow)
+      setUploadProgress(0.7);
       createMutation.mutate(
         {
           placeId: selectedPlace.id,
           caption: caption.trim() || undefined,
-          // imageUrl takes precedence over base64 when CDN upload succeeded
-          ...(imageUrl ? { imageUrl } : {}),
         },
         {
-          onSuccess: () => {
+          onSuccess: async (postId: string) => {
+            try {
+              // Step 3: Attach Cloudinary URL to the post
+              if (imageUrl && postId) {
+                setUploadProgress(0.85);
+                await attachPostMedia(postId, imageUrl);
+                setUploadProgress(1);
+              }
+            } catch {
+              // Image attachment failed but post exists — acceptable
+            }
             trackEvent('post_create', { placeId: selectedPlace.id });
-            showToast('Post shared!', 'success');
+            showToast('Gönderi paylaşıldı!', 'success');
             haptic.success();
             resetForm();
           },
           onError: (err: any) => {
-            showToast(err.message ?? 'Post failed. Please try again.', 'error');
+            showToast(err.message ?? 'Gönderi paylaşılamadı. Tekrar dene.', 'error');
             haptic.error();
             isSubmittingRef.current = false;
           },

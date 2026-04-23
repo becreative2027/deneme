@@ -193,7 +193,7 @@ export async function createPlaceOwnerUser(
 export interface GeoCity { id: number; name: string; }
 export interface GeoDistrict { id: number; name: string; }
 
-export async function getCities(countryId = 1): Promise<GeoCity[]> {
+export async function getCities(countryId = 2): Promise<GeoCity[]> {
   const { data } = await adminClient.get(`/api/cities/by-country/${countryId}?langId=1`);
   const inner = data?.data ?? data;
   return (Array.isArray(inner) ? inner : []).map((c: any) => ({ id: c.id, name: c.name }));

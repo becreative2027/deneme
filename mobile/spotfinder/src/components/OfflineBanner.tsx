@@ -39,25 +39,16 @@ export function OfflineBanner() {
     }
   }, [isOffline, translateY]);
 
-  return (
-    <Animated.View
-      style={[styles.banner, { top: insets.top, transform: [{ translateY }] }]}
-      pointerEvents="none"
-    >
-      <Ionicons name={isOffline ? 'cloud-offline-outline' : 'cloud-done-outline'} size={16} color="#fff" />
-      <Text style={styles.text}>
-        {isOffline ? "You're offline \u2014 showing cached data" : 'Back online'}
-      </Text>
-    </Animated.View>
-  );
+  return null;
 }
 
 const styles = StyleSheet.create({
   banner: {
     position: 'absolute',
-    left: 0,
-    right: 0,
+    left: 16,
+    right: 16,
     backgroundColor: '#e74c3c',
+    borderRadius: 12,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',

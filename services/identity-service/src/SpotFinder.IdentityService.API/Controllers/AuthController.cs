@@ -1,8 +1,8 @@
 using MediatR;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SpotFinder.BuildingBlocks.Api;
 using SpotFinder.IdentityService.Application.Features.Auth.Commands.Login;
+using SpotFinder.IdentityService.Application.Features.Auth.Commands.OAuthLogin;
 using SpotFinder.IdentityService.Application.Features.Auth.Commands.Register;
 
 namespace SpotFinder.IdentityService.API.Controllers;
@@ -25,6 +25,19 @@ public sealed class AuthController : BaseController
     [ProducesResponseType(typeof(ApiResponse<LoginResult>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Login([FromBody] LoginCommand command, CancellationToken ct)
+    {
+        var result = await Sender.Send(command, ct);
+        return OkResult(result);
+    }
+
+    /// <summary>
+    /// Sign in or register via Apple or Google.
+    /// Body: { provider: "apple"|"google", identityToken: "...", email?: "...", displayName?: "..." }
+    /// </summary>
+    [HttpPost("oauth")]
+    [ProducesResponseType(typeof(ApiResponse<LoginResult>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> OAuth([FromBody] OAuthLoginCommand command, CancellationToken ct)
     {
         var result = await Sender.Send(command, ct);
         return OkResult(result);

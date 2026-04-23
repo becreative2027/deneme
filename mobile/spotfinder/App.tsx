@@ -1,6 +1,8 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { StatusBar } from 'expo-status-bar';
 import React from 'react';
+// if (__DEV__) { require('./src/utils/reactotron'); }
+import { View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ErrorBoundary } from './src/components/ErrorBoundary';
 import { OfflineBanner } from './src/components/OfflineBanner';
@@ -41,6 +43,7 @@ function AppContent() {
 export default function App() {
   return (
     <ErrorBoundary>
+      <View style={{ flex: 1, backgroundColor: '#ffffff' }}>
       <SafeAreaProvider>
         <ThemeProvider>
           <QueryClientProvider client={queryClient}>
@@ -50,6 +53,7 @@ export default function App() {
           </QueryClientProvider>
         </ThemeProvider>
       </SafeAreaProvider>
+      </View>
     </ErrorBoundary>
   );
 }

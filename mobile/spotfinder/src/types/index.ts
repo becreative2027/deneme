@@ -43,48 +43,61 @@ export interface Place {
   address: string;
   city: string;
   country: string;
-  latitude: number;
-  longitude: number;
-  categoryId: string;
+  districtName?: string;
+  latitude?: number;
+  longitude?: number;
+  categoryId?: string;
   categoryName: string;
   labels: string[];
   averageRating: number;
   reviewCount: number;
   imageUrl?: string;
   trendScore?: number;
+  parkingStatus?: string;
+  menuUrl?: string;
+  menuImageUrls?: string[];
+  priceLevel?: number;
+  venueType?: string;
+  favoriteCount?: number;
+  wishlistCount?: number;
 }
 
 export interface PlaceSearchRequest {
   query?: string;
-  categoryId?: string;
-  city?: string;
-  country?: string;
-  latitude?: number;
-  longitude?: number;
-  radiusKm?: number;
-  page?: number;
+  labelIds?: number[];
+  matchMode?: 'ANY' | 'ALL';
   pageSize?: number;
+  page?: number;
+  langId?: number;
+  priceLevels?: number[];
+  venueTypes?: string[];
 }
 
 export interface PlaceSearchResponse {
   items: Place[];
   totalCount: number;
-  page: number;
-  pageSize: number;
-  hasNextPage: boolean;
 }
 
-export interface PlaceRecommendation {
+export interface FilterLabel {
+  id: number;
+  key: string;
+  displayName: string;
+}
+
+export interface FilterCategory {
+  id: number;
+  key: string;
+  displayName: string;
+  labels: FilterLabel[];
+}
+
+export interface RecommendationItem {
   place: Place;
   score: number;
-  reasons: string[];
 }
 
 export interface RecommendationResponse {
-  recommendations: PlaceRecommendation[];
-  userId: string;
-  generatedAt: string;
-  debugInfo?: unknown;
+  recommendations: RecommendationItem[];
 }
 
 // ── Post ──────────────────────────────────────────────────────────────────────
@@ -147,11 +160,24 @@ export type SearchStackParamList = {
   PlaceDetail: { placeId: string };
 };
 
+export type ProfileStackParamList = {
+  OwnProfile: undefined;
+  PlaceDetail: { placeId: string };
+  UserProfile: { userId: string };
+  EditProfile: undefined;
+};
+
+export type WishlistStackParamList = {
+  Wishlist: undefined;
+  PlaceDetail: { placeId: string };
+};
+
 export type MainTabParamList = {
   FeedTab: NavigatorScreenParams<FeedStackParamList> | undefined;
   SearchTab: NavigatorScreenParams<SearchStackParamList> | undefined;
   CreatePost: undefined;
-  ProfileTab: undefined;
+  WishlistTab: NavigatorScreenParams<WishlistStackParamList> | undefined;
+  ProfileTab: NavigatorScreenParams<ProfileStackParamList> | undefined;
 };
 
 export type AuthStackParamList = {
