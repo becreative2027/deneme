@@ -19,7 +19,7 @@ services:
     container_name: spotfinder-identity
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
-      - ConnectionStrings__IdentityDb=Host=private-spotfinder-db-do-user-35196135-0.l.db.ondigitalocean.com;Port=25060;Database=spotfinder_identity;Username=doadmin;Password=DO_DB_PASSWORD_REDACTED;SSL Mode=Require;Trust Server Certificate=true
+      - ConnectionStrings__IdentityDb=Host=${DO_DB_HOST};Port=${DO_DB_PORT};Database=spotfinder_identity;Username=${DO_DB_USER};Password=${DO_DB_PASSWORD};SSL Mode=Require;Trust Server Certificate=true
 
   geo-service:
     build:
@@ -28,7 +28,7 @@ services:
     container_name: spotfinder-geo
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
-      - ConnectionStrings__GeoDb=Host=private-spotfinder-db-do-user-35196135-0.l.db.ondigitalocean.com;Port=25060;Database=spotfinder;Username=doadmin;Password=DO_DB_PASSWORD_REDACTED;SSL Mode=Require;Trust Server Certificate=true
+      - ConnectionStrings__GeoDb=Host=${DO_DB_HOST};Port=${DO_DB_PORT};Database=spotfinder;Username=${DO_DB_USER};Password=${DO_DB_PASSWORD};SSL Mode=Require;Trust Server Certificate=true
 
   place-service:
     build:
@@ -37,7 +37,7 @@ services:
     container_name: spotfinder-place
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
-      - ConnectionStrings__PlaceDb=Host=private-spotfinder-db-do-user-35196135-0.l.db.ondigitalocean.com;Port=25060;Database=spotfinder;Username=doadmin;Password=DO_DB_PASSWORD_REDACTED;SSL Mode=Require;Trust Server Certificate=true
+      - ConnectionStrings__PlaceDb=Host=${DO_DB_HOST};Port=${DO_DB_PORT};Database=spotfinder;Username=${DO_DB_USER};Password=${DO_DB_PASSWORD};SSL Mode=Require;Trust Server Certificate=true
 
   label-service:
     build:
@@ -46,7 +46,7 @@ services:
     container_name: spotfinder-label
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
-      - ConnectionStrings__LabelDb=Host=private-spotfinder-db-do-user-35196135-0.l.db.ondigitalocean.com;Port=25060;Database=spotfinder;Username=doadmin;Password=DO_DB_PASSWORD_REDACTED;SSL Mode=Require;Trust Server Certificate=true
+      - ConnectionStrings__LabelDb=Host=${DO_DB_HOST};Port=${DO_DB_PORT};Database=spotfinder;Username=${DO_DB_USER};Password=${DO_DB_PASSWORD};SSL Mode=Require;Trust Server Certificate=true
 
   search-service:
     build:
@@ -55,7 +55,7 @@ services:
     container_name: spotfinder-search
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
-      - ConnectionStrings__SearchDb=Host=private-spotfinder-db-do-user-35196135-0.l.db.ondigitalocean.com;Port=25060;Database=spotfinder;Username=doadmin;Password=DO_DB_PASSWORD_REDACTED;SSL Mode=Require;Trust Server Certificate=true
+      - ConnectionStrings__SearchDb=Host=${DO_DB_HOST};Port=${DO_DB_PORT};Database=spotfinder;Username=${DO_DB_USER};Password=${DO_DB_PASSWORD};SSL Mode=Require;Trust Server Certificate=true
 
   admin-service:
     build:
@@ -67,7 +67,7 @@ services:
         condition: service_healthy
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
-      - ConnectionStrings__AdminDb=Host=private-spotfinder-db-do-user-35196135-0.l.db.ondigitalocean.com;Port=25060;Database=spotfinder;Username=doadmin;Password=DO_DB_PASSWORD_REDACTED;SSL Mode=Require;Trust Server Certificate=true
+      - ConnectionStrings__AdminDb=Host=${DO_DB_HOST};Port=${DO_DB_PORT};Database=spotfinder;Username=${DO_DB_USER};Password=${DO_DB_PASSWORD};SSL Mode=Require;Trust Server Certificate=true
       - ConnectionStrings__Redis=redis:6379
 
   social-graph-service:
@@ -77,7 +77,7 @@ services:
     container_name: spotfinder-social
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
-      - ConnectionStrings__SocialDb=Host=private-spotfinder-db-do-user-35196135-0.l.db.ondigitalocean.com;Port=25060;Database=spotfinder;Username=doadmin;Password=DO_DB_PASSWORD_REDACTED;SSL Mode=Require;Trust Server Certificate=true
+      - ConnectionStrings__SocialDb=Host=${DO_DB_HOST};Port=${DO_DB_PORT};Database=spotfinder;Username=${DO_DB_USER};Password=${DO_DB_PASSWORD};SSL Mode=Require;Trust Server Certificate=true
 
   content-service:
     build:
@@ -86,7 +86,7 @@ services:
     container_name: spotfinder-content
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
-      - ConnectionStrings__ContentDb=Host=private-spotfinder-db-do-user-35196135-0.l.db.ondigitalocean.com;Port=25060;Database=spotfinder;Username=doadmin;Password=DO_DB_PASSWORD_REDACTED;SSL Mode=Require;Trust Server Certificate=true
+      - ConnectionStrings__ContentDb=Host=${DO_DB_HOST};Port=${DO_DB_PORT};Database=spotfinder;Username=${DO_DB_USER};Password=${DO_DB_PASSWORD};SSL Mode=Require;Trust Server Certificate=true
 
   feed-service:
     build:
@@ -98,7 +98,7 @@ services:
         condition: service_healthy
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
-      - ConnectionStrings__FeedDb=Host=private-spotfinder-db-do-user-35196135-0.l.db.ondigitalocean.com;Port=25060;Database=spotfinder;Username=doadmin;Password=DO_DB_PASSWORD_REDACTED;SSL Mode=Require;Trust Server Certificate=true
+      - ConnectionStrings__FeedDb=Host=${DO_DB_HOST};Port=${DO_DB_PORT};Database=spotfinder;Username=${DO_DB_USER};Password=${DO_DB_PASSWORD};SSL Mode=Require;Trust Server Certificate=true
       - ConnectionStrings__Redis=redis:6379
 
   api-gateway:
