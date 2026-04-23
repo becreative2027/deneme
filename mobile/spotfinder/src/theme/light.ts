@@ -6,9 +6,15 @@ export interface ThemeColors {
   surface: string;
   surfaceSecondary: string;
   surfaceElevated: string;
-  // Brand
+  // Brand — amber/gold
   primary: string;
   primaryText: string;
+  accent: string;
+  accentDeep: string;
+  accentSoft: string;
+  accentBorder: string;
+  accentGlow: string;
+  accentOnAccent: string;
   // Text
   text: string;
   textSecondary: string;
@@ -17,6 +23,11 @@ export interface ThemeColors {
   // Borders
   border: string;
   borderLight: string;
+  // Glass / elevation
+  glassBg: string;
+  glassBgStrong: string;
+  glassBorder: string;
+  glassBorderStrong: string;
   // Semantic
   danger: string;
   success: string;
@@ -45,34 +56,45 @@ export const light: Theme = {
   isDark: false,
   colors: {
     // Backgrounds
-    background: '#f8f8f8',
-    surface: '#ffffff',
-    surfaceSecondary: '#fafafa',
-    surfaceElevated: '#ffffff',
+    background: '#FAF8F5',
+    surface: '#FFFFFF',
+    surfaceSecondary: '#F5F3F0',
+    surfaceElevated: '#FFFFFF',
     // Brand
-    primary: '#6c63ff',
-    primaryText: '#ffffff',
+    primary: '#F5A623',
+    primaryText: '#1a0e00',
+    accent: '#F5A623',
+    accentDeep: '#E07B1A',
+    accentSoft: 'rgba(245,166,35,0.12)',
+    accentBorder: 'rgba(245,166,35,0.35)',
+    accentGlow: 'rgba(245,166,35,0.35)',
+    accentOnAccent: '#1a0e00',
     // Text
-    text: '#1a1a1a',
-    textSecondary: '#555555',
-    textTertiary: '#888888',
-    textMuted: '#aaaaaa',
+    text: '#0D0D0F',
+    textSecondary: 'rgba(13,13,15,0.72)',
+    textTertiary: 'rgba(13,13,15,0.48)',
+    textMuted: 'rgba(13,13,15,0.32)',
     // Borders
-    border: '#e8e8e8',
-    borderLight: '#f0f0f0',
+    border: 'rgba(13,13,15,0.10)',
+    borderLight: 'rgba(13,13,15,0.06)',
+    // Glass
+    glassBg: 'rgba(0,0,0,0.04)',
+    glassBgStrong: 'rgba(0,0,0,0.07)',
+    glassBorder: 'rgba(0,0,0,0.08)',
+    glassBorderStrong: 'rgba(0,0,0,0.14)',
     // Semantic
     danger: '#e74c3c',
     success: '#27ae60',
     warning: '#f39c12',
     info: '#2980b9',
     // UI elements
-    skeleton: '#e0e0e0',
+    skeleton: '#EAE8E4',
     overlay: 'rgba(0,0,0,0.35)',
-    icon: '#888888',
-    iconActive: '#6c63ff',
+    icon: 'rgba(13,13,15,0.48)',
+    iconActive: '#F5A623',
     // Navigation
-    tabBar: '#ffffff',
-    tabBarBorder: '#e0e0e0',
+    tabBar: 'rgba(250,248,245,0.88)',
+    tabBarBorder: 'rgba(13,13,15,0.10)',
     // Status bar
     statusBar: 'dark',
   },

@@ -1,21 +1,60 @@
 import React, { useState } from 'react';
 import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
+  Dimensions,
   KeyboardAvoidingView,
   Platform,
-  ActivityIndicator,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { StatusBar } from 'expo-status-bar';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../../types';
 import { login } from '../../api/auth';
 import { useAuthStore } from '../../store/authStore';
 import { useToast } from '../../components/Toast';
+import { useTheme, radius, spacing, typography, shadow } from '../../theme';
+import { GlassCard, AmberButton, AmberInput, Eyebrow } from '../../components/ui';
+
+const { width, height } = Dimensions.get('window');
 
 type Props = { navigation: NativeStackNavigationProp<AuthStackParamList, 'Login'> };
+
+// Dekoratif mekan kartları kolajı
+const CARD_ANGLES = [-8, 5, -4, 9, -6];
+const CARD_POSITIONS = [
+  { top: -20, left: -30 },
+  { top: 30, right: -20 },
+  { top: 80, left: 40 },
+  { top: -10, left: width * 0.4 },
+  { top: 100, right: 30 },
+];
+const CARD_COLORS = [
+  ['#2D1B69', '#11998e'],
+  ['#373B44', '#4286f4'],
+  ['#1a1a2e', '#e94560'],
+  ['#0f3460', '#533483'],
+  ['#16213e', '#0f3460'],
+];
+
+function CollageCard({ index }: { index: number }) {
+  return (
+    <LinearGradient
+      colors={CARD_COLORS[index] as [string, string]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={[
+        styles.collageCard,
+        {
+          transform: [{ rotate: `${CARD_ANGLES[index]}deg` }],
+          ...CARD_POSITIONS[index],
+        },
+      ]}
+    />
+  );
+}
 
 export function LoginScreen({ navigation }: Props) {
   const [email, setEmail] = useState('');
@@ -23,103 +62,156 @@ export function LoginScreen({ navigation }: Props) {
   const [loading, setLoading] = useState(false);
   const setAuth = useAuthStore((s) => s.setAuth);
   const { showToast } = useToast();
+  const { colors } = useTheme();
 
   async function handleLogin() {
     if (!email.trim() || !password) {
-      showToast('Email and password are required.', 'warning');
+      showToast('E-posta ve şifre gerekli.', 'warning');
       return;
     }
-
     setLoading(true);
     try {
       const response = await login({ email: email.trim().toLowerCase(), password });
       await setAuth(response.token, response.refreshToken, response.user);
     } catch (err: any) {
-      showToast(err.message ?? 'Please check your credentials.', 'error');
+      showToast(err.message ?? 'Bilgilerini kontrol et.', 'error');
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <KeyboardAvoidingView
-      style={styles.root}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
-      <View style={styles.inner}>
-        <Text style={styles.title}>Welcome back</Text>
-        <Text style={styles.subtitle}>Sign in to SpotFinder</Text>
+    <View style={[styles.root, { backgroundColor: colors.background }]}>
+      <StatusBar style="light" />
 
-        <TextInput
-          style={styles.input}
-          placeholder="Email"
-          value={email}
-          onChangeText={setEmail}
-          keyboardType="email-address"
-          autoCapitalize="none"
-          autoCorrect={false}
-          placeholderTextColor="#aaa"
+      {/* Hero — kolaj arka plan */}
+      <View style={styles.heroContainer}>
+        {CARD_ANGLES.map((_, i) => (
+          <CollageCard key={i} index={i} />
+        ))}
+        {/* Fade to background */}
+        <LinearGradient
+          colors={['transparent', colors.background]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 0, y: 1 }}
+          style={styles.heroFade}
         />
-        <TextInput
-          style={styles.input}
-          placeholder="Password"
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-          placeholderTextColor="#aaa"
-        />
-
-        <TouchableOpacity
-          style={[styles.btn, loading && styles.btnDisabled]}
-          onPress={handleLogin}
-          disabled={loading}
-          activeOpacity={0.85}
-        >
-          {loading ? (
-            <ActivityIndicator color="#fff" size="small" />
-          ) : (
-            <Text style={styles.btnText}>Sign In</Text>
-          )}
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          onPress={() => navigation.navigate('Register')}
-          style={styles.registerLink}
-        >
-          <Text style={styles.registerText}>
-            Don't have an account? <Text style={styles.registerBold}>Sign up</Text>
-          </Text>
-        </TouchableOpacity>
       </View>
-    </KeyboardAvoidingView>
+
+      {/* Form */}
+      <KeyboardAvoidingView
+        style={styles.formOuter}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+        <ScrollView
+          contentContainerStyle={styles.formScroll}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          <Eyebrow style={{ marginBottom: spacing.sm }}>— Tekrar hoş geldin</Eyebrow>
+
+          <Text style={[typography.displayL, { color: colors.text, marginBottom: spacing.sm }]}>
+            Lezzetini bul,{'\n'}
+            <Text style={{ color: colors.accent }}>şehrini keşfet.</Text>
+          </Text>
+
+          <Text style={[typography.bodyDim, { color: colors.textSecondary, marginBottom: spacing['2xl'] }]}>
+            Şehrin en iyi mekanlarını keşfet ve paylaş.
+          </Text>
+
+          {/* Input card */}
+          <GlassCard strong style={styles.inputCard}>
+            <AmberInput
+              icon="mail-outline"
+              eyebrow="E-POSTA"
+              placeholder="ornek@email.com"
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+            <View style={[styles.divider, { backgroundColor: colors.glassBorder }]} />
+            <AmberInput
+              icon="lock-closed-outline"
+              eyebrow="ŞİFRE"
+              placeholder="••••••••"
+              value={password}
+              onChangeText={setPassword}
+              isPassword
+            />
+          </GlassCard>
+
+          <AmberButton
+            label="Giriş yap"
+            onPress={handleLogin}
+            loading={loading}
+            style={[styles.btn, shadow.amber]}
+          />
+
+          <AmberButton
+            label="Apple ile devam et"
+            variant="apple"
+            icon="logo-apple"
+            style={styles.btn}
+          />
+
+          <AmberButton
+            label="Yeni misin? Hesap oluştur →"
+            variant="ghost"
+            onPress={() => navigation.navigate('Register')}
+            style={styles.btn}
+          />
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#fff' },
-  inner: { flex: 1, justifyContent: 'center', padding: 28 },
-  title: { fontSize: 30, fontWeight: '800', color: '#1a1a2e' },
-  subtitle: { fontSize: 15, color: '#888', marginTop: 6, marginBottom: 36 },
-  input: {
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-    borderRadius: 12,
-    padding: 14,
-    fontSize: 15,
-    color: '#333',
-    marginBottom: 14,
-    backgroundColor: '#fafafa',
+  root: {
+    flex: 1,
+  },
+  heroContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: height * 0.45,
+    overflow: 'hidden',
+  },
+  collageCard: {
+    position: 'absolute',
+    width: 160,
+    height: 200,
+    borderRadius: radius.xl,
+  },
+  heroFade: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 140,
+  },
+  formOuter: {
+    flex: 1,
+    justifyContent: 'flex-end',
+  },
+  formScroll: {
+    paddingHorizontal: spacing.xl,
+    paddingTop: height * 0.32,
+    paddingBottom: 40,
+    gap: 0,
+  },
+  inputCard: {
+    marginBottom: spacing.lg,
+    overflow: 'hidden',
+  },
+  divider: {
+    height: 1,
+    marginHorizontal: spacing.md,
   },
   btn: {
-    backgroundColor: '#6c63ff',
-    borderRadius: 12,
-    padding: 16,
-    alignItems: 'center',
-    marginTop: 6,
+    marginBottom: spacing.sm,
   },
-  btnDisabled: { opacity: 0.6 },
-  btnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
-  registerLink: { alignItems: 'center', marginTop: 24 },
-  registerText: { fontSize: 14, color: '#888' },
-  registerBold: { color: '#6c63ff', fontWeight: '700' },
 });
