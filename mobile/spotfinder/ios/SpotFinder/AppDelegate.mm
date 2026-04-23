@@ -13,13 +13,7 @@
   // They will be passed down to the ViewController used by React Native.
   self.initialProps = @{};
 
-  BOOL result = [super application:application didFinishLaunchingWithOptions:launchOptions];
-
-  // Prevent the window background from bleeding through at screen edges (Dynamic Island corners, etc.)
-  self.window.backgroundColor = [UIColor whiteColor];
-  self.window.rootViewController.view.backgroundColor = [UIColor whiteColor];
-
-  return result;
+  return [super application:application didFinishLaunchingWithOptions:launchOptions];
 }
 
 - (NSURL *)sourceURLForBridge:(RCTBridge *)bridge
