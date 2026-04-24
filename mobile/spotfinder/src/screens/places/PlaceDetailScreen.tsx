@@ -193,9 +193,15 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
             onPress={() => setReviewsVisible(true)}
             activeOpacity={0.7}
           >
-            <Ionicons name="star" size={16} color="#f59e0b" />
-            <Text style={s.ratingValue}>{formatRating(place.averageRating)}</Text>
-            <Text style={s.ratingCount}>({formatCount(place.reviewCount)} değerlendirme)</Text>
+            {place.averageRating > 0 ? (
+              <>
+                <Ionicons name="star" size={16} color="#f59e0b" />
+                <Text style={s.ratingValue}>{formatRating(place.averageRating)}</Text>
+                <Text style={s.ratingCount}>({formatCount(place.reviewCount)} değerlendirme)</Text>
+              </>
+            ) : (
+              <Text style={s.ratingCount}>Henüz değerlendirme yok</Text>
+            )}
             {photoPosts.length > 0 && (
               <View style={s.photoCountBadge}>
                 <Ionicons name="images-outline" size={13} color="#888" />
