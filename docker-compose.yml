@@ -133,6 +133,8 @@ services:
       - Cors__Origins__1=http://159.89.13.168:3001
       - Cors__Origins__2=http://localhost:3000
       - Cors__Origins__3=http://localhost:3001
+      - Cors__Origins__4=https://sptfinder.com
+      - Cors__Origins__5=https://www.sptfinder.com
 
   web:
     build:
@@ -140,6 +142,7 @@ services:
       dockerfile: Dockerfile
       args:
         - API_URL=http://api-gateway:8080
+        - NEXT_PUBLIC_API_URL=https://api.sptfinder.com
         - NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=dnwylcwex
         - NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET=spotfinder_posts
     container_name: spotfinder-web
