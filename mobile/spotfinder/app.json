@@ -19,7 +19,7 @@
         "NSPhotoLibraryUsageDescription": "SpotFinder uses your photo library to attach photos to posts.",
         "NSCameraUsageDescription": "SpotFinder uses your camera to capture spot photos.",
         "NSAppTransportSecurity": {
-          "NSAllowsArbitraryLoads": true
+          "NSAllowsArbitraryLoads": false
         }
       }
     },
@@ -54,7 +54,7 @@
       "expo-font"
     ],
     "extra": {
-      "apiBaseUrl": "http://localhost:9000"
+      "apiBaseUrl": "https://api.sptfinder.com"
     }
   }
 }
