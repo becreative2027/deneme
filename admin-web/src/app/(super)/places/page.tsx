@@ -122,7 +122,7 @@ function PlaceModal({
   const [loadingDistricts, setLoadingDistricts] = useState(false);
 
   useEffect(() => {
-    getCities(1).then(setCities).finally(() => setLoadingCities(false));
+    getCities(2).then(setCities).finally(() => setLoadingCities(false));
   }, []);
 
   useEffect(() => {
@@ -432,7 +432,7 @@ export default function PlacesPage() {
 
   // Load cities once
   useEffect(() => {
-    getCities(1).then((cs) => {
+    getCities(2).then((cs) => {
       setCityMap(Object.fromEntries(cs.map((c) => [c.id, c.name])));
     });
   }, []);

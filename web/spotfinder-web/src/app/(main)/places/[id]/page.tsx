@@ -250,13 +250,19 @@ export default function PlaceDetailPage({ params }: { params: { id: string } }) 
             onClick={() => setReviewsOpen(true)}
             className="flex items-center gap-1.5 active:opacity-70 transition-opacity"
           >
-            <Star size={16} className="text-amber-400 fill-amber-400" />
-            <span className="text-[15px] font-bold text-gray-800 dark:text-gray-200">
-              {formatRating(place.averageRating)}
-            </span>
-            <span className="text-sm text-[#6c63ff] font-medium underline underline-offset-2">
-              ({formatCount(place.reviewCount)} {t('reviews.rating')})
-            </span>
+            {place.averageRating > 0 ? (
+              <>
+                <Star size={16} className="text-amber-400 fill-amber-400" />
+                <span className="text-[15px] font-bold text-gray-800 dark:text-gray-200">
+                  {formatRating(place.averageRating)}
+                </span>
+                <span className="text-sm text-[#6c63ff] font-medium underline underline-offset-2">
+                  ({formatCount(place.reviewCount)} {t('reviews.rating')})
+                </span>
+              </>
+            ) : (
+              <span className="text-sm text-gray-400">{t('reviews.noRatings') ?? 'Henüz değerlendirme yok'}</span>
+            )}
           </button>
           {allPosts.length > 0 && (
             <div className="flex items-center gap-1 text-sm text-gray-500">

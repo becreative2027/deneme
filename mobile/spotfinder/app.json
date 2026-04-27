@@ -17,7 +17,10 @@
       "buildNumber": "1",
       "infoPlist": {
         "NSPhotoLibraryUsageDescription": "SpotFinder uses your photo library to attach photos to posts.",
-        "NSCameraUsageDescription": "SpotFinder uses your camera to capture spot photos."
+        "NSCameraUsageDescription": "SpotFinder uses your camera to capture spot photos.",
+        "NSAppTransportSecurity": {
+          "NSAllowsArbitraryLoads": false
+        }
       }
     },
     "android": {
@@ -39,6 +42,7 @@
     "plugins": [
       "expo-secure-store",
       "expo-image-picker",
+      "expo-apple-authentication",
       [
         "expo-notifications",
         {
@@ -46,10 +50,11 @@
           "color": "#6c63ff",
           "sounds": []
         }
-      ]
+      ],
+      "expo-font"
     ],
     "extra": {
-      "apiBaseUrl": "http://localhost:5000"
+      "apiBaseUrl": "https://api.sptfinder.com"
     }
   }
 }

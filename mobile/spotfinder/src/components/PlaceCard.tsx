@@ -28,9 +28,13 @@ export const PlaceCard = memo(function PlaceCard({ place, onPress }: Props) {
         <View style={styles.meta}>
           <Ionicons name="location-outline" size={12} color="#888" />
           <Text style={styles.city}>{place.city}</Text>
-          <Ionicons name="star" size={12} color="#f39c12" style={styles.starIcon} />
-          <Text style={styles.rating}>{formatRating(place.averageRating)}</Text>
-          <Text style={styles.reviews}>({formatCount(place.reviewCount)})</Text>
+          {place.averageRating > 0 && (
+            <>
+              <Ionicons name="star" size={12} color="#f39c12" style={styles.starIcon} />
+              <Text style={styles.rating}>{formatRating(place.averageRating)}</Text>
+              <Text style={styles.reviews}>({formatCount(place.reviewCount)})</Text>
+            </>
+          )}
         </View>
       </View>
     </TouchableOpacity>

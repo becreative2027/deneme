@@ -8,7 +8,9 @@ public sealed class User : AggregateRoot<Guid>
 {
     public string Email { get; private set; } = string.Empty;
     public string Username { get; private set; } = string.Empty;
-    public string PasswordHash { get; private set; } = string.Empty;
+    public string? PasswordHash { get; private set; }
+    public string? ExternalProvider { get; private set; }
+    public string? ExternalId { get; private set; }
     public UserRole Role { get; private set; } = UserRole.User;
     public bool IsActive { get; private set; } = true;
     public bool IsEmailVerified { get; private set; }
@@ -25,6 +27,22 @@ public sealed class User : AggregateRoot<Guid>
             Email = email.ToLowerInvariant(),
             Username = username,
             PasswordHash = passwordHash,
+            CreatedAt = DateTime.UtcNow
+        };
+        user.AddDomainEvent(new UserCreatedDomainEvent(id, email, username));
+        return user;
+    }
+
+    public static User CreateFromOAuth(Guid id, string email, string username, string provider, string externalId)
+    {
+        var user = new User
+        {
+            Id = id,
+            Email = email.ToLowerInvariant(),
+            Username = username,
+            ExternalProvider = provider,
+            ExternalId = externalId,
+            IsEmailVerified = true,
             CreatedAt = DateTime.UtcNow
         };
         user.AddDomainEvent(new UserCreatedDomainEvent(id, email, username));

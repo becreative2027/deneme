@@ -11,6 +11,7 @@ public interface IUserRepository
     Task<bool> ExistsByUsernameAsync(string username, CancellationToken ct = default);
     Task<IReadOnlyList<User>> GetByIdsAsync(IReadOnlyList<Guid> ids, CancellationToken ct = default);
     Task<(IReadOnlyList<User> Users, int TotalCount)> SearchByUsernameAsync(string query, int page, int pageSize, CancellationToken ct = default);
+    Task<User?> GetByExternalIdAsync(string provider, string externalId, CancellationToken ct = default);
     Task AddAsync(User user, CancellationToken ct = default);
     void Update(User user);
 }

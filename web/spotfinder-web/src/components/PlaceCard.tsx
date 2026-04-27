@@ -87,13 +87,17 @@ export const PlaceCard = memo(function PlaceCard({ place, onPress }: Props) {
         <div className="flex items-center gap-1 mt-1.5">
           <MapPin size={12} className="text-gray-400 flex-shrink-0" />
           <span className="text-xs text-gray-500 mr-2">{place.city}</span>
-          <Star size={12} className="text-amber-400 flex-shrink-0 fill-amber-400" />
-          <span className="text-xs font-semibold text-gray-700 dark:text-gray-300 ml-0.5">
-            {formatRating(place.averageRating)}
-          </span>
-          <span className="text-[11px] text-gray-400 ml-0.5">
-            ({formatCount(place.reviewCount)})
-          </span>
+          {place.averageRating > 0 && (
+            <>
+              <Star size={12} className="text-amber-400 flex-shrink-0 fill-amber-400" />
+              <span className="text-xs font-semibold text-gray-700 dark:text-gray-300 ml-0.5">
+                {formatRating(place.averageRating)}
+              </span>
+              <span className="text-[11px] text-gray-400 ml-0.5">
+                ({formatCount(place.reviewCount)})
+              </span>
+            </>
+          )}
         </div>
       </div>
     </button>

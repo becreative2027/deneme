@@ -4,10 +4,9 @@ import { CreatePostRequest } from '../types';
 
 export function useCreatePost() {
   const qc = useQueryClient();
-  return useMutation({
+  return useMutation<string, Error, CreatePostRequest>({
     mutationFn: (body: CreatePostRequest) => createPost(body),
     onSuccess: () => {
-      // Invalidate all feed caches after new post
       qc.invalidateQueries({ queryKey: ['feed'] });
     },
   });

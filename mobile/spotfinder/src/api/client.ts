@@ -1,8 +1,12 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
+import Constants from 'expo-constants';
 import { getToken, saveToken, removeToken } from '../utils/storage';
 
-// Override in env / app.json extra for prod
-const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:5000';
+// Priority: EXPO_PUBLIC_API_URL env var → app.json extra.apiBaseUrl → local proxy
+const BASE_URL =
+  process.env.EXPO_PUBLIC_API_URL ??
+  (Constants.expoConfig?.extra?.apiBaseUrl as string | undefined) ??
+  'http://localhost:9000';
 
 export const apiClient = axios.create({
   baseURL: BASE_URL,
@@ -16,15 +20,22 @@ apiClient.interceptors.request.use(async (config: InternalAxiosRequestConfig) =>
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+  console.log(`[API →] ${config.method?.toUpperCase()} ${config.baseURL}${config.url}`);
   return config;
 });
 
 // ── Response interceptor — handle 401 globally ───────────────────────────────
 apiClient.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    console.log(`[API ←] ${response.status} ${response.config.url}`);
+    return response;
+  },
   async (error: AxiosError) => {
-    if (error.response?.status === 401) {
-      // Token expired — clear credentials and let RootNavigator redirect to Auth
+    const status = error.response?.status;
+    const url = error.config?.url;
+    const data = error.response?.data;
+    console.log(`[API ✗] status=${status ?? 'none'} code=${(error as any).code ?? 'none'} url=${url} msg=${error.message}`, JSON.stringify(data ?? ''));
+    if (status === 401) {
       await removeToken();
     }
     return Promise.reject(error);
