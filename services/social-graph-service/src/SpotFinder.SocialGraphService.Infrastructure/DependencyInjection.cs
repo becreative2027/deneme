@@ -1,7 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using SpotFinder.SocialGraphService.Application.Abstractions;
 using SpotFinder.SocialGraphService.Infrastructure.Persistence;
 using SpotFinder.SocialGraphService.Infrastructure.Services;
 

@@ -1,7 +1,7 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using SpotFinder.BuildingBlocks.Api;
-using SpotFinder.SocialGraphService.Application.Abstractions;
+using SpotFinder.SocialGraphService.Infrastructure.Services;
 using SpotFinder.SocialGraphService.Domain.Entities;
 using SpotFinder.SocialGraphService.Infrastructure.Persistence;
 

@@ -1,8 +1,12 @@
 using Microsoft.EntityFrameworkCore;
-using SpotFinder.SocialGraphService.Application.Abstractions;
 using SpotFinder.SocialGraphService.Infrastructure.Persistence;
 
 namespace SpotFinder.SocialGraphService.Infrastructure.Services;
+
+public interface IUserInterestWriter
+{
+    Task UpdateAsync(Guid userId, Guid placeId, decimal weight, CancellationToken ct = default);
+}
 
 public sealed class UserInterestWriter(SocialDbContext db) : IUserInterestWriter
 {
