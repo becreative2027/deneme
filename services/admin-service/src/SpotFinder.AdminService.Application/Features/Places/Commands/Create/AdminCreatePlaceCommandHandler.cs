@@ -96,8 +96,8 @@ public sealed class AdminCreatePlaceCommandHandler(
             await db.SaveChangesAsync(ct); // saves translations + audit entry
 
             // Insert default place_scores so the place appears in ranked results
-            await db.Database.ExecuteSqlRawAsync(
-                $"INSERT INTO place.place_scores (place_id, final_score, popularity_score, quality_score) VALUES ('{place.Id}', 5.0, 5.0, 5.0) ON CONFLICT (place_id) DO NOTHING");
+            await db.Database.ExecuteSqlAsync(
+                $"INSERT INTO place.place_scores (place_id, final_score, popularity_score, quality_score) VALUES ({place.Id}, 5.0, 5.0, 5.0) ON CONFLICT (place_id) DO NOTHING");
 
             await tx.CommitAsync(ct);
 
