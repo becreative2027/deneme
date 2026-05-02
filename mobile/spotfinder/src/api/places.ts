@@ -86,6 +86,14 @@ export async function searchPlaces(req: PlaceSearchRequest): Promise<PlaceSearch
   };
 }
 
+export async function trackPlaceView(placeId: string, userId: string): Promise<void> {
+  try {
+    await apiClient.post(`/api/places/${placeId}/view`, { userId });
+  } catch {
+    // fire-and-forget — silently ignore errors
+  }
+}
+
 export async function getPlaceById(id: string): Promise<Place> {
   const { data } = await apiClient.get<any>(`/api/places/${id}`);
   if (!isOk(data)) throw new Error((data?.errors ?? []).join('; ') || 'Place not found');

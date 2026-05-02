@@ -22,6 +22,8 @@ import { ReviewsModal } from '../../components/ReviewsModal';
 import { formatRating, formatCount } from '../../utils/formatters';
 import { Post } from '../../types';
 import { getFavoritePlaceIds, addFavorite, removeFavorite } from '../../api/favorites';
+import { trackPlaceView } from '../../api/places';
+import { useAuthStore } from '../../store/authStore';
 import { useWishlistStore } from '../../store/wishlistStore';
 import { WishlistStackParamList } from '../../types';
 
@@ -54,6 +56,14 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
   const { data: place, isLoading, isError, refetch } = usePlaceDetail(placeId);
   const postsQuery = usePlacePosts(placeId);
   const qc = useQueryClient();
+  const currentUser = useAuthStore(s => s.user);
+
+  // Track place view for personalization — fire-and-forget
+  React.useEffect(() => {
+    if (currentUser?.id) {
+      trackPlaceView(placeId, currentUser.id);
+    }
+  }, [placeId, currentUser?.id]);
 
   const [lightboxIndex, setLightboxIndex] = useState(0);
   const [lightboxVisible, setLightboxVisible] = useState(false);

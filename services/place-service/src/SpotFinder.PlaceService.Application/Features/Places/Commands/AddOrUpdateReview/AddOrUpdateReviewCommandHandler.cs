@@ -1,5 +1,6 @@
 using MediatR;
 using SpotFinder.BuildingBlocks.Application;
+using SpotFinder.PlaceService.Application.Abstractions;
 using SpotFinder.PlaceService.Domain.Entities;
 using SpotFinder.PlaceService.Domain.Repositories;
 
@@ -8,6 +9,8 @@ namespace SpotFinder.PlaceService.Application.Features.Places.Commands.AddOrUpda
 public sealed class AddOrUpdateReviewCommandHandler(
     IPlaceReviewRepository reviewRepo,
     IPlaceRepository placeRepo,
+    IPlaceScoreRepository scoreRepo,
+    IUserInterestWriter interests,
     IUnitOfWork unitOfWork)
     : IRequestHandler<AddOrUpdateReviewCommand, Unit>
 {
@@ -37,6 +40,30 @@ public sealed class AddOrUpdateReviewCommandHandler(
             place.SetRatingStats(avg, count);
             await unitOfWork.SaveChangesAsync(ct);
         }
+
+        // Recalculate place_scores based on new review stats
+        // quality_score  = average review rating (0-5 scale) mapped to 0-10
+        // popularity_score grows with review count (log-scale, capped at 10)
+        // final_score = weighted average: 70% quality + 30% popularity
+        var qualityScore    = avg * 2m;                                          // 0-10
+        var popularityScore = Math.Min(10m, (decimal)Math.Log(1 + count) * 2m); // 0-10 log-scaled
+        var finalScore      = (qualityScore * 0.7m) + (popularityScore * 0.3m);
+
+        var score = await scoreRepo.GetByPlaceIdAsync(request.PlaceId, ct);
+        if (score is not null)
+        {
+            score.Update(popularityScore, qualityScore, score.TrendScore, finalScore);
+            scoreRepo.Update(score);
+        }
+        else
+        {
+            scoreRepo.Update(PlaceScore.Create(request.PlaceId, popularityScore, qualityScore, trend: null, finalScore: finalScore));
+        }
+
+        await unitOfWork.SaveChangesAsync(ct);
+
+        // Update user interest signals — review is a strong engagement signal (+5)
+        await interests.UpdateAsync(request.UserId, request.PlaceId, 5m, ct);
 
         return Unit.Value;
     }

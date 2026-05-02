@@ -54,6 +54,18 @@ public sealed class RecommendationOptions
 
         /// <summary>Interest delta applied when a user unlikes a post (negative).</summary>
         public decimal Unlike     { get; set; } = -1;
+
+        /// <summary>Interest delta applied when a user saves a place to wishlist.</summary>
+        public decimal Favorite   { get; set; } = 3;
+
+        /// <summary>Interest delta applied when a user removes a place from wishlist.</summary>
+        public decimal Unfavorite { get; set; } = -1;
+
+        /// <summary>Interest delta applied when a user submits a review for a place.</summary>
+        public decimal Review     { get; set; } = 5;
+
+        /// <summary>Interest delta applied when a user views a place detail page.</summary>
+        public decimal PlaceView  { get; set; } = 1;
     }
 
     public sealed class ExploreBlendOptions
