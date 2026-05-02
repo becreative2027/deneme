@@ -2,7 +2,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using SpotFinder.BuildingBlocks.Application;
-using SpotFinder.PlaceService.Application.Abstractions;
 using SpotFinder.PlaceService.Domain.Repositories;
 using SpotFinder.PlaceService.Infrastructure.Persistence;
 using SpotFinder.PlaceService.Infrastructure.Repositories;

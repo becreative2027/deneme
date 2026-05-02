@@ -1,5 +1,5 @@
 using MediatR;
-using SpotFinder.PlaceService.Application.Abstractions;
+using SpotFinder.PlaceService.Infrastructure.Services;
 
 namespace SpotFinder.PlaceService.Application.Features.Places.Commands.TrackPlaceView;
 

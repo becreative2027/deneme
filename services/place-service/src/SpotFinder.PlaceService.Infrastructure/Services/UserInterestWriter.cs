@@ -1,8 +1,12 @@
 using Microsoft.EntityFrameworkCore;
-using SpotFinder.PlaceService.Application.Abstractions;
 using SpotFinder.PlaceService.Infrastructure.Persistence;
 
 namespace SpotFinder.PlaceService.Infrastructure.Services;
+
+public interface IUserInterestWriter
+{
+    Task UpdateAsync(Guid userId, Guid placeId, decimal weight, CancellationToken ct = default);
+}
 
 /// <summary>
 /// Writes user interest signals directly into content.user_interests using

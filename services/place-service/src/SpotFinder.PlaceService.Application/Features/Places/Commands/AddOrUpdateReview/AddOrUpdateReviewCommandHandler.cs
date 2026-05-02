@@ -1,6 +1,6 @@
 using MediatR;
 using SpotFinder.BuildingBlocks.Application;
-using SpotFinder.PlaceService.Application.Abstractions;
+using SpotFinder.PlaceService.Infrastructure.Services;
 using SpotFinder.PlaceService.Domain.Entities;
 using SpotFinder.PlaceService.Domain.Repositories;
 
