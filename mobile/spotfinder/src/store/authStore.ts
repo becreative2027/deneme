@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { UserProfile } from '../types';
 import { clearAll, saveToken, saveRefreshToken } from '../utils/storage';
 import { setAuthToken, clearAuthToken } from '../api/client';
+import { identifySentryUser, clearSentryUser } from '../utils/sentry';
 
 interface AuthState {
   token: string | null;
@@ -25,6 +26,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     await saveToken(token);
     await saveRefreshToken(refreshToken);
     setAuthToken(token);
+    identifySentryUser(user.id, user.email);
     set({ token, user, isAuthenticated: true });
   },
 
@@ -33,6 +35,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   logout: async () => {
     await clearAll();
     clearAuthToken();
+    clearSentryUser();
     set({ token: null, user: null, isAuthenticated: false });
   },
 
