@@ -421,6 +421,7 @@ export default function PlacesPage() {
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
 
   // Geo lookup maps
   const [cityMap, setCityMap] = useState<Record<number, string>>({});
@@ -430,6 +431,15 @@ export default function PlacesPage() {
   const [editPlace, setEditPlace] = useState<Place | undefined>();
   const [labelPlace, setLabelPlace] = useState<Place | undefined>();
 
+  // Debounce search input — 400ms
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search), 400);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  // Reset to page 1 when search changes
+  useEffect(() => { setPage(1); }, [debouncedSearch]);
+
   // Load cities once
   useEffect(() => {
     getCities(2).then((cs) => {
@@ -437,10 +447,10 @@ export default function PlacesPage() {
     });
   }, []);
 
-  async function load(p: number) {
+  async function load(p: number, q: string) {
     setLoading(true);
     try {
-      const data = await getPlaces(p, 20);
+      const data = await getPlaces(p, 20, q);
       setPlaces(data.items);
       setTotal(data.totalCount);
 
@@ -455,18 +465,13 @@ export default function PlacesPage() {
     }
   }
 
-  useEffect(() => { load(page); }, [page]);
+  useEffect(() => { load(page, debouncedSearch); }, [page, debouncedSearch]);
 
   async function handleDelete(id: string, name: string) {
     if (!confirm(`"${name}" mekanını silmek istediğinize emin misiniz?`)) return;
     await deletePlaceAdmin(id);
-    setPlaces(prev => prev.filter(p => p.id !== id));
-    setTotal(prev => prev - 1);
+    load(page, debouncedSearch);
   }
-
-  const filtered = search
-    ? places.filter(p => p.name?.toLowerCase().includes(search.toLowerCase()) || p.cityName?.toLowerCase().includes(search.toLowerCase()))
-    : places;
 
   return (
     <div className="p-8">
@@ -486,13 +491,21 @@ export default function PlacesPage() {
       </div>
 
       {/* Search */}
-      <div className="mb-4">
+      <div className="mb-4 relative max-w-sm">
         <input
           value={search}
           onChange={e => setSearch(e.target.value)}
-          placeholder="Mekan veya şehir ara..."
-          className="w-full max-w-sm border border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand/30"
+          placeholder="Tüm mekanlarda ara..."
+          className="w-full border border-gray-200 rounded-xl px-4 py-2 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-brand/30"
         />
+        {search && (
+          <button
+            onClick={() => setSearch('')}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700"
+          >
+            <X size={14} />
+          </button>
+        )}
       </div>
 
       {/* Table */}
@@ -514,7 +527,7 @@ export default function PlacesPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {filtered.map((p) => (
+              {places.map((p) => (
                 <tr key={p.id} className="hover:bg-gray-50 transition-colors">
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
@@ -593,7 +606,7 @@ export default function PlacesPage() {
               ))}
             </tbody>
           </table>
-          {filtered.length === 0 && (
+          {places.length === 0 && (
             <p className="text-center text-sm text-gray-400 py-12">Mekan bulunamadı.</p>
           )}
         </div>
@@ -610,10 +623,10 @@ export default function PlacesPage() {
 
       {/* Modals */}
       {showCreate && (
-        <PlaceModal onClose={() => setShowCreate(false)} onSaved={() => load(page)} />
+        <PlaceModal onClose={() => setShowCreate(false)} onSaved={() => load(page, debouncedSearch)} />
       )}
       {editPlace && (
-        <PlaceModal place={editPlace} onClose={() => setEditPlace(undefined)} onSaved={() => load(page)} />
+        <PlaceModal place={editPlace} onClose={() => setEditPlace(undefined)} onSaved={() => load(page, debouncedSearch)} />
       )}
       {labelPlace && (
         <LabelAssignDrawer place={labelPlace} onClose={() => setLabelPlace(undefined)} />
