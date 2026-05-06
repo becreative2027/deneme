@@ -32,8 +32,10 @@ async function requestAndRegister(): Promise<void> {
   const isSimulator = !Constants.isDevice;
   if (isSimulator) return;
 
-  const projectId = Constants.expoConfig?.extra?.eas?.projectId ?? Constants.easConfig?.projectId;
-  if (!projectId) return; // no project ID configured — skip silently
+  const projectId =
+    Constants.expoConfig?.extra?.eas?.projectId ??
+    Constants.easConfig?.projectId ??
+    '9b34ffd4-0bd5-49d2-bdb8-beb17673402c';
 
   const { data: pushToken } = await Notifications.getExpoPushTokenAsync({ projectId });
   await registerDevice(pushToken);
