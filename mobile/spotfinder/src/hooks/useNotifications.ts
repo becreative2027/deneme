@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import * as Notifications from 'expo-notifications';
-import { Platform, Alert } from 'react-native';
+import { Platform } from 'react-native';
 import Constants from 'expo-constants';
 import { registerDevice } from '../api/notifications';
 import { routeNotification, NotificationPayload } from '../navigation/navigationRef';
@@ -18,7 +18,6 @@ Notifications.setNotificationHandler({
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 async function requestAndRegister(): Promise<void> {
-  Alert.alert('DEBUG', 'requestAndRegister started');
   const { status: existing } = await Notifications.getPermissionsAsync();
   let finalStatus = existing;
 
@@ -72,9 +71,7 @@ function extractPayload(
  */
 export function useNotifications(): void {
   useEffect(() => {
-    requestAndRegister().catch((e: unknown) => {
-      Alert.alert('Push Token Error', String(e));
-    });
+    requestAndRegister().catch(() => {});
   }, []);
 }
 
