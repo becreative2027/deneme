@@ -24,7 +24,7 @@ public sealed class OAuthLoginCommandHandler : ICommandHandler<OAuthLoginCommand
 
     // Apple OIDC discovery
     private const string AppleDiscoveryUrl = "https://appleid.apple.com/.well-known/openid-configuration";
-    private const string AppleAudience     = "com.spotfinder.app";
+    private const string AppleAudience     = "com.ayberkkemal.spotfinder";
 
     // Google tokeninfo endpoint
     private const string GoogleTokenInfoUrl = "https://oauth2.googleapis.com/tokeninfo";
