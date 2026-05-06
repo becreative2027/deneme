@@ -18,6 +18,7 @@ Notifications.setNotificationHandler({
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 async function requestAndRegister(): Promise<void> {
+  Alert.alert('DEBUG', 'requestAndRegister started');
   const { status: existing } = await Notifications.getPermissionsAsync();
   let finalStatus = existing;
 
