@@ -13,7 +13,7 @@
     },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.spotfinder.app",
+      "bundleIdentifier": "com.ayberkkemal.spotfinder",
       "buildNumber": "1",
       "usesAppleSignIn": true,
       "infoPlist": {
@@ -31,7 +31,7 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#6c63ff"
       },
-      "package": "com.spotfinder.app",
+      "package": "com.ayberkkemal.spotfinder",
       "versionCode": 1,
       "permissions": [
         "android.permission.CAMERA",
