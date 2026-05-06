@@ -85,6 +85,32 @@ public sealed class UsersController : BaseController
         return NoContent();
     }
 
+    [HttpPatch("me/username")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> UpdateUsername([FromBody] UpdateUsernameRequest request, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(request.Username) || request.Username.Length < 3)
+            return BadRequest(new { message = "Kullanıcı adı en az 3 karakter olmalı." });
+
+        var username = request.Username.Trim().ToLowerInvariant();
+
+        if (!System.Text.RegularExpressions.Regex.IsMatch(username, @"^[a-z0-9_]{3,20}$"))
+            return BadRequest(new { message = "Kullanıcı adı sadece harf, rakam ve _ içerebilir (3-20 karakter)." });
+
+        if (await _userRepository.ExistsByUsernameAsync(username, ct))
+            return Conflict(new { message = "Bu kullanıcı adı zaten alınmış." });
+
+        var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var user = await _userRepository.GetByIdAsync(userId, ct);
+        if (user is null) return NotFound();
+
+        user.UpdateUsername(username);
+        await _unitOfWork.SaveChangesAsync(ct);
+        return NoContent();
+    }
+
     // ── Place Ownership Management (Admin/SuperAdmin only) ────────────────
 
     [HttpPost("ownership")]
@@ -188,3 +214,4 @@ public sealed record UpdateProfileRequest(string? DisplayName, string? Bio, stri
 public sealed record GrantOwnershipRequest(Guid UserId, Guid PlaceId);
 public sealed record SetRoleRequest(UserRole Role);
 public sealed record CreatePlaceOwnerRequest(string Email, string Username, string Password, Guid PlaceId);
+public sealed record UpdateUsernameRequest(string Username);

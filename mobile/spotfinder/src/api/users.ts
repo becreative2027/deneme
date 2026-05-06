@@ -137,6 +137,10 @@ export async function getUsersByIds(ids: string[]): Promise<UserProfile[]> {
   }));
 }
 
+export async function updateUsername(username: string): Promise<void> {
+  await apiClient.patch('/api/users/me/username', { username });
+}
+
 export async function followUser(userId: string): Promise<void> {
   await apiClient.post('/api/social/follow', { followingId: userId });
 }
