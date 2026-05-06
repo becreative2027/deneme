@@ -14,12 +14,12 @@ export function FeedNavigator() {
       <Stack.Screen
         name="PlaceDetail"
         component={PlaceDetailScreen}
-        options={{ title: 'Place', headerBackTitle: '' }}
+        options={{ headerShown: false }}
       />
       <Stack.Screen
         name="UserProfile"
         component={ProfileScreen}
-        options={{ title: 'Profile', headerBackTitle: '' }}
+        options={{ headerShown: false }}
       />
     </Stack.Navigator>
   );

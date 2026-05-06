@@ -13,7 +13,7 @@ export function SearchNavigator() {
       <Stack.Screen
         name="PlaceDetail"
         component={PlaceDetailScreen}
-        options={{ title: 'Place', headerBackTitle: '' }}
+        options={{ headerShown: false }}
       />
     </Stack.Navigator>
   );

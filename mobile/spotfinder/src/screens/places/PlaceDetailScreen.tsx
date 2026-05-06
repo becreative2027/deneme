@@ -9,7 +9,7 @@ import {
   ActivityIndicator,
   Dimensions,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -51,8 +51,11 @@ function parkingLabel(status: string): { text: string; color: string } {
   }
 }
 
+const TAB_BAR_HEIGHT = 56;
+
 export function PlaceDetailScreen({ route, navigation }: Props) {
   const { placeId } = route.params;
+  const insets = useSafeAreaInsets();
   const { data: place, isLoading, isError, refetch } = usePlaceDetail(placeId);
   const postsQuery = usePlacePosts(placeId);
   const qc = useQueryClient();
@@ -155,7 +158,7 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
           )}
           {/* Back button */}
           <TouchableOpacity
-            style={s.backBtn}
+            style={[s.backBtn, { top: insets.top + 10 }]}
             onPress={() => (navigation as any).goBack()}
             activeOpacity={0.8}
           >
@@ -163,7 +166,7 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
           </TouchableOpacity>
           {/* Favorite button */}
           <TouchableOpacity
-            style={s.favBtn}
+            style={[s.favBtn, { top: insets.top + 10 }]}
             onPress={() => favMutation.mutate()}
             activeOpacity={0.8}
             disabled={favMutation.isPending}
@@ -176,7 +179,7 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
           </TouchableOpacity>
           {/* Wishlist (bookmark) button */}
           <TouchableOpacity
-            style={s.bookmarkBtn}
+            style={[s.bookmarkBtn, { top: insets.top + 10 }]}
             onPress={() => togglePlace(placeId)}
             activeOpacity={0.8}
           >
@@ -325,7 +328,7 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
           </View>
         )}
 
-        <View style={{ height: 32 }} />
+        <View style={{ height: TAB_BAR_HEIGHT + insets.bottom + 16 }} />
       </ScrollView>
 
       {/* ── Reviews modal ─────────────────────────────────────────────────────── */}
@@ -367,7 +370,6 @@ const s = StyleSheet.create({
   },
   backBtn: {
     position: 'absolute',
-    top: 52,
     left: 16,
     width: 36,
     height: 36,
@@ -378,7 +380,6 @@ const s = StyleSheet.create({
   },
   favBtn: {
     position: 'absolute',
-    top: 52,
     right: 60,
     width: 36,
     height: 36,
@@ -389,7 +390,6 @@ const s = StyleSheet.create({
   },
   bookmarkBtn: {
     position: 'absolute',
-    top: 52,
     right: 16,
     width: 36,
     height: 36,
