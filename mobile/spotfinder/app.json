@@ -41,7 +41,8 @@
         "android.permission.RECEIVE_BOOT_COMPLETED",
         "android.permission.VIBRATE",
         "android.permission.INTERNET",
-        "android.permission.ACCESS_NETWORK_STATE"
+        "android.permission.ACCESS_NETWORK_STATE",
+        "android.permission.RECORD_AUDIO"
       ],
       "notification": {
         "icon": "./assets/notification-icon.png",
@@ -70,15 +71,7 @@
           "sounds": []
         }
       ],
-      "expo-font",
-      [
-        "@sentry/react-native/expo",
-        {
-          "url": "https://sentry.io/",
-          "project": "spotfinder",
-          "organization": "YOUR_SENTRY_ORG"
-        }
-      ]
+      "expo-font"
     ],
     "scheme": "spotfinder",
     "extra": {
@@ -87,7 +80,7 @@
       "cloudinaryUploadPreset": "spotfinder_posts",
       "sentryDsn": "YOUR_SENTRY_DSN",
       "eas": {
-        "projectId": "YOUR_EAS_PROJECT_ID"
+        "projectId": "9b34ffd4-0bd5-49d2-bdb8-beb17673402c"
       }
     }
   }
