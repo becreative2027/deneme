@@ -24,7 +24,8 @@
         "NSAppTransportSecurity": {
           "NSAllowsArbitraryLoads": false
         }
-      }
+      },
+      "runtimeVersion": "1.0.0"
     },
     "android": {
       "adaptiveIcon": {
@@ -42,12 +43,24 @@
         "android.permission.VIBRATE",
         "android.permission.INTERNET",
         "android.permission.ACCESS_NETWORK_STATE",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.CAMERA",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.READ_MEDIA_IMAGES",
+        "android.permission.POST_NOTIFICATIONS",
+        "android.permission.RECEIVE_BOOT_COMPLETED",
+        "android.permission.VIBRATE",
+        "android.permission.INTERNET",
+        "android.permission.ACCESS_NETWORK_STATE",
         "android.permission.RECORD_AUDIO"
       ],
       "notification": {
         "icon": "./assets/notification-icon.png",
         "color": "#6c63ff",
         "androidMode": "default"
+      },
+      "runtimeVersion": {
+        "policy": "appVersion"
       }
     },
     "web": {
@@ -82,6 +95,9 @@
       "eas": {
         "projectId": "9b34ffd4-0bd5-49d2-bdb8-beb17673402c"
       }
+    },
+    "updates": {
+      "url": "https://u.expo.dev/9b34ffd4-0bd5-49d2-bdb8-beb17673402c"
     }
   }
 }
