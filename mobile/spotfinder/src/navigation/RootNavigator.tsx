@@ -39,7 +39,12 @@ export function RootNavigator() {
         if (token) {
           setAuthToken(token);
           const user = await getMe();
-          useAuthStore.setState({ token, user, isAuthenticated: true });
+          useAuthStore.setState({
+            token,
+            user,
+            isAuthenticated: true,
+            needsUsernameSetup: /^user\d*$/.test(user.username ?? ''),
+          });
         }
       } catch {
         await logout();
