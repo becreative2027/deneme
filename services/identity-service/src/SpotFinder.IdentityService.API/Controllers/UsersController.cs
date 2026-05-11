@@ -75,6 +75,7 @@ public sealed class UsersController : BaseController
     }
 
     [HttpPut("profile")]
+    [HttpPatch("me")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileRequest request, CancellationToken ct)
