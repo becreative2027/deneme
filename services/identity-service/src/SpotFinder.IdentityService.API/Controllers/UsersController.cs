@@ -76,14 +76,15 @@ public sealed class UsersController : BaseController
 
     [HttpPut("profile")]
     [HttpPatch("me")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileRequest request, CancellationToken ct)
     {
         var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
         var cmd = new UpdateProfileCommand(userId, request.DisplayName, request.Bio, request.ProfileImageUrl);
         await Sender.Send(cmd, ct);
-        return NoContent();
+        var updated = await Sender.Send(new GetUserByIdQuery(userId), ct);
+        return OkResult(updated);
     }
 
     [HttpPatch("me/username")]
