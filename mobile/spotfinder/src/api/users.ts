@@ -152,22 +152,10 @@ export async function unfollowUser(userId: string): Promise<void> {
 export async function updateProfile(
   payload: Partial<Pick<UserProfile, 'displayName' | 'bio' | 'avatarUrl'>>,
 ): Promise<UserProfile> {
-  const { data } = await apiClient.patch<ApiResponse<any>>('/api/users/me', {
+  await apiClient.put('/api/users/profile', {
     displayName: payload.displayName,
     bio: payload.bio,
     profileImageUrl: payload.avatarUrl,
   });
-  if (!data.success || !data.data) throw new Error('Update failed');
-  const raw = data.data;
-  return {
-    id:             raw.id          ?? '',
-    username:       raw.username    ?? '',
-    displayName:    raw.displayName ?? '',
-    email:          raw.email       ?? '',
-    bio:            raw.bio         ?? undefined,
-    avatarUrl:      raw.avatarUrl   ?? raw.profileImageUrl ?? undefined,
-    postsCount:     raw.postsCount  ?? 0,
-    followersCount: raw.followersCount ?? 0,
-    followingCount: raw.followingCount ?? 0,
-  };
+  return getMe();
 }
