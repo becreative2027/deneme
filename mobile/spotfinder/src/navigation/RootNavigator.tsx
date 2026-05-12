@@ -13,6 +13,7 @@ import { NotificationReceiver } from '../components/NotificationReceiver';
 import { AuthNavigator } from './AuthNavigator';
 import { MainNavigator } from './MainNavigator';
 import { SplashScreen } from '../screens/SplashScreen';
+import { UsernameSetupScreen } from '../screens/auth/UsernameSetupScreen';
 import { useWishlistStore } from '../store/wishlistStore';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -27,7 +28,7 @@ function NotificationRegistrar() {
 // ── Root navigator ────────────────────────────────────────────────────────────
 
 export function RootNavigator() {
-  const { isAuthenticated, setHydrated, isHydrated, logout } = useAuthStore();
+  const { isAuthenticated, setHydrated, isHydrated, logout, needsUsernameSetup } = useAuthStore();
   const hydrateWishlist = useWishlistStore((s) => s.hydrate);
   const [isBooting, setIsBooting] = useState(true);
 
@@ -38,7 +39,12 @@ export function RootNavigator() {
         if (token) {
           setAuthToken(token);
           const user = await getMe();
-          useAuthStore.setState({ token, user, isAuthenticated: true });
+          useAuthStore.setState({
+            token,
+            user,
+            isAuthenticated: true,
+            needsUsernameSetup: /^user\d*$/.test(user.username ?? ''),
+          });
         }
       } catch {
         await logout();
@@ -68,7 +74,9 @@ export function RootNavigator() {
         </>
       )}
       <Stack.Navigator screenOptions={{ headerShown: false }}>
-        {isAuthenticated ? (
+        {isAuthenticated && needsUsernameSetup ? (
+          <Stack.Screen name="UsernameSetup" component={UsernameSetupScreen} />
+        ) : isAuthenticated ? (
           <Stack.Screen name="Main" component={MainNavigator} />
         ) : (
           <Stack.Screen name="Auth" component={AuthNavigator} />

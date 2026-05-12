@@ -5,6 +5,7 @@ using SpotFinder.BuildingBlocks.Application;
 using SpotFinder.PlaceService.Domain.Repositories;
 using SpotFinder.PlaceService.Infrastructure.Persistence;
 using SpotFinder.PlaceService.Infrastructure.Repositories;
+using SpotFinder.PlaceService.Infrastructure.Services;
 
 namespace SpotFinder.PlaceService.Infrastructure;
 
@@ -27,6 +28,7 @@ public static class DependencyInjection
         services.AddScoped<IPlaceRepository, PlaceRepository>();
         services.AddScoped<IPlaceScoreRepository, PlaceScoreRepository>();
         services.AddScoped<IPlaceReviewRepository, PlaceReviewRepository>();
+        services.AddScoped<IUserInterestWriter, UserInterestWriter>();
         return services;
     }
 }

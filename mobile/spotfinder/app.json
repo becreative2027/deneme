@@ -13,27 +13,54 @@
     },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.spotfinder.app",
-      "buildNumber": "1",
+      "bundleIdentifier": "com.ayberkkemal.spotfinder",
+      "buildNumber": "9",
+      "usesAppleSignIn": true,
       "infoPlist": {
         "NSPhotoLibraryUsageDescription": "SpotFinder uses your photo library to attach photos to posts.",
         "NSCameraUsageDescription": "SpotFinder uses your camera to capture spot photos.",
+        "NSFaceIDUsageDescription": "SpotFinder uses Face ID to securely authenticate you.",
+        "ITSAppUsesNonExemptEncryption": false,
         "NSAppTransportSecurity": {
           "NSAllowsArbitraryLoads": false
         }
-      }
+      },
+      "runtimeVersion": "1.0.0"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#6c63ff"
       },
-      "package": "com.spotfinder.app",
+      "package": "com.ayberkkemal.spotfinder",
       "versionCode": 1,
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.READ_MEDIA_IMAGES",
+        "android.permission.POST_NOTIFICATIONS",
+        "android.permission.RECEIVE_BOOT_COMPLETED",
+        "android.permission.VIBRATE",
+        "android.permission.INTERNET",
+        "android.permission.ACCESS_NETWORK_STATE",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.CAMERA",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.READ_MEDIA_IMAGES",
+        "android.permission.POST_NOTIFICATIONS",
+        "android.permission.RECEIVE_BOOT_COMPLETED",
+        "android.permission.VIBRATE",
+        "android.permission.INTERNET",
+        "android.permission.ACCESS_NETWORK_STATE",
+        "android.permission.RECORD_AUDIO"
+      ],
       "notification": {
-        "icon": "./assets/icon.png",
+        "icon": "./assets/notification-icon.png",
         "color": "#6c63ff",
         "androidMode": "default"
+      },
+      "runtimeVersion": {
+        "policy": "appVersion"
       }
     },
     "web": {
@@ -41,20 +68,36 @@
     },
     "plugins": [
       "expo-secure-store",
-      "expo-image-picker",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "SpotFinder uses your photo library to attach photos to posts.",
+          "cameraPermission": "SpotFinder uses your camera to capture spot photos."
+        }
+      ],
       "expo-apple-authentication",
       [
         "expo-notifications",
         {
-          "icon": "./assets/icon.png",
+          "icon": "./assets/notification-icon.png",
           "color": "#6c63ff",
           "sounds": []
         }
       ],
       "expo-font"
     ],
+    "scheme": "spotfinder",
     "extra": {
-      "apiBaseUrl": "https://api.sptfinder.com"
+      "apiBaseUrl": "https://api.sptfinder.com",
+      "cloudinaryCloudName": "dnwylcwex",
+      "cloudinaryUploadPreset": "spotfinder_posts",
+      "sentryDsn": "YOUR_SENTRY_DSN",
+      "eas": {
+        "projectId": "9b34ffd4-0bd5-49d2-bdb8-beb17673402c"
+      }
+    },
+    "updates": {
+      "url": "https://u.expo.dev/9b34ffd4-0bd5-49d2-bdb8-beb17673402c"
     }
   }
 }

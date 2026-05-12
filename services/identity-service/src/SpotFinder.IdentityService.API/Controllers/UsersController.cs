@@ -75,13 +75,41 @@ public sealed class UsersController : BaseController
     }
 
     [HttpPut("profile")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [HttpPatch("me")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileRequest request, CancellationToken ct)
     {
         var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
         var cmd = new UpdateProfileCommand(userId, request.DisplayName, request.Bio, request.ProfileImageUrl);
         await Sender.Send(cmd, ct);
+        var updated = await Sender.Send(new GetUserByIdQuery(userId), ct);
+        return OkResult(updated);
+    }
+
+    [HttpPatch("me/username")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> UpdateUsername([FromBody] UpdateUsernameRequest request, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(request.Username) || request.Username.Length < 3)
+            return BadRequest(new { message = "Kullanıcı adı en az 3 karakter olmalı." });
+
+        var username = request.Username.Trim().ToLowerInvariant();
+
+        if (!System.Text.RegularExpressions.Regex.IsMatch(username, @"^[a-z0-9_]{3,20}$"))
+            return BadRequest(new { message = "Kullanıcı adı sadece harf, rakam ve _ içerebilir (3-20 karakter)." });
+
+        if (await _userRepository.ExistsByUsernameAsync(username, ct))
+            return Conflict(new { message = "Bu kullanıcı adı zaten alınmış." });
+
+        var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var user = await _userRepository.GetByIdAsync(userId, ct);
+        if (user is null) return NotFound();
+
+        user.UpdateUsername(username);
+        await _unitOfWork.SaveChangesAsync(ct);
         return NoContent();
     }
 
@@ -188,3 +216,4 @@ public sealed record UpdateProfileRequest(string? DisplayName, string? Bio, stri
 public sealed record GrantOwnershipRequest(Guid UserId, Guid PlaceId);
 public sealed record SetRoleRequest(UserRole Role);
 public sealed record CreatePlaceOwnerRequest(string Email, string Username, string Password, Guid PlaceId);
+public sealed record UpdateUsernameRequest(string Username);

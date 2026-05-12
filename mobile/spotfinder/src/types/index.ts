@@ -188,4 +188,5 @@ export type AuthStackParamList = {
 export type RootStackParamList = {
   Auth: undefined;
   Main: NavigatorScreenParams<MainTabParamList> | undefined;
+  UsernameSetup: undefined;
 };

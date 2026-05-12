@@ -1,5 +1,15 @@
-const CLOUD_NAME = 'dnwylcwex';
-const UPLOAD_PRESET = 'spotfinder_posts';
+import Constants from 'expo-constants';
+
+const CLOUD_NAME =
+  process.env.EXPO_PUBLIC_CLOUDINARY_CLOUD_NAME ??
+  (Constants.expoConfig?.extra?.cloudinaryCloudName as string | undefined) ??
+  'dnwylcwex';
+
+const UPLOAD_PRESET =
+  process.env.EXPO_PUBLIC_CLOUDINARY_UPLOAD_PRESET ??
+  (Constants.expoConfig?.extra?.cloudinaryUploadPreset as string | undefined) ??
+  'spotfinder_posts';
+
 const CLOUDINARY_URL = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`;
 
 export type UploadProgressCallback = (fraction: number) => void;

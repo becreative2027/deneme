@@ -10,6 +10,7 @@ using SpotFinder.IdentityService.Application.Features.Auth.Commands.Login;
 using SpotFinder.IdentityService.Domain.Entities;
 using SpotFinder.IdentityService.Domain.Repositories;
 using SpotFinder.IdentityService.Domain.Services;
+using RefreshTokenEntity = SpotFinder.IdentityService.Domain.Entities.RefreshToken;
 
 namespace SpotFinder.IdentityService.Application.Features.Auth.Commands.OAuthLogin;
 
@@ -23,7 +24,7 @@ public sealed class OAuthLoginCommandHandler : ICommandHandler<OAuthLoginCommand
 
     // Apple OIDC discovery
     private const string AppleDiscoveryUrl = "https://appleid.apple.com/.well-known/openid-configuration";
-    private const string AppleAudience     = "com.spotfinder.app";
+    private const string AppleAudience     = "com.ayberkkemal.spotfinder";
 
     // Google tokeninfo endpoint
     private const string GoogleTokenInfoUrl = "https://oauth2.googleapis.com/tokeninfo";
@@ -74,7 +75,7 @@ public sealed class OAuthLoginCommandHandler : ICommandHandler<OAuthLoginCommand
         // ── Issue tokens ──────────────────────────────────────────────────────
         var accessToken      = _jwtTokenService.GenerateAccessToken(user);
         var refreshTokenValue = _jwtTokenService.GenerateRefreshToken();
-        var refreshToken     = RefreshToken.Create(user.Id, refreshTokenValue, DateTime.UtcNow.AddDays(30));
+        var refreshToken     = RefreshTokenEntity.Create(user.Id, refreshTokenValue, DateTime.UtcNow.AddDays(30));
 
         await _refreshTokenRepository.AddAsync(refreshToken, ct);
         await _unitOfWork.SaveChangesAsync(ct);

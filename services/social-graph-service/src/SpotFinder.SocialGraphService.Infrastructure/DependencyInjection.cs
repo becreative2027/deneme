@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using SpotFinder.SocialGraphService.Infrastructure.Persistence;
+using SpotFinder.SocialGraphService.Infrastructure.Services;
 
 namespace SpotFinder.SocialGraphService.Infrastructure;
 
@@ -11,6 +12,8 @@ public static class DependencyInjection
     {
         services.AddDbContext<SocialDbContext>(options =>
             options.UseNpgsql(configuration.GetConnectionString("SocialDb")).UseSnakeCaseNamingConvention());
+
+        services.AddScoped<IUserInterestWriter, UserInterestWriter>();
 
         return services;
     }

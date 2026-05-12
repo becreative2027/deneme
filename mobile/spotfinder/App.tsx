@@ -10,6 +10,10 @@ import { ToastProvider } from './src/components/Toast';
 import { RootNavigator } from './src/navigation/RootNavigator';
 import { ThemeProvider, useTheme } from './src/theme';
 import { retryDelay, shouldRetry } from './src/utils/retry';
+import { initSentry } from './src/utils/sentry';
+
+// Initialize crash reporting before anything renders
+initSentry();
 
 // ── React Query client with exponential backoff ───────────────────────────────
 const queryClient = new QueryClient({

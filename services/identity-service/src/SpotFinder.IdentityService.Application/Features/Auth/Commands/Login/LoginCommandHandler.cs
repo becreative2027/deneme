@@ -1,8 +1,8 @@
 using SpotFinder.BuildingBlocks.Application;
-using SpotFinder.IdentityService.Domain.Entities;
 using SpotFinder.IdentityService.Domain.Enums;
 using SpotFinder.IdentityService.Domain.Repositories;
 using SpotFinder.IdentityService.Domain.Services;
+using RefreshTokenEntity = SpotFinder.IdentityService.Domain.Entities.RefreshToken;
 
 namespace SpotFinder.IdentityService.Application.Features.Auth.Commands.Login;
 
@@ -49,7 +49,7 @@ public sealed class LoginCommandHandler : ICommandHandler<LoginCommand, LoginRes
 
         var accessToken = _jwtTokenService.GenerateAccessToken(user, ownedPlaceIds);
         var refreshTokenValue = _jwtTokenService.GenerateRefreshToken();
-        var refreshToken = RefreshToken.Create(user.Id, refreshTokenValue, DateTime.UtcNow.AddDays(30));
+        var refreshToken = RefreshTokenEntity.Create(user.Id, refreshTokenValue, DateTime.UtcNow.AddDays(30));
 
         await _refreshTokenRepository.AddAsync(refreshToken, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);

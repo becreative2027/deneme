@@ -46,6 +46,13 @@ public static class DependencyInjection
         services.AddHttpClient("internal");
         services.AddScoped<IContentDeletionService, ContentDeletionService>();
 
+        // Expo push notification delivery
+        services.AddScoped<IExpoPushService, ExpoPushService>();
+
+        // Identity service HTTP client for fetching push tokens
+        var identityUrl = configuration["Services:IdentityUrl"] ?? "http://spotfinder-identity:8080";
+        services.AddHttpClient("identity", c => c.BaseAddress = new Uri(identityUrl));
+
         // Phase 7.4 — Redis pub/sub publisher for config change events.
         // Redis is optional; if no connection string is configured the publisher is a no-op.
         var redisConn = configuration.GetConnectionString("Redis");

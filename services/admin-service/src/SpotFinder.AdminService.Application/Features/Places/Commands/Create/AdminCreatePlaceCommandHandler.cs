@@ -59,8 +59,27 @@ public sealed class AdminCreatePlaceCommandHandler(
                 PlaceId    = place.Id,
                 LanguageId = t.LanguageId,
                 Name       = t.Name.Trim(),
-                Slug       = NormalizeSlug(t.Slug),
+                Slug       = string.IsNullOrWhiteSpace(t.Slug)
+                             ? GenerateSlug(t.Name)
+                             : NormalizeSlug(t.Slug),
             }).ToList();
+
+            // If only one translation provided, mirror it for the other language (TR→EN or EN→TR)
+            var providedLangIds = translations.Select(t => t.LanguageId).ToHashSet();
+            var trLangId = 1; // tr
+            var enLangId = 2; // en
+            if (providedLangIds.Count == 1)
+            {
+                var source = translations[0];
+                var missingLangId = source.LanguageId == trLangId ? enLangId : trLangId;
+                translations.Add(new AdminPlaceTranslationWrite
+                {
+                    PlaceId    = place.Id,
+                    LanguageId = missingLangId,
+                    Name       = source.Name,
+                    Slug       = source.Slug,
+                });
+            }
 
             db.PlaceTranslations.AddRange(translations);
 
@@ -75,6 +94,11 @@ public sealed class AdminCreatePlaceCommandHandler(
             });
 
             await db.SaveChangesAsync(ct); // saves translations + audit entry
+
+            // Insert default place_scores so the place appears in ranked results
+            await db.Database.ExecuteSqlAsync(
+                $"INSERT INTO place.place_scores (place_id, final_score, popularity_score, quality_score) VALUES ({place.Id}, 5.0, 5.0, 5.0) ON CONFLICT (place_id) DO NOTHING");
+
             await tx.CommitAsync(ct);
 
             cache.InvalidateFilters();
@@ -97,4 +121,16 @@ public sealed class AdminCreatePlaceCommandHandler(
 
     private static string? NormalizeSlug(string? slug)
         => slug?.Trim().ToLowerInvariant().Replace(' ', '-');
+
+    private static string GenerateSlug(string name)
+    {
+        var s = name.Trim().ToLowerInvariant();
+        s = s.Replace('ı', 'i').Replace('ğ', 'g').Replace('ş', 's')
+             .Replace('ç', 'c').Replace('ü', 'u').Replace('ö', 'o')
+             .Replace('İ', 'i').Replace('Ğ', 'g').Replace('Ş', 's')
+             .Replace('Ç', 'c').Replace('Ü', 'u').Replace('Ö', 'o');
+        // Replace non-alphanumeric with dash, collapse multiple dashes
+        s = System.Text.RegularExpressions.Regex.Replace(s, @"[^a-z0-9]+", "-");
+        return s.Trim('-');
+    }
 }

@@ -6,6 +6,7 @@ using SpotFinder.BuildingBlocks.Api;
 using SpotFinder.PlaceService.Application.Features.Places.Commands.AddOrUpdateReview;
 using SpotFinder.PlaceService.Application.Features.Places.Commands.CreatePlace;
 using SpotFinder.PlaceService.Application.Features.Places.Commands.DeleteReview;
+using SpotFinder.PlaceService.Application.Features.Places.Commands.TrackPlaceView;
 using SpotFinder.PlaceService.Application.Features.Places.Queries.GetPlaceById;
 using SpotFinder.PlaceService.Application.Features.Places.Queries.GetPlaceDetail;
 using SpotFinder.PlaceService.Application.Features.Places.Queries.GetPlaceReviews;
@@ -102,6 +103,16 @@ public sealed class PlacesController : BaseController
         return Ok(result);
     }
 
+    /// <summary>Track that a user viewed a place detail page (interest signal).</summary>
+    [HttpPost("{id:guid}/view")]
+    [Authorize]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    public async Task<IActionResult> TrackView(Guid id, [FromBody] TrackViewRequest req, CancellationToken ct)
+    {
+        await Sender.Send(new TrackPlaceViewCommand(req.UserId, id), ct);
+        return NoContent();
+    }
+
     /// <summary>Admin: Delete a review by id.</summary>
     [HttpDelete("{id:guid}/reviews/{reviewId:guid}")]
     [Authorize(Roles = "Admin,SuperAdmin")]
@@ -121,3 +132,5 @@ public sealed record AddReviewRequest(
     string? AvatarUrl,
     int Rating,
     string? Comment);
+
+public sealed record TrackViewRequest(Guid UserId);

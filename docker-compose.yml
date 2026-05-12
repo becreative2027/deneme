@@ -135,6 +135,7 @@ services:
       - Cors__Origins__3=http://localhost:3001
       - Cors__Origins__4=https://sptfinder.com
       - Cors__Origins__5=https://www.sptfinder.com
+      - Cors__Origins__6=https://admin.sptfinder.com
 
   web:
     build:
@@ -156,7 +157,7 @@ services:
       context: ./admin-web
       dockerfile: Dockerfile
       args:
-        - NEXT_PUBLIC_API_URL=http://159.89.13.168:5000
+        - NEXT_PUBLIC_API_URL=https://api.sptfinder.com
     container_name: spotfinder-admin-web
     ports:
       - "3001:3001"

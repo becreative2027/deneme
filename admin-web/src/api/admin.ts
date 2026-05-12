@@ -3,11 +3,12 @@ import type { PagedResult, Place, FilterCategory, Review } from '@/lib/types';
 
 // ── Places ────────────────────────────────────────────────────────────────
 
-export async function getPlaces(page = 1, pageSize = 20): Promise<PagedResult<Place>> {
+export async function getPlaces(page = 1, pageSize = 20, query?: string): Promise<PagedResult<Place>> {
   const { data } = await adminClient.post('/api/places/search', {
     languageId: 1,
     page,
     pageSize,
+    query: query?.trim() || undefined,
   });
   // SearchPlaces response: { data: { items, totalCount } } or { items, totalCount }
   const inner = data?.data ?? data;

@@ -12,6 +12,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { captureError } from '../utils/sentry';
 
 interface Props {
   children: React.ReactNode;
@@ -35,10 +36,7 @@ export class ErrorBoundary extends React.Component<Props, State> {
   }
 
   componentDidCatch(error: Error, info: React.ErrorInfo) {
-    // In production: forward to Sentry / Datadog / etc.
-    if (__DEV__) {
-      console.error('[ErrorBoundary]', error, info.componentStack);
-    }
+    captureError(error, { componentStack: info.componentStack ?? '' });
   }
 
   reset = () => {

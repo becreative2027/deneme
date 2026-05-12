@@ -8,6 +8,7 @@ import {
   StyleSheet,
   ScrollView,
   Alert,
+  ActionSheetIOS,
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
@@ -98,38 +99,95 @@ export function CreatePostScreen() {
     isSubmittingRef.current = false;
   }
 
-  // ── Phase 8.2: pick + compress image ─────────────────────────────────────────
+  // ── Image pick / capture ──────────────────────────────────────────────────────
 
-  const pickImage = useCallback(async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+  const processAndSet = useCallback(async (uri: string) => {
+    try {
+      setIsUploading(true);
+      const processed = await processImageForUpload(uri);
+      setImageUri(processed.uri);
+      haptic.light();
+    } catch {
+      showToast('Fotoğraf işlenemedi.', 'error');
+      haptic.error();
+    } finally {
+      setIsUploading(false);
+    }
+  }, [showToast]);
+
+  const launchCamera = useCallback(async () => {
+    const available = await ImagePicker.getCameraPermissionsAsync()
+      .then(() => true)
+      .catch(() => false);
+
+    if (!available) {
+      showToast('Bu cihazda kamera kullanılamıyor.', 'error');
+      return;
+    }
+
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
     if (status !== 'granted') {
-      showToast('Camera roll access is required to attach photos.', 'error');
+      showToast('Kamera erişimi gerekiyor.', 'error');
       haptic.warning();
       return;
     }
 
+    let result;
+    try {
+      result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 1,
+      });
+    } catch {
+      showToast('Kamera açılamadı.', 'error');
+      return;
+    }
+
+    if (!result.canceled && result.assets[0]) {
+      await processAndSet(result.assets[0].uri);
+    }
+  }, [processAndSet, showToast]);
+
+  const launchGallery = useCallback(async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      showToast('Galeri erişimi gerekiyor.', 'error');
+      haptic.warning();
+      return;
+    }
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [1, 1],
-      quality: 1,          // pick at full quality; we compress in processImageForUpload
+      quality: 1,
     });
-
     if (!result.canceled && result.assets[0]) {
-      try {
-        setIsUploading(true);
-        // Resize + compress to max 1080px / 0.7 quality
-        const processed = await processImageForUpload(result.assets[0].uri);
-        setImageUri(processed.uri);
-        haptic.light();
-      } catch {
-        showToast('Could not process the selected image.', 'error');
-        haptic.error();
-      } finally {
-        setIsUploading(false);
-      }
+      await processAndSet(result.assets[0].uri);
     }
-  }, [showToast]);
+  }, [processAndSet, showToast]);
+
+  const pickImage = useCallback(() => {
+    if (Platform.OS === 'ios') {
+      ActionSheetIOS.showActionSheetWithOptions(
+        {
+          options: ['İptal', 'Kameradan Çek', 'Galeriden Seç'],
+          cancelButtonIndex: 0,
+        },
+        (idx) => {
+          if (idx === 1) launchCamera();
+          if (idx === 2) launchGallery();
+        },
+      );
+    } else {
+      Alert.alert('Fotoğraf Ekle', '', [
+        { text: 'İptal', style: 'cancel' },
+        { text: 'Kameradan Çek', onPress: launchCamera },
+        { text: 'Galeriden Seç', onPress: launchGallery },
+      ]);
+    }
+  }, [launchCamera, launchGallery]);
 
   // ── Phase 8.2: CDN upload + post create ───────────────────────────────────────
 

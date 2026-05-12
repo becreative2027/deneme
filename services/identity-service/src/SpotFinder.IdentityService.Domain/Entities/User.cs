@@ -49,6 +49,12 @@ public sealed class User : AggregateRoot<Guid>
         return user;
     }
 
+    public void UpdateUsername(string username)
+    {
+        Username = username;
+        UpdatedAt = DateTime.UtcNow;
+    }
+
     public void UpdateEmail(string email)
     {
         Email = email.ToLowerInvariant();
