@@ -119,6 +119,12 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
     Linking.openURL(place.menuUrl).catch(() => {});
   }, [place]);
 
+  const openNearbyParking = useCallback(() => {
+    if (!place?.latitude || !place?.longitude) return;
+    const url = `https://www.google.com/maps/search/parking/@${place.latitude},${place.longitude},16z`;
+    Linking.openURL(url).catch(() => {});
+  }, [place]);
+
   const openPhoto = useCallback((index: number) => {
     setLightboxIndex(index);
     setLightboxVisible(true);
@@ -260,7 +266,7 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
           )}
 
           {/* Parking + Menu */}
-          {(parking || hasMenu) && (
+          {(parking || hasMenu || !!(place.latitude && place.longitude)) && (
             <View style={s.section}>
               {parking && (
                 <View style={s.infoRow}>
@@ -269,6 +275,12 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
                   </View>
                   <Text style={[s.infoText, { color: parking.color }]}>{parking.text}</Text>
                 </View>
+              )}
+              {!!(place.latitude && place.longitude) && (
+                <TouchableOpacity style={s.parkingBtn} onPress={openNearbyParking} activeOpacity={0.8}>
+                  <Ionicons name="map-outline" size={15} color="#fff" />
+                  <Text style={s.parkingBtnText}>Yakındaki otoparklar</Text>
+                </TouchableOpacity>
               )}
               {place.menuUrl && (
                 <TouchableOpacity style={s.infoRow} onPress={openMenu} activeOpacity={0.7}>
@@ -428,6 +440,8 @@ const s = StyleSheet.create({
   infoRow:       { flexDirection: 'row', alignItems: 'center', marginBottom: 12, gap: 10 },
   infoIcon:      { width: 32, height: 32, borderRadius: 16, backgroundColor: '#f5f5f5', alignItems: 'center', justifyContent: 'center' },
   infoText:      { fontSize: 14, fontWeight: '500' },
+  parkingBtn:    { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', backgroundColor: '#6c63ff', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, marginBottom: 12 },
+  parkingBtnText: { fontSize: 13, color: '#fff', fontWeight: '600' },
 
   trendRow:      { flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 16, paddingTop: 16, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: '#eee' },
   trendText:     { fontSize: 13, color: PRIMARY },
