@@ -19,6 +19,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
 import { useCreatePost } from '../../hooks/usePosts';
+import { useRatingPrompt } from '../../hooks/useRatingPrompt';
 import { usePlaceSearch } from '../../hooks/usePlaces';
 import { useToast } from '../../components/Toast';
 import { useAnalytics } from '../../hooks/useAnalytics';
@@ -58,6 +59,7 @@ export function CreatePostScreen() {
   const searchQuery = usePlaceSearch({ query: placeSearch, pageSize: 10 }, placeSearch.length > 1);
   const { showToast } = useToast();
   const { trackScreen, trackEvent } = useAnalytics();
+  const { trackAction } = useRatingPrompt();
 
   useEffect(() => {
     trackScreen('CreatePostScreen');
@@ -243,6 +245,7 @@ export function CreatePostScreen() {
               // Image attachment failed but post exists — acceptable
             }
             trackEvent('post_create', { placeId: selectedPlace.id });
+            trackAction();
             showToast('Gönderi paylaşıldı!', 'success');
             haptic.success();
             resetForm();

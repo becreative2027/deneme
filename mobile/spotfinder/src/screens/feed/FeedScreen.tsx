@@ -21,6 +21,7 @@ import { PostSkeleton } from '../../components/SkeletonLoader';
 import { ErrorState } from '../../components/ErrorState';
 import { EmptyState } from '../../components/EmptyState';
 import { useLikePost } from '../../hooks/usePosts';
+import { useRatingPrompt } from '../../hooks/useRatingPrompt';
 
 type Props = { navigation: NativeStackNavigationProp<FeedStackParamList, 'Feed'> };
 
@@ -37,6 +38,7 @@ export function FeedScreen({ navigation }: Props) {
   const personalized = usePersonalizedFeed();
   const likeMutation = useLikePost();
   const { trackScreen, trackEvent } = useAnalytics();
+  const { trackAction } = useRatingPrompt();
   const theme = useTheme();
   const s = useMemo(() => createStyles(theme.colors), [theme.colors]);
 
@@ -64,16 +66,18 @@ export function FeedScreen({ navigation }: Props) {
     (postId: string, currentlyLiked: boolean) => {
       likeMutation.mutate({ postId, liked: currentlyLiked });
       trackEvent('post_like', { postId, liked: !currentlyLiked });
+      if (!currentlyLiked) trackAction(); // only track when liking (not unliking)
     },
-    [likeMutation, trackEvent],
+    [likeMutation, trackEvent, trackAction],
   );
 
   const handlePressPlace = useCallback(
     (placeId: string) => {
       navigation.push('PlaceDetail', { placeId });
       trackEvent('place_open', { placeId, source: 'feed' });
+      trackAction();
     },
-    [navigation, trackEvent],
+    [navigation, trackEvent, trackAction],
   );
 
   const renderPost = useCallback(
