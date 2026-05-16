@@ -165,6 +165,7 @@ export type ProfileStackParamList = {
   PlaceDetail: { placeId: string };
   UserProfile: { userId: string };
   EditProfile: undefined;
+  UserSearch: undefined;
 };
 
 export type WishlistStackParamList = {

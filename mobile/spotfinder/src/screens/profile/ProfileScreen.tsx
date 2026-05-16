@@ -219,14 +219,24 @@ export function ProfileScreen({ route, navigation }: Props) {
           )}
           <View style={{ flex: 1 }} />
           {isOwnProfile && (
-            <TouchableOpacity
-              onPress={handleLogout}
-              style={[s.glassBtn, { backgroundColor: colors.glassBg, borderColor: colors.glassBorder }]}
-              accessibilityRole="button"
-              accessibilityLabel="Çıkış yap"
-            >
-              <Ionicons name="log-out-outline" size={18} color={colors.text} />
-            </TouchableOpacity>
+            <View style={{ flexDirection: 'row', gap: 8 }}>
+              <TouchableOpacity
+                onPress={() => navigation.push('UserSearch')}
+                style={[s.glassBtn, { backgroundColor: colors.glassBg, borderColor: colors.glassBorder }]}
+                accessibilityRole="button"
+                accessibilityLabel="Kişi ara"
+              >
+                <Ionicons name="search-outline" size={18} color={colors.text} />
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={handleLogout}
+                style={[s.glassBtn, { backgroundColor: colors.glassBg, borderColor: colors.glassBorder }]}
+                accessibilityRole="button"
+                accessibilityLabel="Çıkış yap"
+              >
+                <Ionicons name="log-out-outline" size={18} color={colors.text} />
+              </TouchableOpacity>
+            </View>
           )}
         </SafeAreaView>
       </View>
