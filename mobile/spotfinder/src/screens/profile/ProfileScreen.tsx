@@ -31,6 +31,7 @@ import { useToast } from '../../components/Toast';
 import { useAnalytics } from '../../hooks/useAnalytics';
 import { formatCount } from '../../utils/formatters';
 import { logout as apiLogout } from '../../api/auth';
+import { deleteAccount as apiDeleteAccount } from '../../api/users';
 import { getFavoritePlaceIds } from '../../api/favorites';
 import { getPlaceById } from '../../api/places';
 import { useTheme, radius, spacing, typography, shadow } from '../../theme';
@@ -162,6 +163,42 @@ export function ProfileScreen({ route, navigation }: Props) {
     ]);
   }, [doLogout]);
 
+  const handleDeleteAccount = useCallback(() => {
+    Alert.alert(
+      'Hesabı Sil',
+      'Hesabını kalıcı olarak silmek istediğine emin misin? Bu işlem geri alınamaz.',
+      [
+        { text: 'İptal', style: 'cancel' },
+        {
+          text: 'Hesabımı Sil',
+          style: 'destructive',
+          onPress: () => {
+            Alert.alert(
+              'Son Onay',
+              'Tüm verilerinden vazgeçiyorsun. Devam etmek istiyor musun?',
+              [
+                { text: 'İptal', style: 'cancel' },
+                {
+                  text: 'Evet, Sil',
+                  style: 'destructive',
+                  onPress: async () => {
+                    try {
+                      await apiDeleteAccount();
+                      await apiLogout();
+                      await doLogout();
+                    } catch {
+                      showToast('Hesap silinirken hata oluştu.', 'error');
+                    }
+                  },
+                },
+              ],
+            );
+          },
+        },
+      ],
+    );
+  }, [doLogout, showToast]);
+
   if (profileQuery.isLoading) {
     return (
       <SafeAreaView style={[s.container, { backgroundColor: colors.background }]} edges={['top']}>
@@ -285,12 +322,22 @@ export function ProfileScreen({ route, navigation }: Props) {
         {/* Actions */}
         <View style={s.actionsRow}>
           {isOwnProfile ? (
-            <AmberButton
-              label="Profili düzenle"
-              variant="ghost"
-              style={{ flex: 1 }}
-              onPress={() => navigation.push('EditProfile')}
-            />
+            <>
+              <AmberButton
+                label="Profili düzenle"
+                variant="ghost"
+                style={{ flex: 1 }}
+                onPress={() => navigation.push('EditProfile')}
+              />
+              <TouchableOpacity
+                onPress={handleDeleteAccount}
+                style={[s.iconBtn, { backgroundColor: colors.glassBg, borderColor: colors.glassBorder }]}
+                accessibilityRole="button"
+                accessibilityLabel="Hesabı sil"
+              >
+                <Ionicons name="trash-outline" size={18} color="#ef4444" />
+              </TouchableOpacity>
+            </>
           ) : (
             <>
               <AmberButton
