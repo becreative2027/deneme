@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SpotFinder.BuildingBlocks.Api;
 using SpotFinder.BuildingBlocks.Application;
+using SpotFinder.IdentityService.Application.Features.Users.Commands.DeleteAccount;
 using SpotFinder.IdentityService.Application.Features.Users.Commands.UpdateProfile;
 using SpotFinder.IdentityService.Application.Features.Users.Queries.GetUserById;
 using SpotFinder.IdentityService.Application.Features.Users.Queries.GetUsersByIds;
@@ -85,6 +86,16 @@ public sealed class UsersController : BaseController
         await Sender.Send(cmd, ct);
         var updated = await Sender.Send(new GetUserByIdQuery(userId), ct);
         return OkResult(updated);
+    }
+
+    [HttpDelete("me")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> DeleteAccount(CancellationToken ct)
+    {
+        var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var result = await Sender.Send(new DeleteAccountCommand(userId), ct);
+        return result ? NoContent() : NotFound();
     }
 
     [HttpPatch("me/username")]

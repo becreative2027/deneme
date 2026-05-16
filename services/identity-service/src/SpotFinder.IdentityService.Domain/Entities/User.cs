@@ -73,6 +73,18 @@ public sealed class User : AggregateRoot<Guid>
         UpdatedAt = DateTime.UtcNow;
     }
 
+    public void DeleteAccount()
+    {
+        // Anonymize PII for GDPR compliance
+        Email = $"deleted_{Id}@deleted.invalid";
+        Username = $"deleted_{Id}";
+        PasswordHash = null;
+        ExternalProvider = null;
+        ExternalId = null;
+        IsActive = false;
+        UpdatedAt = DateTime.UtcNow;
+    }
+
     public void VerifyEmail()
     {
         IsEmailVerified = true;
