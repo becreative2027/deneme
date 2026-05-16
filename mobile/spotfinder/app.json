@@ -3,6 +3,7 @@
     "name": "SpotFinder",
     "slug": "spotfinder",
     "version": "1.0.0",
+    "privacyPolicyUrl": "https://sptfinder.com/privacy",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
