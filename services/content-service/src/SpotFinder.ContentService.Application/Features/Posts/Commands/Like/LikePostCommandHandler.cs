@@ -65,14 +65,14 @@ public sealed class LikePostCommandHandler(
         return ApiResult<bool>.Ok(true);
     }
 
-    private async Task SendLikeNotificationAsync(Guid likerId, Guid postOwnerId, string postId)
+    private async Task SendLikeNotificationAsync(Guid likerId, Guid postOwnerId, Guid postId)
     {
         try
         {
             var http = httpClientFactory.CreateClient();
             await http.PostAsJsonAsync(
                 "http://spotfinder-identity:8080/api/notifications/send-like",
-                new { likerId, postOwnerId, postId });
+                new { likerId, postOwnerId, postId = postId.ToString() });
         }
         catch (Exception ex)
         {
