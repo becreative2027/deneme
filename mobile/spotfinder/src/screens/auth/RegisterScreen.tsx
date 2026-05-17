@@ -42,12 +42,20 @@ export function RegisterScreen({ navigation }: Props) {
       showToast('Tüm alanlar zorunludur.', 'warning');
       return;
     }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email.trim())) {
+      showToast('Geçerli bir e-posta adresi gir.', 'warning');
+      return;
+    }
     if (password !== confirmPassword) {
       showToast('Şifreler eşleşmiyor.', 'warning');
       return;
     }
     if (password.length < 8) {
       showToast('Şifre en az 8 karakter olmalı.', 'warning');
+      return;
+    }
+    if (!/[A-Z]/.test(password) || !/[0-9]/.test(password)) {
+      showToast('Şifre en az 1 büyük harf ve 1 rakam içermeli.', 'warning');
       return;
     }
     setLoading(true);

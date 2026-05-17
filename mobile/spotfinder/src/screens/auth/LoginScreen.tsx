@@ -30,8 +30,8 @@ const { width, height } = Dimensions.get('window');
 // https://console.cloud.google.com → APIs & Services → Credentials → Create OAuth 2.0 Client ID
 // iOS Client ID  : "App type = iOS", Bundle ID = com.spotfinder.app
 // Web Client ID  : "App type = Web application" (required for id_token)
-const GOOGLE_IOS_CLIENT_ID = 'YOUR_IOS_GOOGLE_CLIENT_ID.apps.googleusercontent.com';
-const GOOGLE_WEB_CLIENT_ID = 'YOUR_WEB_GOOGLE_CLIENT_ID.apps.googleusercontent.com';
+const GOOGLE_IOS_CLIENT_ID = '196817036029-74cmitujnep5s5il8cmsbfjb6hjif5so.apps.googleusercontent.com';
+const GOOGLE_WEB_CLIENT_ID = '196817036029-ad7o8lof6tm0le250vjo5b03jdak1961.apps.googleusercontent.com';
 // ────────────────────────────────────────────────────────────────────────────────────
 
 type Props = { navigation: NativeStackNavigationProp<AuthStackParamList, 'Login'> };
@@ -100,6 +100,10 @@ export function LoginScreen({ navigation }: Props) {
   async function handleLogin() {
     if (!email.trim() || !password) {
       showToast('E-posta ve şifre gerekli.', 'warning');
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email.trim())) {
+      showToast('Geçerli bir e-posta adresi gir.', 'warning');
       return;
     }
     setLoading(true);
