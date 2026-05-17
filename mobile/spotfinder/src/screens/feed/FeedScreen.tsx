@@ -128,7 +128,6 @@ export function FeedScreen({ navigation }: Props) {
         initialNumToRender={4}
         maxToRenderPerBatch={5}
         windowSize={8}
-        removeClippedSubviews
         onEndReached={handleEndReached}
         onEndReachedThreshold={0.4}
         refreshControl={
