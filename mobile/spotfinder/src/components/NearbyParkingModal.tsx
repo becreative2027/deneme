@@ -51,8 +51,12 @@ function estimateDrivingMinutes(meters: number): number {
   return Math.max(1, Math.round((meters / 1000 / 25) * 60));
 }
 
+const GOOGLE_MAPS_API_KEY =
+  (Constants.expoConfig?.extra?.googleMapsApiKey as string | undefined) ||
+  'AIzaSyBXJTEBXIpAADNzMk1AdxI1eErMTic1klQ';
+
 async function fetchNearbyParking(lat: number, lon: number): Promise<ParkingSpot[]> {
-  const apiKey = (Constants.expoConfig?.extra?.googleMapsApiKey as string) ?? '';
+  const apiKey = GOOGLE_MAPS_API_KEY;
 
   const url =
     `https://maps.googleapis.com/maps/api/place/nearbysearch/json` +
@@ -61,7 +65,14 @@ async function fetchNearbyParking(lat: number, lon: number): Promise<ParkingSpot
     `&type=parking` +
     `&key=${apiKey}`;
 
-  const resp = await fetch(url, { signal: AbortSignal.timeout(12000) });
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 12000);
+  let resp: Response;
+  try {
+    resp = await fetch(url, { signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
   const json = await resp.json();
 
   if (json.status !== 'OK' && json.status !== 'ZERO_RESULTS') {
@@ -258,7 +269,9 @@ export function NearbyParkingModal({ visible, onClose, placeLat, placeLon, place
               <View style={s.emptyIcon}>
                 <Ionicons name="car-outline" size={32} color="#bbb" />
               </View>
-              <Text style={s.centerText}>Bu çevrede otopark bulunamadı.</Text>
+              <Text style={s.centerText}>
+                Bu çevrede otopark bulunamadı.
+              </Text>
               <Text style={s.centerSub}>Haritalar uygulaması üzerinden arayabilirsiniz.</Text>
               <TouchableOpacity style={[s.mapsBtn, { marginTop: 20 }]} onPress={openAllInMaps}>
                 <Ionicons name="map-outline" size={15} color="#fff" />
