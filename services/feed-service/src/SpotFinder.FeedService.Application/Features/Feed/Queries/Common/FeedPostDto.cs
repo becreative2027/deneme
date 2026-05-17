@@ -20,4 +20,4 @@ public sealed record FeedUserDto(
     string? ProfileImageUrl
 );
 
-public sealed record FeedPlaceDto(Guid Id, string Name);
+public sealed record FeedPlaceDto(Guid Id, string Name, string? City);

@@ -12,7 +12,7 @@ function normalizeFeedPage(raw: any): FeedPage {
     avatarUrl:    item.user?.profileImageUrl ?? undefined,
     placeId:      item.place?.id   ?? '',
     placeName:    item.place?.name ?? '',
-    placeCity:    '',
+    placeCity:    item.place?.city ?? '',
     imageUrl:     item.media?.[0]  ?? undefined,
     caption:      item.caption     ?? undefined,
     likeCount:    item.likeCount   ?? 0,

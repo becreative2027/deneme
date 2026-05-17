@@ -266,6 +266,14 @@ export function ProfileScreen({ route, navigation }: Props) {
                 <Ionicons name="search-outline" size={18} color={colors.text} />
               </TouchableOpacity>
               <TouchableOpacity
+                onPress={() => navigation.push('Feedback')}
+                style={[s.glassBtn, { backgroundColor: colors.glassBg, borderColor: colors.glassBorder }]}
+                accessibilityRole="button"
+                accessibilityLabel="Geri bildirim"
+              >
+                <Ionicons name="chatbubble-ellipses-outline" size={18} color={colors.text} />
+              </TouchableOpacity>
+              <TouchableOpacity
                 onPress={handleLogout}
                 style={[s.glassBtn, { backgroundColor: colors.glassBg, borderColor: colors.glassBorder }]}
                 accessibilityRole="button"

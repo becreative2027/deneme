@@ -55,12 +55,14 @@ export const PostCard = memo(function PostCard({ post, onLike, onPressPlace, onP
       {post.caption ? <Text style={s.caption}>{post.caption}</Text> : null}
 
       {/* Place tag */}
-      <TouchableOpacity style={s.placeTag} onPress={() => onPressPlace?.(post.placeId)}>
-        <Ionicons name="location-outline" size={13} color={theme.colors.primary} />
-        <Text style={s.placeName}>
-          {post.placeName} · {post.placeCity}
-        </Text>
-      </TouchableOpacity>
+      {post.placeName ? (
+        <TouchableOpacity style={s.placeTag} onPress={() => onPressPlace?.(post.placeId)}>
+          <Ionicons name="location-outline" size={13} color={theme.colors.primary} />
+          <Text style={s.placeName}>
+            {post.placeName}{post.placeCity ? ` · ${post.placeCity}` : ''}
+          </Text>
+        </TouchableOpacity>
+      ) : null}
 
       {/* Actions */}
       <View style={s.actions}>

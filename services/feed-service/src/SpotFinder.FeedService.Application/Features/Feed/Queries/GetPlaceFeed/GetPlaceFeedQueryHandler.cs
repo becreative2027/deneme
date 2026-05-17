@@ -136,6 +136,15 @@ public sealed class GetPlaceFeedQueryHandler
             .Select(t => t.Name)
             .FirstOrDefaultAsync(ct) ?? string.Empty;
 
+        var placeRow  = await _db.Places.Where(p => p.Id == request.PlaceId).Select(p => new { p.CityId }).FirstOrDefaultAsync(ct);
+        var cityName  = placeRow?.CityId.HasValue == true
+            ? await _db.CityTranslations
+                .Where(t => t.CityId == placeRow.CityId!.Value)
+                .OrderBy(t => t.LanguageId == 1 ? 0 : 1)
+                .Select(t => t.Name)
+                .FirstOrDefaultAsync(ct)
+            : null;
+
         var likedList = await _db.PostLikes
             .Where(l => l.UserId == request.UserId && postIds.Contains(l.PostId))
             .Select(l => l.PostId)
@@ -149,7 +158,7 @@ public sealed class GetPlaceFeedQueryHandler
 
         var userById  = userList.ToDictionary(u => u.Id);
         var likedSet  = likedList.ToHashSet();
-        var placeDto  = new FeedPlaceDto(request.PlaceId, placeName);
+        var placeDto  = new FeedPlaceDto(request.PlaceId, placeName, cityName);
 
         var dtos = posts.Select(p =>
         {

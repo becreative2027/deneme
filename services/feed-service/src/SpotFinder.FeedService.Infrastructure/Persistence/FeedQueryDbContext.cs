@@ -26,6 +26,9 @@ public sealed class FeedQueryDbContext : DbContext
     public DbSet<PlaceRow>            Places            => Set<PlaceRow>();
     public DbSet<PlaceTranslationRow> PlaceTranslations => Set<PlaceTranslationRow>();
 
+    // ── geo schema ────────────────────────────────────────────────────────────
+    public DbSet<CityTranslationRow> CityTranslations => Set<CityTranslationRow>();
+
     // ── label schema ──────────────────────────────────────────────────────────
     public DbSet<PlaceLabelRow> PlaceLabels => Set<PlaceLabelRow>();
 
@@ -108,6 +111,17 @@ public sealed class FeedQueryDbContext : DbContext
             b.HasKey(x => x.Id);
             b.Property(x => x.Id).HasColumnName("id");
             b.Property(x => x.PlaceId).HasColumnName("place_id");
+            b.Property(x => x.LanguageId).HasColumnName("language_id");
+            b.Property(x => x.Name).HasColumnName("name");
+        });
+
+        // ── geo.city_translations ─────────────────────────────────────────────
+        modelBuilder.Entity<CityTranslationRow>(b =>
+        {
+            b.ToTable("city_translations", "geo");
+            b.HasKey(x => x.Id);
+            b.Property(x => x.Id).HasColumnName("id");
+            b.Property(x => x.CityId).HasColumnName("city_id");
             b.Property(x => x.LanguageId).HasColumnName("language_id");
             b.Property(x => x.Name).HasColumnName("name");
         });

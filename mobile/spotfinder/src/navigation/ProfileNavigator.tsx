@@ -5,6 +5,7 @@ import { ProfileScreen } from '../screens/profile/ProfileScreen';
 import { EditProfileScreen } from '../screens/profile/EditProfileScreen';
 import { PlaceDetailScreen } from '../screens/places/PlaceDetailScreen';
 import { UserSearchScreen } from '../screens/profile/UserSearchScreen';
+import { FeedbackScreen } from '../screens/profile/FeedbackScreen';
 
 const Stack = createNativeStackNavigator<ProfileStackParamList>();
 
@@ -30,6 +31,11 @@ export function ProfileNavigator() {
       <Stack.Screen
         name="UserSearch"
         component={UserSearchScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="Feedback"
+        component={FeedbackScreen}
         options={{ headerShown: false }}
       />
     </Stack.Navigator>

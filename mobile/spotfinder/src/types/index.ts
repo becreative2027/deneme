@@ -166,6 +166,7 @@ export type ProfileStackParamList = {
   UserProfile: { userId: string };
   EditProfile: undefined;
   UserSearch: undefined;
+  Feedback: undefined;
 };
 
 export type WishlistStackParamList = {

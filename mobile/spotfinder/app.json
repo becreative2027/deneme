@@ -15,7 +15,7 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.ayberkkemal.spotfinder",
-      "buildNumber": "16",
+      "buildNumber": "17",
       "usesAppleSignIn": true,
       "infoPlist": {
         "NSPhotoLibraryUsageDescription": "SpotFinder uses your photo library to attach photos to posts.",

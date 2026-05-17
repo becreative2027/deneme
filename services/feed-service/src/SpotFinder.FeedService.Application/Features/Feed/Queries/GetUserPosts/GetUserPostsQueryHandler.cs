@@ -70,6 +70,19 @@ public sealed class GetUserPostsQueryHandler
             .Select(t => new { t.PlaceId, t.LanguageId, t.Name })
             .ToListAsync(ct);
 
+        var cityIdByPlace = await _db.Places
+            .Where(p => placeIds.Contains(p.Id))
+            .Select(p => new { p.Id, p.CityId })
+            .ToListAsync(ct);
+
+        var cityIds = cityIdByPlace.Where(p => p.CityId.HasValue).Select(p => p.CityId!.Value).Distinct().ToList();
+        var cityNames = cityIds.Count > 0
+            ? await _db.CityTranslations
+                .Where(t => cityIds.Contains(t.CityId))
+                .Select(t => new { t.CityId, t.LanguageId, t.Name })
+                .ToListAsync(ct)
+            : [];
+
         var likedSet = (await _db.PostLikes
             .Where(l => l.UserId == request.RequestingUserId && postIds.Contains(l.PostId))
             .Select(l => l.PostId)
@@ -86,21 +99,31 @@ public sealed class GetUserPostsQueryHandler
                 g => g.Key,
                 g => (g.FirstOrDefault(t => t.LanguageId == 1) ?? g.First()).Name);
 
-        var dtos = posts.Select(p => new FeedPostDto(
-            p.Id,
-            new FeedUserDto(p.UserId,
-                userRow?.Username ?? string.Empty,
-                userRow?.DisplayName,
-                userRow?.ProfileImageUrl),
-            new FeedPlaceDto(p.PlaceId,
-                nameByPlace.GetValueOrDefault(p.PlaceId, string.Empty)),
-            p.Caption,
-            mediaByPost.GetValueOrDefault(p.Id, []),
-            p.LikeCount,
-            p.CommentCount,
-            p.CreatedAt,
-            likedSet.Contains(p.Id)
-        )).ToList();
+        var cityIdMap = cityIdByPlace.ToDictionary(p => p.Id, p => p.CityId);
+        var cityNameMap = cityNames
+            .GroupBy(t => t.CityId)
+            .ToDictionary(g => g.Key, g => (g.FirstOrDefault(t => t.LanguageId == 1) ?? g.First()).Name);
+
+        var dtos = posts.Select(p =>
+        {
+            var cityId   = cityIdMap.GetValueOrDefault(p.PlaceId);
+            var cityName = cityId.HasValue ? cityNameMap.GetValueOrDefault(cityId.Value) : null;
+            return new FeedPostDto(
+                p.Id,
+                new FeedUserDto(p.UserId,
+                    userRow?.Username ?? string.Empty,
+                    userRow?.DisplayName,
+                    userRow?.ProfileImageUrl),
+                new FeedPlaceDto(p.PlaceId,
+                    nameByPlace.GetValueOrDefault(p.PlaceId, string.Empty),
+                    cityName),
+                p.Caption,
+                mediaByPost.GetValueOrDefault(p.Id, []),
+                p.LikeCount,
+                p.CommentCount,
+                p.CreatedAt,
+                likedSet.Contains(p.Id));
+        }).ToList();
 
         var last   = posts[^1];
         var cursor = hasMore ? new FeedCursor(last.FeedScore, last.CreatedAt, last.Id) : null;
