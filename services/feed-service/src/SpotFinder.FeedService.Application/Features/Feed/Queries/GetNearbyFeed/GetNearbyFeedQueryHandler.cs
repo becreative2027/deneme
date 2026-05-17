@@ -165,7 +165,7 @@ public sealed class GetNearbyFeedQueryHandler
                     u?.DisplayName,
                     u?.ProfileImageUrl),
                 new FeedPlaceDto(p.PlaceId,
-                    nameByPlace.GetValueOrDefault(p.PlaceId, string.Empty)),
+                    nameByPlace.GetValueOrDefault(p.PlaceId, string.Empty), null),
                 p.Caption,
                 mediaByPost.GetValueOrDefault(p.Id, []),
                 p.LikeCount,
