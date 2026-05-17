@@ -8,7 +8,8 @@ import {
   RefreshControl,
   ActivityIndicator,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { FeedStackParamList, Post } from '../../types';
 import { useFollowingFeed, useExploreFeed, usePersonalizedFeed } from '../../hooks/useFeed';
@@ -41,6 +42,7 @@ export function FeedScreen({ navigation }: Props) {
   const { trackAction } = useRatingPrompt();
   const theme = useTheme();
   const s = useMemo(() => createStyles(theme.colors), [theme.colors]);
+  const tabBarHeight = useBottomTabBarHeight();
 
   useEffect(() => {
     trackScreen('FeedScreen');
@@ -150,7 +152,7 @@ export function FeedScreen({ navigation }: Props) {
           ) : null
         }
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={allPosts.length === 0 ? { flex: 1 } : undefined}
+        contentContainerStyle={allPosts.length === 0 ? { flex: 1 } : { paddingBottom: tabBarHeight }}
       />
     </SafeAreaView>
   );
