@@ -15,8 +15,8 @@ import { RootStackParamList } from '../types';
 export const linking: LinkingOptions<RootStackParamList> = {
   prefixes: [
     'spotfinder://',
+    'https://sptfinder.com',
     'https://spotfinder.app',
-    'http://spotfinder.app', // dev / staging
   ],
 
   config: {

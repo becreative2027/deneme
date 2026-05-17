@@ -1,0 +1,14 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appID": "TWBV3B7Y56.com.ayberkkemal.spotfinder",
+        "paths": [
+          "/place/*",
+          "/user/*"
+        ]
+      }
+    ]
+  }
+}
