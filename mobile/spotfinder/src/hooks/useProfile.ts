@@ -53,7 +53,12 @@ export function useFollowUser() {
       isFollowing ? unfollowUser(userId) : followUser(userId),
     onMutate: async ({ userId, isFollowing }) => {
       await qc.cancelQueries({ queryKey: ['users', userId] });
-      const prev = qc.getQueryData<UserProfile>(['users', userId]);
+      await qc.cancelQueries({ queryKey: ['users', 'me'] });
+
+      const prevTarget = qc.getQueryData<UserProfile>(['users', userId]);
+      const prevMe     = qc.getQueryData<UserProfile>(['users', 'me']);
+
+      // Optimistically update the target user's profile (isFollowing + followersCount)
       qc.setQueryData<UserProfile>(['users', userId], (old) =>
         old
           ? {
@@ -63,15 +68,23 @@ export function useFollowUser() {
             }
           : old,
       );
-      return { prev, userId };
+
+      // Optimistically update current user's followingCount
+      qc.setQueryData<UserProfile>(['users', 'me'], (old) =>
+        old
+          ? { ...old, followingCount: old.followingCount + (isFollowing ? -1 : 1) }
+          : old,
+      );
+
+      return { prevTarget, prevMe, userId };
     },
     onError: (_err, _vars, context) => {
-      if (context?.prev) {
-        qc.setQueryData(['users', context.userId], context.prev);
-      }
+      if (context?.prevTarget) qc.setQueryData(['users', context.userId], context.prevTarget);
+      if (context?.prevMe)     qc.setQueryData(['users', 'me'], context.prevMe);
     },
     onSettled: (_data, _err, { userId }) => {
       qc.invalidateQueries({ queryKey: ['users', userId] });
+      qc.invalidateQueries({ queryKey: ['users', 'me'] });
     },
   });
 }
