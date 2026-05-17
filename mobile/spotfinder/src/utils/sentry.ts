@@ -1,6 +1,7 @@
 import * as Sentry from '@sentry/react-native';
+import Constants from 'expo-constants';
 
-const DSN = 'https://13fde8bb13ed607da03495e4857e1e05@o4511403701108736.ingest.de.sentry.io/4511403712446544';
+const DSN = Constants.expoConfig?.extra?.sentryDsn as string;
 
 export function initSentry() {
   Sentry.init({
