@@ -15,7 +15,7 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.ayberkkemal.spotfinder",
-      "buildNumber": "17",
+      "buildNumber": "20",
       "usesAppleSignIn": true,
       "infoPlist": {
         "NSPhotoLibraryUsageDescription": "SpotFinder uses your photo library to attach photos to posts.",
@@ -84,6 +84,7 @@
       "cloudinaryCloudName": "dnwylcwex",
       "cloudinaryUploadPreset": "spotfinder_posts",
       "sentryDsn": "https://13fde8bb13ed607da03495e4857e1e05@o4511403701108736.ingest.de.sentry.io/4511403712446544",
+      "googleMapsApiKey": "AIzaSyBXJTEBXIpAADNzMk1AdxI1eErMTic1klQ",
       "eas": {
         "projectId": "9b34ffd4-0bd5-49d2-bdb8-beb17673402c"
       }

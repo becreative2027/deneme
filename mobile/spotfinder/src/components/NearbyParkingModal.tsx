@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Constants from 'expo-constants';
 
 const PRIMARY = '#6c63ff';
 
@@ -23,9 +24,10 @@ interface ParkingSpot {
   lat: number;
   lon: number;
   distanceMeters: number;
-  fee?: string;        // 'yes' | 'no'
-  capacity?: number;
-  parkingType?: string; // 'surface' | 'underground' | 'multi-storey' etc.
+  drivingMinutes: number;
+  vicinity?: string;
+  openNow?: boolean;
+  rating?: number;
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -44,44 +46,45 @@ function formatDistance(m: number): string {
   return m < 1000 ? `${Math.round(m)} m` : `${(m / 1000).toFixed(1)} km`;
 }
 
-function parkingTypeLabel(type?: string): string {
-  switch (type) {
-    case 'underground':  return 'Kapalı otopark';
-    case 'multi-storey': return 'Çok katlı otopark';
-    case 'surface':      return 'Açık otopark';
-    case 'rooftop':      return 'Çatı otoparkı';
-    default:             return 'Otopark';
-  }
+// Estimate city driving time: avg 25 km/h in urban areas
+function estimateDrivingMinutes(meters: number): number {
+  return Math.max(1, Math.round((meters / 1000 / 25) * 60));
 }
 
 async function fetchNearbyParking(lat: number, lon: number): Promise<ParkingSpot[]> {
-  const query = `[out:json][timeout:12];
-(
-  node["amenity"="parking"](around:1000,${lat},${lon});
-  way["amenity"="parking"](around:1000,${lat},${lon});
-);
-out center 15;`;
+  const apiKey = (Constants.expoConfig?.extra?.googleMapsApiKey as string) ?? '';
 
-  const url = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`;
+  const url =
+    `https://maps.googleapis.com/maps/api/place/nearbysearch/json` +
+    `?location=${lat},${lon}` +
+    `&radius=1500` +
+    `&type=parking` +
+    `&key=${apiKey}`;
+
   const resp = await fetch(url, { signal: AbortSignal.timeout(12000) });
   const json = await resp.json();
 
-  const spots: ParkingSpot[] = [];
-  for (const el of json.elements as any[]) {
-    const elLat = el.lat ?? el.center?.lat;
-    const elLon = el.lon ?? el.center?.lon;
-    if (!elLat || !elLon) continue;
-    spots.push({
-      id:             String(el.id),
-      name:           el.tags?.name ?? el.tags?.['name:tr'] ?? '',
-      lat:            elLat,
-      lon:            elLon,
-      distanceMeters: haversineMeters(lat, lon, elLat, elLon),
-      fee:            el.tags?.fee,
-      capacity:       el.tags?.capacity ? parseInt(el.tags.capacity, 10) : undefined,
-      parkingType:    el.tags?.parking,
-    });
+  if (json.status !== 'OK' && json.status !== 'ZERO_RESULTS') {
+    throw new Error(`Places API error: ${json.status}`);
   }
+
+  const spots: ParkingSpot[] = (json.results ?? []).map((place: any) => {
+    const plLat = place.geometry.location.lat as number;
+    const plLon = place.geometry.location.lng as number;
+    const dist  = haversineMeters(lat, lon, plLat, plLon);
+    return {
+      id:             place.place_id,
+      name:           place.name,
+      lat:            plLat,
+      lon:            plLon,
+      distanceMeters: dist,
+      drivingMinutes: estimateDrivingMinutes(dist),
+      vicinity:       place.vicinity,
+      openNow:        place.opening_hours?.open_now,
+      rating:         place.rating,
+    } satisfies ParkingSpot;
+  });
+
   return spots.sort((a, b) => a.distanceMeters - b.distanceMeters).slice(0, 8);
 }
 
@@ -120,23 +123,35 @@ export function NearbyParkingModal({ visible, onClose, placeLat, placeLon, place
     return () => { cancelled = true; };
   }, [visible, placeLat, placeLon]);
 
-  // Opens turn-by-turn navigation to a specific parking spot
+  // Opens turn-by-turn navigation to a specific parking spot.
+  // iOS: Apple Maps (maps://) — works without Google Maps installed.
+  // Android: Google Maps app, falls back to web.
   const navigateTo = useCallback((spot: ParkingSpot) => {
-    const nativeUrl = Platform.OS === 'ios'
-      ? `maps://?daddr=${spot.lat},${spot.lon}&dirflg=d`
-      : `google.navigation:q=${spot.lat},${spot.lon}`;
-    const webUrl = `https://www.google.com/maps/dir/?api=1&destination=${spot.lat},${spot.lon}&travelmode=driving`;
-
-    Linking.canOpenURL(nativeUrl)
-      .then((can) => Linking.openURL(can ? nativeUrl : webUrl))
-      .catch(() => Linking.openURL(webUrl).catch(() => {}));
+    if (Platform.OS === 'ios') {
+      // Apple Maps — always available on iOS
+      Linking.openURL(`maps://?daddr=${spot.lat},${spot.lon}&dirflg=d`).catch(() => {
+        // Fallback to web Google Maps in Safari
+        Linking.openURL(`https://www.google.com/maps/dir/?api=1&destination=${spot.lat},${spot.lon}&travelmode=driving`).catch(() => {});
+      });
+    } else {
+      const gmNative = `google.navigation:q=${spot.lat},${spot.lon}`;
+      const gmWeb    = `https://www.google.com/maps/dir/?api=1&destination=${spot.lat},${spot.lon}&travelmode=driving`;
+      Linking.canOpenURL(gmNative)
+        .then((can) => Linking.openURL(can ? gmNative : gmWeb))
+        .catch(() => Linking.openURL(gmWeb).catch(() => {}));
+    }
   }, []);
 
-  // Opens Google Maps parking search as fallback
+  // Opens parking search on the appropriate maps app.
   const openAllInMaps = useCallback(() => {
-    Linking.openURL(
-      `https://www.google.com/maps/search/parking/@${placeLat},${placeLon},16z`,
-    ).catch(() => {});
+    if (Platform.OS === 'ios') {
+      // Apple Maps nearby parking search
+      Linking.openURL(`maps://?q=otopark&near=${placeLat},${placeLon}`).catch(() => {
+        Linking.openURL(`https://www.google.com/maps/search/parking/@${placeLat},${placeLon},16z`).catch(() => {});
+      });
+    } else {
+      Linking.openURL(`https://www.google.com/maps/search/parking/@${placeLat},${placeLon},16z`).catch(() => {});
+    }
   }, [placeLat, placeLon]);
 
   const renderSpot = useCallback(
@@ -149,26 +164,40 @@ export function NearbyParkingModal({ visible, onClose, placeLat, placeLon, place
 
         {/* Info */}
         <View style={s.spotInfo}>
-          <Text style={s.spotName} numberOfLines={1}>
-            {item.name || parkingTypeLabel(item.parkingType)}
-          </Text>
+          <Text style={s.spotName} numberOfLines={1}>{item.name}</Text>
+          {!!item.vicinity && (
+            <Text style={s.spotVicinity} numberOfLines={1}>{item.vicinity}</Text>
+          )}
           <View style={s.spotMeta}>
+            {/* Distance */}
             <Ionicons name="navigate-outline" size={11} color="#999" />
-            <Text style={s.spotDist}>
-              {formatDistance(item.distanceMeters)} uzaklıkta
-            </Text>
-            {item.fee === 'no' && (
+            <Text style={s.spotDist}>{formatDistance(item.distanceMeters)}</Text>
+
+            {/* Separator */}
+            <Text style={s.metaSep}>·</Text>
+
+            {/* Driving time */}
+            <Ionicons name="car-outline" size={11} color="#999" />
+            <Text style={s.spotDist}>~{item.drivingMinutes} dk</Text>
+
+            {/* Open/closed badge */}
+            {item.openNow === true && (
               <View style={s.badge}>
-                <Text style={[s.badgeText, { color: '#16a34a' }]}>Ücretsiz</Text>
+                <Text style={[s.badgeText, { color: '#16a34a' }]}>Açık</Text>
               </View>
             )}
-            {item.fee === 'yes' && (
-              <View style={[s.badge, s.badgePaid]}>
-                <Text style={[s.badgeText, { color: '#d97706' }]}>Ücretli</Text>
+            {item.openNow === false && (
+              <View style={[s.badge, s.badgeClosed]}>
+                <Text style={[s.badgeText, { color: '#ef4444' }]}>Kapalı</Text>
               </View>
             )}
-            {!!item.capacity && (
-              <Text style={s.spotCap}>{item.capacity} araç kapasiteli</Text>
+
+            {/* Rating */}
+            {!!item.rating && (
+              <>
+                <Ionicons name="star" size={10} color="#f59e0b" />
+                <Text style={s.spotDist}>{item.rating.toFixed(1)}</Text>
+              </>
             )}
           </View>
         </View>
@@ -230,10 +259,12 @@ export function NearbyParkingModal({ visible, onClose, placeLat, placeLon, place
                 <Ionicons name="car-outline" size={32} color="#bbb" />
               </View>
               <Text style={s.centerText}>Bu çevrede otopark bulunamadı.</Text>
-              <Text style={s.centerSub}>Google Maps üzerinden arayabilirsiniz.</Text>
+              <Text style={s.centerSub}>Haritalar uygulaması üzerinden arayabilirsiniz.</Text>
               <TouchableOpacity style={[s.mapsBtn, { marginTop: 20 }]} onPress={openAllInMaps}>
                 <Ionicons name="map-outline" size={15} color="#fff" />
-                <Text style={s.mapsBtnText}>Google Maps'te Ara</Text>
+                <Text style={s.mapsBtnText}>
+                  {Platform.OS === 'ios' ? 'Apple Haritalar\'da Ara' : 'Google Maps\'te Ara'}
+                </Text>
               </TouchableOpacity>
             </View>
           )}
@@ -308,13 +339,15 @@ const s = StyleSheet.create({
   spotRankText: { fontSize: 13, fontWeight: '700', color: PRIMARY },
   spotInfo:     { flex: 1 },
   spotName:     { fontSize: 14, fontWeight: '600', color: '#1a1a1a' },
-  spotMeta:     { flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 3, flexWrap: 'wrap' },
+  spotVicinity: { fontSize: 11, color: '#aaa', marginTop: 1 },
+  spotMeta:     { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4, flexWrap: 'wrap' },
   spotDist:     { fontSize: 12, color: '#777' },
-  spotCap:      { fontSize: 11, color: '#bbb' },
+  metaSep:      { fontSize: 12, color: '#ccc' },
 
-  badge:     { backgroundColor: '#f0fdf4', borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2 },
-  badgePaid: { backgroundColor: '#fffbeb' },
-  badgeText: { fontSize: 10, fontWeight: '700' },
+  badge:       { backgroundColor: '#f0fdf4', borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2 },
+  badgePaid:   { backgroundColor: '#fffbeb' },
+  badgeClosed: { backgroundColor: '#fef2f2' },
+  badgeText:   { fontSize: 10, fontWeight: '700' },
 
   dirBtn:     { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: PRIMARY, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 16 },
   dirBtnText: { fontSize: 12, color: '#fff', fontWeight: '700' },
