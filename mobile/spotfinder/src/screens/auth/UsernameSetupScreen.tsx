@@ -53,7 +53,7 @@ export function UsernameSetupScreen() {
             <Ionicons name="at-circle" size={64} color={colors.accent} />
           </View>
 
-          <Text style={[typography.displayM, { color: colors.text, textAlign: 'center' }]}>
+          <Text style={[typography.displayL, { color: colors.text, textAlign: 'center' }]}>
             Kullanıcı adını seç
           </Text>
           <Text style={[typography.bodyDim, { color: colors.textSecondary, textAlign: 'center', marginTop: spacing.sm, marginBottom: spacing['2xl'] }]}>

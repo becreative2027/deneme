@@ -1,14 +1,28 @@
-// Sentry is temporarily disabled — add @sentry/react-native back and configure
-// DSN in app.json extra.sentryDsn once a Sentry account is set up.
+import * as Sentry from '@sentry/react-native';
 
-export function initSentry() {}
+const DSN = 'https://13fde8bb13ed607da03495e4857e1e05@o4511403701108736.ingest.de.sentry.io/4511403712446544';
 
-export function identifySentryUser(_userId: string, _email?: string) {}
+export function initSentry() {
+  Sentry.init({
+    dsn: DSN,
+    enabled: !__DEV__,
+    tracesSampleRate: 0.2,
+    environment: __DEV__ ? 'development' : 'production',
+  });
+}
 
-export function clearSentryUser() {}
+export function identifySentryUser(userId: string, email?: string) {
+  Sentry.setUser({ id: userId, email });
+}
+
+export function clearSentryUser() {
+  Sentry.setUser(null);
+}
 
 export function captureError(error: Error, context?: Record<string, unknown>) {
   if (__DEV__) {
     console.error('[Error]', error, context);
+  } else {
+    Sentry.captureException(error, context ? { extra: context } : undefined);
   }
 }
