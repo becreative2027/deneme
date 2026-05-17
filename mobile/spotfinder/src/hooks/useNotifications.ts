@@ -23,8 +23,8 @@ const KEY_PERMISSION_ASKED = 'notification_permission_asked';
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 async function registerPushToken(): Promise<void> {
-  const isSimulator = !Constants.isDevice;
-  if (isSimulator) return;
+  // Constants.isDevice is unreliable in bare workflow production builds — skip the check
+  // and let getExpoPushTokenAsync fail naturally if running on a simulator.
 
   const projectId =
     Constants.expoConfig?.extra?.eas?.projectId ??
