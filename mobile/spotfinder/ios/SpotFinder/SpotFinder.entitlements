@@ -8,9 +8,5 @@
     <array>
       <string>Default</string>
     </array>
-    <key>com.apple.developer.associated-domains</key>
-    <array>
-      <string>applinks:sptfinder.com</string>
-    </array>
   </dict>
 </plist>
