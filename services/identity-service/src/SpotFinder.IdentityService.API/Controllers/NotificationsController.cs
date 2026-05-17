@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using SpotFinder.BuildingBlocks.Api;
 using SpotFinder.IdentityService.Domain.Entities;
 using SpotFinder.IdentityService.Infrastructure.Persistence;
+using SpotFinder.IdentityService.Infrastructure.Services;
 
 namespace SpotFinder.IdentityService.API.Controllers;
 
@@ -42,7 +43,6 @@ public sealed class NotificationsController : BaseController
         }
         else
         {
-            // Re-associate token with current user (device handed to someone else)
             existing.UserId = userId;
         }
 
@@ -68,7 +68,91 @@ public sealed class NotificationsController : BaseController
 
         return Ok(tokens);
     }
+
+    /// <summary>
+    /// Internal endpoint — called by social-graph-service after a follow event.
+    /// Not exposed via the external gateway (Docker-internal only).
+    /// </summary>
+    [HttpPost("send-follow")]
+    [AllowAnonymous]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    public async Task<IActionResult> SendFollowNotification(
+        [FromBody] SendFollowRequest request,
+        [FromServices] IExpoPushService pushService,
+        CancellationToken ct)
+    {
+        // Get follower's display name
+        var follower = await _ctx.Profiles
+            .FirstOrDefaultAsync(p => p.UserId == request.FollowerId, ct);
+
+        var followerName = follower?.DisplayName
+            ?? (await _ctx.Users.Where(u => u.Id == request.FollowerId)
+                              .Select(u => u.Username)
+                              .FirstOrDefaultAsync(ct))
+            ?? "Biri";
+
+        // Get push tokens of the followed user
+        var tokens = await _ctx.PushTokens
+            .Where(t => t.UserId == request.FollowingId)
+            .Select(t => t.Token)
+            .ToListAsync(ct);
+
+        if (tokens.Count == 0) return NoContent();
+
+        await pushService.SendAsync(
+            tokens,
+            title: "Yeni takipçi 🎉",
+            body:  $"{followerName} seni takip etmeye başladı.",
+            type:  "follow",
+            userId: request.FollowerId.ToString(),
+            ct:    ct);
+
+        return NoContent();
+    }
+
+    /// <summary>
+    /// Internal endpoint — called by content-service after a like event.
+    /// </summary>
+    [HttpPost("send-like")]
+    [AllowAnonymous]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    public async Task<IActionResult> SendLikeNotification(
+        [FromBody] SendLikeRequest request,
+        [FromServices] IExpoPushService pushService,
+        CancellationToken ct)
+    {
+        // Don't notify if user liked their own post
+        if (request.LikerId == request.PostOwnerId) return NoContent();
+
+        var liker = await _ctx.Profiles
+            .FirstOrDefaultAsync(p => p.UserId == request.LikerId, ct);
+
+        var likerName = liker?.DisplayName
+            ?? (await _ctx.Users.Where(u => u.Id == request.LikerId)
+                              .Select(u => u.Username)
+                              .FirstOrDefaultAsync(ct))
+            ?? "Biri";
+
+        var tokens = await _ctx.PushTokens
+            .Where(t => t.UserId == request.PostOwnerId)
+            .Select(t => t.Token)
+            .ToListAsync(ct);
+
+        if (tokens.Count == 0) return NoContent();
+
+        await pushService.SendAsync(
+            tokens,
+            title: "Yeni beğeni ❤️",
+            body:  $"{likerName} gönderini beğendi.",
+            type:  "like",
+            userId: request.LikerId.ToString(),
+            ct:    ct);
+
+        return NoContent();
+    }
 }
 
 public sealed record RegisterDeviceRequest(string Token, string? Platform);
 public sealed record TokensByUsersRequest(IReadOnlyList<Guid> UserIds);
+public sealed record SendFollowRequest(Guid FollowerId, Guid FollowingId);
+public sealed record SendLikeRequest(Guid LikerId, Guid PostOwnerId, string PostId);

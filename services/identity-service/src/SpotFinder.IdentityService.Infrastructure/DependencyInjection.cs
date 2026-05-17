@@ -24,6 +24,7 @@ public static class DependencyInjection
         services.AddScoped<IPlaceOwnershipRepository, PlaceOwnershipRepository>();
         services.AddScoped<IPasswordHasher, BcryptPasswordHasher>();
         services.AddScoped<IJwtTokenService, JwtTokenService>();
+        services.AddScoped<IExpoPushService, ExpoPushService>();
 
         return services;
     }

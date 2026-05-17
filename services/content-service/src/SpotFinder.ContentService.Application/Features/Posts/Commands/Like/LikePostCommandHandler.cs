@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Net.Http.Json;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -17,6 +18,7 @@ public sealed class LikePostCommandHandler(
     IUserInterestService userInterests,
     IUserEventService userEvents,
     IOptions<RecommendationOptions> options,
+    IHttpClientFactory httpClientFactory,
     ILogger<LikePostCommandHandler> logger)
     : IRequestHandler<LikePostCommand, ApiResult<bool>>
 {
@@ -57,6 +59,24 @@ public sealed class LikePostCommandHandler(
             "LikePost — userId={UserId} postId={PostId} weight={Weight}, totalTime={TotalMs} ms.",
             cmd.UserId, cmd.PostId, options.Value.Weights.Like, sw.ElapsedMilliseconds);
 
+        // Fire-and-forget push notification (non-critical)
+        _ = SendLikeNotificationAsync(cmd.UserId, post.UserId, cmd.PostId);
+
         return ApiResult<bool>.Ok(true);
+    }
+
+    private async Task SendLikeNotificationAsync(Guid likerId, Guid postOwnerId, string postId)
+    {
+        try
+        {
+            var http = httpClientFactory.CreateClient();
+            await http.PostAsJsonAsync(
+                "http://spotfinder-identity:8080/api/notifications/send-like",
+                new { likerId, postOwnerId, postId });
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Failed to send like push notification for liker={LikerId}", likerId);
+        }
     }
 }

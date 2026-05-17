@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Net.Http.Json;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -10,6 +11,7 @@ namespace SpotFinder.SocialGraphService.Application.Features.Social.Commands.Fol
 
 public sealed class FollowUserCommandHandler(
     SocialDbContext db,
+    IHttpClientFactory httpClientFactory,
     ILogger<FollowUserCommandHandler> logger)
     : IRequestHandler<FollowUserCommand, ApiResult<bool>>
 {
@@ -38,6 +40,24 @@ public sealed class FollowUserCommandHandler(
             "Follow — followerId={FollowerId} followingId={FollowingId}, totalTime={TotalMs} ms.",
             cmd.FollowerId, cmd.FollowingId, sw.ElapsedMilliseconds);
 
+        // Fire-and-forget push notification (non-critical)
+        _ = SendFollowNotificationAsync(cmd.FollowerId, cmd.FollowingId);
+
         return ApiResult<bool>.Ok(true);
+    }
+
+    private async Task SendFollowNotificationAsync(Guid followerId, Guid followingId)
+    {
+        try
+        {
+            var http = httpClientFactory.CreateClient();
+            await http.PostAsJsonAsync(
+                "http://spotfinder-identity:8080/api/notifications/send-follow",
+                new { followerId, followingId });
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Failed to send follow push notification for follower={FollowerId}", followerId);
+        }
     }
 }
