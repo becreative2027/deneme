@@ -32,6 +32,7 @@ import { useAnalytics } from '../../hooks/useAnalytics';
 import { formatCount } from '../../utils/formatters';
 import { logout as apiLogout } from '../../api/auth';
 import { deleteAccount as apiDeleteAccount } from '../../api/users';
+import { reportContent } from '../../api/report';
 import { getFavoritePlaceIds } from '../../api/favorites';
 import { getPlaceById } from '../../api/places';
 import { useTheme, radius, spacing, typography, shadow } from '../../theme';
@@ -255,6 +256,32 @@ export function ProfileScreen({ route, navigation }: Props) {
             </TouchableOpacity>
           )}
           <View style={{ flex: 1 }} />
+          {!isOwnProfile && (
+            <TouchableOpacity
+              onPress={() =>
+                Alert.alert(
+                  'Kullanıcıyı Şikayet Et',
+                  'Bu kullanıcıyı uygunsuz davranış nedeniyle bildirmek istiyor musun?',
+                  [
+                    { text: 'Vazgeç', style: 'cancel' },
+                    {
+                      text: 'Şikayet Et',
+                      style: 'destructive',
+                      onPress: () =>
+                        reportContent('User', userId)
+                          .then(() => Alert.alert('Teşekkürler', 'Bildiriminiz incelemeye alındı.'))
+                          .catch(() => Alert.alert('Hata', 'Bir sorun oluştu, lütfen tekrar dene.')),
+                    },
+                  ],
+                )
+              }
+              style={[s.glassBtn, { backgroundColor: colors.glassBg, borderColor: colors.glassBorder }]}
+              accessibilityRole="button"
+              accessibilityLabel="Şikayet et"
+            >
+              <Ionicons name="ellipsis-horizontal" size={18} color={colors.text} />
+            </TouchableOpacity>
+          )}
           {isOwnProfile && (
             <View style={{ flexDirection: 'row', gap: 8 }}>
               <TouchableOpacity

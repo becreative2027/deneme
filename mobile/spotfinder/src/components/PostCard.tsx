@@ -5,6 +5,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   Pressable,
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Post } from '../types';
@@ -13,6 +14,7 @@ import { haptic } from '../utils/haptics';
 import { useTheme, ThemeColors } from '../theme';
 import { Avatar } from './Avatar';
 import { OptimizedImage } from './OptimizedImage';
+import { reportContent } from '../api/report';
 
 interface Props {
   post: Post;
@@ -30,17 +32,42 @@ export const PostCard = memo(function PostCard({ post, onLike, onPressPlace, onP
     onLike(post.id, post.isLiked);
   };
 
+  const handleReport = () => {
+    Alert.alert(
+      'Gönderiyi Şikayet Et',
+      'Bu gönderiyi uygunsuz içerik olarak bildirmek istiyor musun?',
+      [
+        { text: 'Vazgeç', style: 'cancel' },
+        {
+          text: 'Şikayet Et',
+          style: 'destructive',
+          onPress: () =>
+            reportContent('Post', post.id).then(() =>
+              Alert.alert('Teşekkürler', 'Bildiriminiz incelemeye alındı.'),
+            ).catch(() =>
+              Alert.alert('Hata', 'Bir sorun oluştu, lütfen tekrar dene.'),
+            ),
+        },
+      ],
+    );
+  };
+
   return (
     <View style={s.card}>
       {/* Header */}
-      <Pressable style={s.header} onPress={() => onPressUser?.(post.userId)}>
-        <Avatar uri={post.avatarUrl} name={post.displayName} size={36} />
-        <View style={s.headerText}>
-          <Text style={s.displayName}>{post.displayName || post.username || 'Kullanıcı'}</Text>
-          <Text style={s.username}>@{post.username || 'kullanici'}</Text>
-        </View>
+      <View style={s.header}>
+        <Pressable style={s.headerLeft} onPress={() => onPressUser?.(post.userId)}>
+          <Avatar uri={post.avatarUrl} name={post.displayName} size={36} />
+          <View style={s.headerText}>
+            <Text style={s.displayName}>{post.displayName || post.username || 'Kullanıcı'}</Text>
+            <Text style={s.username}>@{post.username || 'kullanici'}</Text>
+          </View>
+        </Pressable>
         <Text style={s.time}>{formatRelativeTime(post.createdAt)}</Text>
-      </Pressable>
+        <TouchableOpacity onPress={handleReport} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} style={s.moreBtn}>
+          <Ionicons name="ellipsis-horizontal" size={18} color={theme.colors.icon} />
+        </TouchableOpacity>
+      </View>
 
       {/* Phase 8.1: OptimizedImage with shimmer placeholder + fade-in */}
       {post.imageUrl ? (
@@ -103,9 +130,12 @@ const createStyles = (c: ThemeColors) =>
     header: {
       flexDirection: 'row',
       alignItems: 'center',
-      padding: 12,
+      paddingHorizontal: 12,
+      paddingVertical: 10,
     },
+    headerLeft: { flexDirection: 'row', alignItems: 'center', flex: 1 },
     headerText: { flex: 1, marginLeft: 10 },
+    moreBtn: { paddingLeft: 8 },
     displayName: { fontWeight: '600', fontSize: 14, color: c.text },
     username: { fontSize: 12, color: c.textTertiary, marginTop: 1 },
     time: { fontSize: 11, color: c.textMuted },
