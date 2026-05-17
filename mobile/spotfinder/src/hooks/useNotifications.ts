@@ -1,7 +1,8 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import * as Notifications from 'expo-notifications';
-import { Platform } from 'react-native';
+import { Linking, Platform } from 'react-native';
 import Constants from 'expo-constants';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { registerDevice } from '../api/notifications';
 import { routeNotification, NotificationPayload } from '../navigation/navigationRef';
 
@@ -15,20 +16,13 @@ Notifications.setNotificationHandler({
   }),
 });
 
+// ── Storage keys ──────────────────────────────────────────────────────────────
+
+const KEY_PERMISSION_ASKED = 'notification_permission_asked';
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-async function requestAndRegister(): Promise<void> {
-  const { status: existing } = await Notifications.getPermissionsAsync();
-  let finalStatus = existing;
-
-  if (existing !== 'granted') {
-    const { status } = await Notifications.requestPermissionsAsync();
-    finalStatus = status;
-  }
-
-  if (finalStatus !== 'granted') return;
-
-  // Push tokens only work on physical devices; skip on simulator
+async function registerPushToken(): Promise<void> {
   const isSimulator = !Constants.isDevice;
   if (isSimulator) return;
 
@@ -50,6 +44,30 @@ async function requestAndRegister(): Promise<void> {
   }
 }
 
+export async function requestNotificationPermission(): Promise<'granted' | 'denied' | 'undetermined'> {
+  const { status: existing } = await Notifications.getPermissionsAsync();
+  if (existing === 'granted') {
+    await registerPushToken().catch(() => {});
+    return 'granted';
+  }
+
+  const { status } = await Notifications.requestPermissionsAsync();
+  if (status === 'granted') {
+    await registerPushToken().catch(() => {});
+    return 'granted';
+  }
+
+  return 'denied';
+}
+
+export function openNotificationSettings(): void {
+  if (Platform.OS === 'ios') {
+    Linking.openURL('app-settings:').catch(() => {});
+  } else {
+    Linking.openSettings().catch(() => {});
+  }
+}
+
 function extractPayload(
   notification: Notifications.Notification,
 ): NotificationPayload | null {
@@ -63,31 +81,63 @@ function extractPayload(
   };
 }
 
-// ── Hook: token registration ──────────────────────────────────────────────────
+// ── Hook: permission modal controller ────────────────────────────────────────
 
 /**
- * Registers the device push token with the backend once, on mount.
- * Call inside the authenticated part of the app.
+ * Controls when to show the pre-permission modal.
+ * Shows after a short delay on first authenticated session,
+ * but only if permission hasn't been asked before.
  */
-export function useNotifications(): void {
+export function useNotificationPermissionPrompt(onShowToast: (msg: string) => void) {
+  const [showModal, setShowModal] = useState(false);
+
   useEffect(() => {
-    requestAndRegister().catch(() => {});
+    let timer: ReturnType<typeof setTimeout>;
+
+    (async () => {
+      // Already asked before → skip modal, just register if already granted
+      const asked = await AsyncStorage.getItem(KEY_PERMISSION_ASKED);
+      if (asked === 'true') {
+        const { status } = await Notifications.getPermissionsAsync();
+        if (status === 'granted') {
+          await registerPushToken().catch(() => {});
+        }
+        return;
+      }
+
+      // Wait 3 seconds before showing modal so user can orient themselves
+      timer = setTimeout(() => setShowModal(true), 3000);
+    })();
+
+    return () => clearTimeout(timer);
   }, []);
+
+  const handleAllow = async () => {
+    setShowModal(false);
+    await AsyncStorage.setItem(KEY_PERMISSION_ASKED, 'true');
+    const result = await requestNotificationPermission();
+    if (result === 'denied') {
+      onShowToast('Ayarlar\'dan bildirimlere izin verebilirsin.');
+    }
+  };
+
+  const handleDismiss = async () => {
+    setShowModal(false);
+    await AsyncStorage.setItem(KEY_PERMISSION_ASKED, 'true');
+  };
+
+  return { showModal, handleAllow, handleDismiss };
 }
 
 // ── Hook: tap response handler ────────────────────────────────────────────────
 
 /**
  * Subscribes to notification tap events (background / killed-state).
- * When the user taps a notification, routes to the relevant screen.
- *
- * Call once at the authenticated root — pairs with `navigationRef`.
  */
 export function useNotificationResponseHandler(): void {
   const listenerRef = useRef<Notifications.Subscription | null>(null);
 
   useEffect(() => {
-    // Handle tap on notification received while app was in background/killed
     listenerRef.current = Notifications.addNotificationResponseReceivedListener(
       (response) => {
         const payload = extractPayload(response.notification);
@@ -95,7 +145,6 @@ export function useNotificationResponseHandler(): void {
       },
     );
 
-    // Handle the initial notification that launched the app (killed state)
     Notifications.getLastNotificationResponseAsync().then((response) => {
       if (response) {
         const payload = extractPayload(response.notification);
@@ -109,18 +158,13 @@ export function useNotificationResponseHandler(): void {
   }, []);
 }
 
-// ── Hook: foreground receiver (in-app banner via callback) ────────────────────
+// ── Hook: foreground receiver ─────────────────────────────────────────────────
 
-/**
- * Subscribes to notifications received while the app is foregrounded.
- * Calls `onReceive` with a human-readable title/body so the caller
- * can display an in-app banner (e.g., using the Toast system).
- */
 export function useNotificationForegroundReceiver(
   onReceive: (title: string, body: string) => void,
 ): void {
   const callbackRef = useRef(onReceive);
-  callbackRef.current = onReceive; // keep fresh without re-subscribing
+  callbackRef.current = onReceive;
 
   useEffect(() => {
     const sub = Notifications.addNotificationReceivedListener((notification) => {
@@ -132,3 +176,7 @@ export function useNotificationForegroundReceiver(
     return () => sub.remove();
   }, []);
 }
+
+// ── Hook: legacy (kept for backward compat) ───────────────────────────────────
+/** @deprecated Use useNotificationPermissionPrompt instead */
+export function useNotifications(): void {}

@@ -8,8 +8,10 @@ import { setAuthToken } from '../api/client';
 import { getMe } from '../api/users';
 import { linking } from '../utils/deepLinks';
 import { navigationRef } from './navigationRef';
-import { useNotifications } from '../hooks/useNotifications';
+import { useNotificationPermissionPrompt } from '../hooks/useNotifications';
 import { NotificationReceiver } from '../components/NotificationReceiver';
+import { NotificationPermissionModal } from '../components/NotificationPermissionModal';
+import { useToast } from '../components/Toast';
 import { AuthNavigator } from './AuthNavigator';
 import { MainNavigator } from './MainNavigator';
 import { SplashScreen } from '../screens/SplashScreen';
@@ -18,11 +20,19 @@ import { useWishlistStore } from '../store/wishlistStore';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
-// ── Notification token registrar ──────────────────────────────────────────────
-// Rendered only when authenticated — calls useNotifications() once.
-function NotificationRegistrar() {
-  useNotifications();
-  return null;
+// ── Notification permission flow ──────────────────────────────────────────────
+function NotificationManager() {
+  const { showToast } = useToast();
+  const { showModal, handleAllow, handleDismiss } = useNotificationPermissionPrompt(
+    (msg) => showToast(msg, 'info'),
+  );
+  return (
+    <NotificationPermissionModal
+      visible={showModal}
+      onAllow={handleAllow}
+      onDismiss={handleDismiss}
+    />
+  );
 }
 
 // ── Root navigator ────────────────────────────────────────────────────────────
@@ -69,7 +79,7 @@ export function RootNavigator() {
     <NavigationContainer ref={navigationRef} linking={linking} theme={navTheme}>
       {isAuthenticated && (
         <>
-          <NotificationRegistrar />
+          <NotificationManager />
           <NotificationReceiver />
         </>
       )}
