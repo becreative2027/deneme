@@ -19,6 +19,7 @@ import { OptimizedImage } from '../../components/OptimizedImage';
 import { ErrorState } from '../../components/ErrorState';
 import { PhotoLightboxModal } from '../../components/PhotoLightboxModal';
 import { ReviewsModal } from '../../components/ReviewsModal';
+import { NearbyParkingModal } from '../../components/NearbyParkingModal';
 import { formatRating, formatCount } from '../../utils/formatters';
 import { Post } from '../../types';
 import { getFavoritePlaceIds, addFavorite, removeFavorite } from '../../api/favorites';
@@ -71,6 +72,7 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
   const [lightboxIndex, setLightboxIndex] = useState(0);
   const [lightboxVisible, setLightboxVisible] = useState(false);
   const [reviewsVisible, setReviewsVisible] = useState(false);
+  const [parkingModalVisible, setParkingModalVisible] = useState(false);
 
   // ── Wishlist ───────────────────────────────────────────────────────────────
   const { togglePlace, hasPlace, hydrated, hydrate } = useWishlistStore();
@@ -121,8 +123,7 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
 
   const openNearbyParking = useCallback(() => {
     if (!place?.latitude || !place?.longitude) return;
-    const url = `https://www.google.com/maps/search/parking/@${place.latitude},${place.longitude},16z`;
-    Linking.openURL(url).catch(() => {});
+    setParkingModalVisible(true);
   }, [place]);
 
   const openPhoto = useCallback((index: number) => {
@@ -364,6 +365,17 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
           }
         }}
       />
+
+      {/* ── Nearby parking modal ──────────────────────────────────────────────── */}
+      {place && (
+        <NearbyParkingModal
+          visible={parkingModalVisible}
+          onClose={() => setParkingModalVisible(false)}
+          placeLat={place.latitude!}
+          placeLon={place.longitude!}
+          placeName={place.name}
+        />
+      )}
     </>
   );
 }
