@@ -64,10 +64,5 @@ export function useLikePost() {
         qc.setQueryData(key, data);
       });
     },
-
-    onSettled: () => {
-      // Background sync to reconcile server state
-      qc.invalidateQueries({ queryKey: ['feed'] });
-    },
   });
 }
