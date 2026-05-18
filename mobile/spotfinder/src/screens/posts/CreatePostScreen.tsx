@@ -15,7 +15,9 @@ import {
   BackHandler,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
+import type { MainTabParamList } from '../../types';
 import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
 import { useCreatePost } from '../../hooks/usePosts';
@@ -55,6 +57,7 @@ export function CreatePostScreen() {
   // Phase 8.1: prevent double-submit with a ref (faster than state)
   const isSubmittingRef = useRef(false);
 
+  const navigation = useNavigation<BottomTabNavigationProp<MainTabParamList>>();
   const createMutation = useCreatePost();
   const searchQuery = usePlaceSearch({ query: placeSearch, pageSize: 10 }, placeSearch.length > 1);
   const { showToast } = useToast();
@@ -248,7 +251,12 @@ export function CreatePostScreen() {
             trackAction();
             showToast('Gönderi paylaşıldı!', 'success');
             haptic.success();
+            const sharedPlaceId = selectedPlace.id;
             resetForm();
+            navigation.navigate('FeedTab', {
+              screen: 'PlaceDetail',
+              params: { placeId: sharedPlaceId },
+            } as any);
           },
           onError: (err: any) => {
             showToast(err.message ?? 'Gönderi paylaşılamadı. Tekrar dene.', 'error');
