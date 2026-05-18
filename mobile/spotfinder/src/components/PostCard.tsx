@@ -21,9 +21,10 @@ interface Props {
   onLike: (postId: string, currentlyLiked: boolean) => void;
   onPressPlace?: (placeId: string) => void;
   onPressUser?: (userId: string) => void;
+  onPressComment?: (postId: string) => void;
 }
 
-export const PostCard = memo(function PostCard({ post, onLike, onPressPlace, onPressUser }: Props) {
+export const PostCard = memo(function PostCard({ post, onLike, onPressPlace, onPressUser, onPressComment }: Props) {
   const theme = useTheme();
   const s = useMemo(() => createStyles(theme.colors), [theme.colors]);
 
@@ -108,7 +109,7 @@ export const PostCard = memo(function PostCard({ post, onLike, onPressPlace, onP
           <Text style={s.actionCount}>{formatCount(post.likeCount)}</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={s.actionBtn} activeOpacity={0.7}>
+        <TouchableOpacity style={s.actionBtn} activeOpacity={0.7} onPress={() => onPressComment?.(post.id)}>
           <Ionicons name="chatbubble-outline" size={20} color={theme.colors.icon} />
           <Text style={s.actionCount}>{formatCount(post.commentCount)}</Text>
         </TouchableOpacity>

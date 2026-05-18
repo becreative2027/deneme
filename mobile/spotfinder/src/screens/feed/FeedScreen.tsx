@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -18,6 +18,7 @@ import { useAnalytics } from '../../hooks/useAnalytics';
 import { haptic } from '../../utils/haptics';
 import { useTheme, ThemeColors } from '../../theme';
 import { PostCard } from '../../components/PostCard';
+import { CommentsModal } from '../../components/CommentsModal';
 import { PostSkeleton } from '../../components/SkeletonLoader';
 import { ErrorState } from '../../components/ErrorState';
 import { EmptyState } from '../../components/EmptyState';
@@ -38,6 +39,7 @@ export function FeedScreen({ navigation }: Props) {
   const explore = useExploreFeed();
   const personalized = usePersonalizedFeed();
   const likeMutation = useLikePost();
+  const [commentPostId, setCommentPostId] = useState<string | null>(null);
   const { trackScreen, trackEvent } = useAnalytics();
   const { trackAction } = useRatingPrompt();
   const theme = useTheme();
@@ -89,6 +91,7 @@ export function FeedScreen({ navigation }: Props) {
         onLike={handleLike}
         onPressPlace={handlePressPlace}
         onPressUser={(userId) => navigation.push('UserProfile', { userId })}
+        onPressComment={(postId) => setCommentPostId(postId)}
       />
     ),
     [handleLike, handlePressPlace, navigation],
@@ -153,6 +156,11 @@ export function FeedScreen({ navigation }: Props) {
         }
         showsVerticalScrollIndicator={false}
         contentContainerStyle={allPosts.length === 0 ? { flex: 1 } : { paddingBottom: tabBarHeight }}
+      />
+      <CommentsModal
+        visible={!!commentPostId}
+        postId={commentPostId ?? ''}
+        onClose={() => setCommentPostId(null)}
       />
     </SafeAreaView>
   );

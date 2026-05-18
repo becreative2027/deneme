@@ -23,3 +23,22 @@ export async function unlikePost(postId: string): Promise<void> {
 export async function deletePost(postId: string): Promise<void> {
   await apiClient.delete(`/api/posts/${postId}`);
 }
+
+export interface PostComment {
+  id: string;
+  userId: string;
+  username: string;
+  displayName?: string;
+  avatarUrl?: string;
+  text: string;
+  createdAt: string;
+}
+
+export async function getPostComments(postId: string, page = 1, pageSize = 30): Promise<PostComment[]> {
+  const { data } = await apiClient.get<any>(`/api/posts/${postId}/comments`, { params: { page, pageSize } });
+  return (data.data ?? []) as PostComment[];
+}
+
+export async function createComment(postId: string, text: string): Promise<void> {
+  await apiClient.post(`/api/posts/${postId}/comment`, { text });
+}

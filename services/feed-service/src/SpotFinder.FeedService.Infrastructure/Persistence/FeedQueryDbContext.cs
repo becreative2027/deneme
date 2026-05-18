@@ -16,6 +16,7 @@ public sealed class FeedQueryDbContext : DbContext
     public DbSet<PostRow>          Posts          => Set<PostRow>();
     public DbSet<PostMediaRow>     PostMedia      => Set<PostMediaRow>();
     public DbSet<PostLikeRow>      PostLikes      => Set<PostLikeRow>();
+    public DbSet<PostCommentRow>   PostComments   => Set<PostCommentRow>();
     public DbSet<UserInterestRow>  UserInterests  => Set<UserInterestRow>();
     public DbSet<TrendingScoreRow> TrendingScores => Set<TrendingScoreRow>();
 
@@ -82,6 +83,18 @@ public sealed class FeedQueryDbContext : DbContext
             b.HasKey(x => new { x.UserId, x.PostId });
             b.Property(x => x.UserId).HasColumnName("user_id");
             b.Property(x => x.PostId).HasColumnName("post_id");
+        });
+
+        // ── content.post_comments ─────────────────────────────────────────────
+        modelBuilder.Entity<PostCommentRow>(b =>
+        {
+            b.ToTable("post_comments", "content");
+            b.HasKey(x => x.Id);
+            b.Property(x => x.Id).HasColumnName("id");
+            b.Property(x => x.PostId).HasColumnName("post_id");
+            b.Property(x => x.UserId).HasColumnName("user_id");
+            b.Property(x => x.Text).HasColumnName("text");
+            b.Property(x => x.CreatedAt).HasColumnName("created_at");
         });
 
         // ── social.user_follows ───────────────────────────────────────────────
