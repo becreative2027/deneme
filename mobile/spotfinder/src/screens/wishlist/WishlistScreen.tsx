@@ -125,11 +125,28 @@ export function WishlistScreen({ navigation }: Props) {
 
   const handleShare = async () => {
     try {
-      const placeList = places.map((p) => `• ${p.name} (${p.city})`).join('\n');
-      await Share.share({
-        message: `SpotFinder Listemi:\n\n${placeList}`,
-        title: 'SpotFinder Listesi',
-      });
+      const placeLines = places.map((p) => {
+        const rating = p.averageRating ? `⭐ ${p.averageRating.toFixed(1)}` : '';
+        const location = [p.districtName, p.city].filter(Boolean).join(', ');
+        const tags = (p.labels ?? []).slice(0, 2).map((l) => `#${l}`).join(' ');
+        return [`📍 ${p.name}`, location, rating, tags].filter(Boolean).join('  ·  ');
+      }).join('\n');
+
+      const count = places.length;
+      const intro = count === 1
+        ? `Sana harika bir mekan önerdim 👀`
+        : `Sana ${count} harika mekan önerdim 👀`;
+
+      const message = [
+        intro,
+        '',
+        placeLines,
+        '',
+        '— SpotFinder ile keşfedildi 🔍',
+        'sptfinder.com',
+      ].join('\n');
+
+      await Share.share({ message, title: 'SpotFinder Mekan Listesi' });
     } catch {}
   };
 
