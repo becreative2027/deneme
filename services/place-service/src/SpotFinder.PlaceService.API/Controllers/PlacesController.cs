@@ -1,6 +1,5 @@
 using FluentValidation;
 using MediatR;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SpotFinder.BuildingBlocks.Api;
 using SpotFinder.PlaceService.Application.Features.Places.Commands.AddOrUpdateReview;
@@ -105,7 +104,6 @@ public sealed class PlacesController : BaseController
 
     /// <summary>Track that a user viewed a place detail page (interest signal).</summary>
     [HttpPost("{id:guid}/view")]
-    [Authorize]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> TrackView(Guid id, [FromBody] TrackViewRequest req, CancellationToken ct)
     {
@@ -115,7 +113,6 @@ public sealed class PlacesController : BaseController
 
     /// <summary>Admin: Delete a review by id.</summary>
     [HttpDelete("{id:guid}/reviews/{reviewId:guid}")]
-    [Authorize(Roles = "Admin,SuperAdmin")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> DeleteReview(Guid id, Guid reviewId, CancellationToken ct)
