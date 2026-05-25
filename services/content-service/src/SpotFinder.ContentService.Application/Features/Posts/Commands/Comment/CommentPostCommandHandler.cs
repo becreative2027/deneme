@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Net.Http.Json;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -17,6 +18,7 @@ public sealed class CommentPostCommandHandler(
     IUserInterestService userInterests,
     IUserEventService userEvents,
     IOptions<RecommendationOptions> options,
+    IHttpClientFactory httpClientFactory,
     ILogger<CommentPostCommandHandler> logger)
     : IRequestHandler<CommentPostCommand, ApiResult<Guid>>
 {
@@ -53,6 +55,24 @@ public sealed class CommentPostCommandHandler(
             "CommentPost — userId={UserId} postId={PostId} commentId={CommentId} weight={Weight}, totalTime={TotalMs} ms.",
             cmd.UserId, cmd.PostId, comment.Id, options.Value.Weights.Comment, sw.ElapsedMilliseconds);
 
+        // Fire-and-forget push notification (non-critical)
+        _ = SendCommentNotificationAsync(cmd.UserId, post.UserId, cmd.PostId);
+
         return ApiResult<Guid>.Ok(comment.Id);
+    }
+
+    private async Task SendCommentNotificationAsync(Guid commenterId, Guid postOwnerId, Guid postId)
+    {
+        try
+        {
+            var http = httpClientFactory.CreateClient();
+            await http.PostAsJsonAsync(
+                "http://spotfinder-identity:8080/api/notifications/send-comment",
+                new { commenterId, postOwnerId, postId = postId.ToString() });
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Failed to send comment push notification for commenter={CommenterId}", commenterId);
+        }
     }
 }
