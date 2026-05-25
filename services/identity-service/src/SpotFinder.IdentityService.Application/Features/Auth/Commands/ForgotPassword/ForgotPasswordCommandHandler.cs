@@ -1,4 +1,3 @@
-using Microsoft.Extensions.Logging;
 using SpotFinder.BuildingBlocks.Application;
 using SpotFinder.IdentityService.Domain.Repositories;
 using SpotFinder.IdentityService.Domain.Services;
@@ -9,16 +8,16 @@ public sealed class ForgotPasswordCommandHandler : ICommandHandler<ForgotPasswor
 {
     private readonly IUserRepository _userRepository;
     private readonly IPasswordResetService _passwordResetService;
-    private readonly ILogger<ForgotPasswordCommandHandler> _logger;
+    private readonly IEmailService _emailService;
 
     public ForgotPasswordCommandHandler(
         IUserRepository userRepository,
         IPasswordResetService passwordResetService,
-        ILogger<ForgotPasswordCommandHandler> logger)
+        IEmailService emailService)
     {
         _userRepository = userRepository;
         _passwordResetService = passwordResetService;
-        _logger = logger;
+        _emailService = emailService;
     }
 
     public async Task Handle(ForgotPasswordCommand request, CancellationToken cancellationToken)
@@ -29,8 +28,6 @@ public sealed class ForgotPasswordCommandHandler : ICommandHandler<ForgotPasswor
         if (user is null) return;
 
         var code = _passwordResetService.GenerateCode(request.Email);
-
-        // TODO: send via email service when available
-        _logger.LogWarning("PASSWORD RESET CODE for {Email}: {Code} (expires 15 min)", request.Email, code);
+        await _emailService.SendPasswordResetCodeAsync(request.Email, code, cancellationToken);
     }
 }

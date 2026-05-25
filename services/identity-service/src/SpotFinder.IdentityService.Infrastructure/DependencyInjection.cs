@@ -26,6 +26,7 @@ public static class DependencyInjection
         services.AddScoped<IJwtTokenService, JwtTokenService>();
         services.AddScoped<IExpoPushService, ExpoPushService>();
         services.AddSingleton<IPasswordResetService, InMemoryPasswordResetService>();
+        services.AddHttpClient<IEmailService, ResendEmailService>();
 
         return services;
     }
