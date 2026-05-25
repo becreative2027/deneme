@@ -25,6 +25,7 @@ public static class DependencyInjection
         services.AddScoped<IPasswordHasher, BcryptPasswordHasher>();
         services.AddScoped<IJwtTokenService, JwtTokenService>();
         services.AddScoped<IExpoPushService, ExpoPushService>();
+        services.AddSingleton<IPasswordResetService, InMemoryPasswordResetService>();
 
         return services;
     }

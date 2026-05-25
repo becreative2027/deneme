@@ -199,8 +199,14 @@ export function CreatePostScreen() {
   const handlePost = useCallback(async () => {
     if (isSubmittingRef.current) return;
 
+    if (!imageUri) {
+      showToast('Gönderi için fotoğraf zorunludur.', 'warning');
+      haptic.warning();
+      return;
+    }
+
     if (!selectedPlace) {
-      showToast('Select a place before posting.', 'warning');
+      showToast('Mekan seçmeden gönderi paylaşamazsın.', 'warning');
       haptic.warning();
       return;
     }
@@ -415,9 +421,9 @@ export function CreatePostScreen() {
 
           {/* Submit */}
           <TouchableOpacity
-            style={[styles.submitBtn, (!selectedPlace || isLoading) && styles.btnDisabled]}
+            style={[styles.submitBtn, (!selectedPlace || !imageUri || isLoading) && styles.btnDisabled]}
             onPress={handlePost}
-            disabled={isLoading || !selectedPlace}
+            disabled={isLoading || !selectedPlace || !imageUri}
             activeOpacity={0.85}
           >
             {isLoading ? (

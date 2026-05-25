@@ -81,6 +81,8 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
 
   const allPosts: Post[] = postsQuery.data?.pages.flatMap((p) => p.items) ?? [];
   const photoPosts = allPosts.filter((p) => p.imageUrl);
+  const textReviews = [...allPosts.filter((p) => !p.imageUrl && p.caption)]
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
   // ── Favorites ──────────────────────────────────────────────────────────────
   const favQuery = useQuery({
@@ -341,6 +343,31 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
           </View>
         )}
 
+        {/* ── Text reviews ──────────────────────────────────────────────────── */}
+        {textReviews.length > 0 && (
+          <View style={s.reviewsSection}>
+            <View style={[s.sectionHeader, { paddingHorizontal: 16, marginBottom: 8 }]}>
+              <Ionicons name="chatbubble-outline" size={14} color="#888" />
+              <Text style={s.sectionTitle}>YORUMLAR</Text>
+            </View>
+            {textReviews.map((review) => (
+              <View key={review.id} style={s.reviewCard}>
+                <View style={s.reviewHeader}>
+                  <Text style={s.reviewUsername}>@{review.username || 'kullanici'}</Text>
+                  <Text style={s.reviewDate}>{new Date(review.createdAt).toLocaleDateString('tr-TR')}</Text>
+                </View>
+                <Text style={s.reviewText}>{review.caption}</Text>
+                {review.likeCount > 0 && (
+                  <View style={s.reviewLikes}>
+                    <Ionicons name="heart" size={12} color="#ef4444" />
+                    <Text style={s.reviewLikesText}>{review.likeCount}</Text>
+                  </View>
+                )}
+              </View>
+            ))}
+          </View>
+        )}
+
         <View style={{ height: TAB_BAR_HEIGHT + insets.bottom + 16 }} />
       </ScrollView>
 
@@ -465,4 +492,14 @@ const s = StyleSheet.create({
 
   loadMoreBtn:   { alignItems: 'center', paddingVertical: 12 },
   loadMoreText:  { fontSize: 13, color: PRIMARY, fontWeight: '600' },
+
+  // Text reviews
+  reviewsSection: { marginTop: 8, paddingTop: 8, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: '#eee' },
+  reviewCard:    { paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#f2f2f2' },
+  reviewHeader:  { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 },
+  reviewUsername: { fontSize: 13, fontWeight: '700', color: '#333' },
+  reviewDate:    { fontSize: 11, color: '#bbb' },
+  reviewText:    { fontSize: 14, color: '#444', lineHeight: 20 },
+  reviewLikes:   { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 6 },
+  reviewLikesText: { fontSize: 12, color: '#888' },
 });

@@ -238,6 +238,13 @@ export function LoginScreen({ navigation }: Props) {
             style={[styles.btn, shadow.amber]}
           />
 
+          <AmberButton
+            label="Şifremi Unuttum"
+            variant="ghost"
+            onPress={() => navigation.navigate('ForgotPassword')}
+            style={styles.btn}
+          />
+
           {/* Ayırıcı */}
           <View style={styles.orRow}>
             <View style={[styles.orLine, { backgroundColor: colors.border }]} />

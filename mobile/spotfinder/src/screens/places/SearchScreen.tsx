@@ -59,7 +59,7 @@ export function SearchScreen({ navigation }: Props) {
   const filtersQuery  = useFilters(1);
 
   const allLabels: FilterLabel[] = useMemo(
-    () => (filtersQuery.data ?? []).flatMap((c) => c.labels).slice(0, 20),
+    () => (filtersQuery.data ?? []).flatMap((c) => c.labels),
     [filtersQuery.data],
   );
 

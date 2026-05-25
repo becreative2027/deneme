@@ -27,6 +27,16 @@ export async function logout(): Promise<void> {
   await apiClient.post('/api/auth/logout').catch(() => {});
 }
 
+export async function forgotPassword(email: string): Promise<void> {
+  const { data } = await apiClient.post<ApiResponse<any>>('/api/auth/forgot-password', { email });
+  if (!data.success) throw new Error(data.errors?.join('; ') ?? 'İstek gönderilemedi');
+}
+
+export async function resetPassword(email: string, code: string, newPassword: string): Promise<void> {
+  const { data } = await apiClient.post<ApiResponse<any>>('/api/auth/reset-password', { email, code, newPassword });
+  if (!data.success) throw new Error(data.errors?.join('; ') ?? 'Şifre sıfırlanamadı');
+}
+
 export async function oauthLogin(
   provider: 'apple' | 'google',
   identityToken: string,

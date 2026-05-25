@@ -55,7 +55,7 @@ export function FeedScreen({ navigation }: Props) {
     : activeTab === 'explore' ? explore
     : personalized;
 
-  const allPosts: Post[] = activeQuery.data?.pages.flatMap((p) => p.items) ?? [];
+  const allPosts: Post[] = (activeQuery.data?.pages.flatMap((p) => p.items) ?? []).filter((p) => !!p.imageUrl);
 
   const handleTabChange = useCallback(
     (tab: FeedTab) => {

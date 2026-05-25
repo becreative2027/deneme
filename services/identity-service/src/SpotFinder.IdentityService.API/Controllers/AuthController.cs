@@ -1,10 +1,12 @@
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using SpotFinder.BuildingBlocks.Api;
+using SpotFinder.IdentityService.Application.Features.Auth.Commands.ForgotPassword;
 using SpotFinder.IdentityService.Application.Features.Auth.Commands.Login;
 using SpotFinder.IdentityService.Application.Features.Auth.Commands.OAuthLogin;
 using SpotFinder.IdentityService.Application.Features.Auth.Commands.RefreshToken;
 using SpotFinder.IdentityService.Application.Features.Auth.Commands.Register;
+using SpotFinder.IdentityService.Application.Features.Auth.Commands.ResetPassword;
 
 namespace SpotFinder.IdentityService.API.Controllers;
 
@@ -45,6 +47,31 @@ public sealed class AuthController : BaseController
     }
 
     /// <summary>
+    /// Send a 6-digit reset code to the given email (code is logged; replace with email infra when ready).
+    /// Always returns 200 to avoid email enumeration.
+    /// </summary>
+    [HttpPost("forgot-password")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request, CancellationToken ct)
+    {
+        await Sender.Send(new ForgotPasswordCommand(request.Email), ct);
+        return OkResult("Reset code sent if the account exists.");
+    }
+
+    /// <summary>
+    /// Reset password using the 6-digit code.
+    /// Body: { email, code, newPassword }
+    /// </summary>
+    [HttpPost("reset-password")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request, CancellationToken ct)
+    {
+        await Sender.Send(new ResetPasswordCommand(request.Email, request.Code, request.NewPassword), ct);
+        return OkResult("Password reset successful.");
+    }
+
+    /// <summary>
     /// Exchange a valid refresh token for a new access + refresh token pair (rotation).
     /// Body: { refreshToken: "..." }
     /// </summary>
@@ -59,3 +86,5 @@ public sealed class AuthController : BaseController
 }
 
 public sealed record RefreshTokenRequest(string RefreshToken);
+public sealed record ForgotPasswordRequest(string Email);
+public sealed record ResetPasswordRequest(string Email, string Code, string NewPassword);

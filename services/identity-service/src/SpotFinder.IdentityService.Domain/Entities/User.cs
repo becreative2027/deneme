@@ -90,4 +90,10 @@ public sealed class User : AggregateRoot<Guid>
         IsEmailVerified = true;
         UpdatedAt = DateTime.UtcNow;
     }
+
+    public void UpdatePasswordHash(string passwordHash)
+    {
+        PasswordHash = passwordHash;
+        UpdatedAt = DateTime.UtcNow;
+    }
 }

@@ -27,6 +27,7 @@ import { PostSkeleton } from '../../components/SkeletonLoader';
 import { ErrorState } from '../../components/ErrorState';
 import { EmptyState } from '../../components/EmptyState';
 import { useLikePost } from '../../hooks/usePosts';
+import { CommentsModal } from '../../components/CommentsModal';
 import { useToast } from '../../components/Toast';
 import { useAnalytics } from '../../hooks/useAnalytics';
 import { formatCount } from '../../utils/formatters';
@@ -81,6 +82,7 @@ export function ProfileScreen({ route, navigation }: Props) {
   const [activeTab, setActiveTab] = useState<Tab>('places');
   const [expandedPlaces, setExpandedPlaces] = useState<Set<string>>(new Set());
   const [followSheet, setFollowSheet] = useState<'followers' | 'following' | null>(null);
+  const [commentPostId, setCommentPostId] = useState<string | null>(null);
 
   // Favorites
   const favIdsQuery = useQuery({
@@ -438,6 +440,7 @@ export function ProfileScreen({ route, navigation }: Props) {
               onLike={(postId, liked) => likeMutation.mutate({ postId, liked })}
               onPressPlace={handlePressPlace}
               onPressUser={handlePressUser}
+              onPressComment={(postId) => setCommentPostId(postId)}
             />
           )}
           ListHeaderComponent={Header}
@@ -473,6 +476,11 @@ export function ProfileScreen({ route, navigation }: Props) {
           visible={!!followSheet}
           onClose={() => setFollowSheet(null)}
           onUserPress={(id) => { setFollowSheet(null); handlePressUser(id); }}
+        />
+        <CommentsModal
+          visible={!!commentPostId}
+          postId={commentPostId ?? ''}
+          onClose={() => setCommentPostId(null)}
         />
       </View>
     );
@@ -567,6 +575,7 @@ export function ProfileScreen({ route, navigation }: Props) {
               onLike={(postId, liked) => likeMutation.mutate({ postId, liked })}
               onPressPlace={handlePressPlace}
               onPressUser={handlePressUser}
+              onPressComment={(postId) => setCommentPostId(postId)}
             />
           );
         }}
@@ -605,6 +614,11 @@ export function ProfileScreen({ route, navigation }: Props) {
         visible={!!followSheet}
         onClose={() => setFollowSheet(null)}
         onUserPress={(id) => { setFollowSheet(null); handlePressUser(id); }}
+      />
+      <CommentsModal
+        visible={!!commentPostId}
+        postId={commentPostId ?? ''}
+        onClose={() => setCommentPostId(null)}
       />
     </View>
   );
