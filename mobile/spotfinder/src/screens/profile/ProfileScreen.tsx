@@ -17,7 +17,7 @@ import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import { ProfileStackParamList, Post, Place } from '../../types';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMe, useUserProfile, useUserPosts, useFollowUser } from '../../hooks/useProfile';
 import { FollowListModal } from '../../components/FollowListModal';
 import { useAuthStore } from '../../store/authStore';
@@ -83,6 +83,11 @@ export function ProfileScreen({ route, navigation }: Props) {
   const [expandedPlaces, setExpandedPlaces] = useState<Set<string>>(new Set());
   const [followSheet, setFollowSheet] = useState<'followers' | 'following' | null>(null);
   const [commentPostId, setCommentPostId] = useState<string | null>(null);
+  const qc = useQueryClient();
+  const handleCommentAdded = useCallback(() => {
+    qc.invalidateQueries({ queryKey: ['users', userId, 'posts'] });
+    qc.invalidateQueries({ queryKey: ['feed'] });
+  }, [qc, userId]);
 
   // Favorites
   const favIdsQuery = useQuery({
@@ -481,6 +486,7 @@ export function ProfileScreen({ route, navigation }: Props) {
           visible={!!commentPostId}
           postId={commentPostId ?? ''}
           onClose={() => setCommentPostId(null)}
+          onCommentAdded={handleCommentAdded}
         />
       </View>
     );
@@ -619,6 +625,7 @@ export function ProfileScreen({ route, navigation }: Props) {
         visible={!!commentPostId}
         postId={commentPostId ?? ''}
         onClose={() => setCommentPostId(null)}
+        onCommentAdded={handleCommentAdded}
       />
     </View>
   );

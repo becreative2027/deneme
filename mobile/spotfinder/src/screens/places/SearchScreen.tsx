@@ -29,6 +29,7 @@ export function SearchScreen({ navigation }: Props) {
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const [selectedLabelIds, setSelectedLabelIds] = useState<number[]>([]);
   const [showFilters, setShowFilters]       = useState(false);
+  const [expandedCategories, setExpandedCategories] = useState<Set<number>>(new Set());
 
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { trackScreen, trackEvent } = useAnalytics();
@@ -58,10 +59,19 @@ export function SearchScreen({ navigation }: Props) {
   const popularQuery  = usePopularPlaces(20);
   const filtersQuery  = useFilters(1);
 
+  const categories = filtersQuery.data ?? [];
   const allLabels: FilterLabel[] = useMemo(
-    () => (filtersQuery.data ?? []).flatMap((c) => c.labels),
-    [filtersQuery.data],
+    () => categories.flatMap((c) => c.labels),
+    [categories],
   );
+
+  const toggleCategory = useCallback((id: number) => {
+    setExpandedCategories((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  }, []);
 
   const handleClear = useCallback(() => { setQuery(''); setDebouncedQuery(''); }, []);
   const handleClearFilters = useCallback(() => setSelectedLabelIds([]), []);
@@ -129,32 +139,48 @@ export function SearchScreen({ navigation }: Props) {
         </View>
 
         {/* ── Filter panel ─────────────────────────────────────────────── */}
-        {showFilters && allLabels.length > 0 && (
-          <View style={s.filterPanel}>
-            <Text style={s.filterPanelTitle}>ETİKETLER</Text>
-            <View style={s.filterLabels}>
-              {allLabels.map((lbl) => {
-                const active = selectedLabelIds.includes(lbl.id);
-                return (
-                  <TouchableOpacity
-                    key={lbl.id}
-                    style={[s.filterChip, active && s.filterChipActive]}
-                    onPress={() => toggleLabel(lbl.id)}
-                    activeOpacity={0.75}
-                  >
-                    <Text style={[s.filterChipText, active && s.filterChipTextActive]}>
-                      {lbl.displayName}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
+        {showFilters && categories.length > 0 && (
+          <ScrollView style={s.filterPanel} contentContainerStyle={{ paddingBottom: 4 }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" nestedScrollEnabled>
+            {categories.map((cat) => {
+              const isExpanded = expandedCategories.has(cat.id);
+              const visibleLabels = isExpanded ? cat.labels : cat.labels.slice(0, 6);
+              const hasMore = cat.labels.length > 6;
+              return (
+                <View key={cat.id} style={s.categorySection}>
+                  <Text style={s.categoryTitle}>{cat.displayName.toUpperCase()}</Text>
+                  <View style={s.filterLabels}>
+                    {visibleLabels.map((lbl) => {
+                      const active = selectedLabelIds.includes(lbl.id);
+                      return (
+                        <TouchableOpacity
+                          key={lbl.id}
+                          style={[s.filterChip, active && s.filterChipActive]}
+                          onPress={() => toggleLabel(lbl.id)}
+                          activeOpacity={0.75}
+                        >
+                          <Text style={[s.filterChipText, active && s.filterChipTextActive]}>
+                            {lbl.displayName}
+                          </Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                  {hasMore && (
+                    <TouchableOpacity onPress={() => toggleCategory(cat.id)} style={s.showMoreBtn}>
+                      <Text style={s.showMoreText}>
+                        {isExpanded ? 'Daha az göster ▲' : `+${cat.labels.length - 6} daha göster ▼`}
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              );
+            })}
             {hasLabels && (
               <TouchableOpacity onPress={handleClearFilters} style={s.clearFiltersBtn}>
                 <Text style={s.clearFiltersText}>Filtreleri Temizle</Text>
               </TouchableOpacity>
             )}
-          </View>
+          </ScrollView>
         )}
 
         {/* ── Active label chips (when filter panel closed) ──────────── */}
@@ -287,8 +313,12 @@ const s = StyleSheet.create({
   filterBadgeText: { color: '#fff', fontSize: 10, fontWeight: '700' },
 
   // Filter panel
-  filterPanel:      { backgroundColor: '#fff', borderRadius: 12, padding: 14, marginTop: 8, borderWidth: 1, borderColor: '#e8e8e8' },
+  filterPanel:      { backgroundColor: '#fff', borderRadius: 12, padding: 14, marginTop: 8, borderWidth: 1, borderColor: '#e8e8e8', maxHeight: 340 },
   filterPanelTitle: { fontSize: 11, fontWeight: '700', color: '#aaa', letterSpacing: 0.8, marginBottom: 10 },
+  categorySection:  { marginBottom: 12 },
+  categoryTitle:    { fontSize: 10, fontWeight: '700', color: '#bbb', letterSpacing: 1, marginBottom: 8 },
+  showMoreBtn:      { marginTop: 6, alignSelf: 'flex-start' },
+  showMoreText:     { fontSize: 12, color: PRIMARY, fontWeight: '600' },
   filterLabels:     { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   filterChip: {
     paddingHorizontal: 12,
