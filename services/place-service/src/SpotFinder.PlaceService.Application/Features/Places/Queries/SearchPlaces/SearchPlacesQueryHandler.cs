@@ -195,6 +195,18 @@ public sealed class SearchPlacesQueryHandler
         swDb.Stop();
         long dbTime = swDb.ElapsedMilliseconds;
 
+        // ── City / District names ─────────────────────────────────────────────
+        var cityIds     = pagedPlaces.Where(p => p.CityId.HasValue).Select(p => p.CityId!.Value).Distinct().ToList();
+        var districtIds = pagedPlaces.Where(p => p.DistrictId.HasValue).Select(p => p.DistrictId!.Value).Distinct().ToList();
+
+        var cityNameMap = await _db.CityTranslations
+            .Where(ct => cityIds.Contains(ct.CityId) && ct.LanguageId == request.LanguageId)
+            .ToDictionaryAsync(ct => ct.CityId, ct => ct.Name, ct);
+
+        var districtNameMap = await _db.DistrictTranslations
+            .Where(dt => districtIds.Contains(dt.DistrictId) && dt.LanguageId == request.LanguageId)
+            .ToDictionaryAsync(dt => dt.DistrictId, dt => dt.Name, ct);
+
         // ── Review counts (from app reviews, not Google data) ─────────────────
         var reviewCountMap = await _db.PlaceReviews
             .Where(r => placeIds.Contains(r.PlaceId))
@@ -219,6 +231,8 @@ public sealed class SearchPlacesQueryHandler
                 translations.TryGetValue(p.Id, out var t);
                 labelsByPlace.TryGetValue(p.Id, out var lbls);
                 reviewCountMap.TryGetValue(p.Id, out var rc);
+                cityNameMap.TryGetValue(p.CityId ?? 0, out var cityName);
+                districtNameMap.TryGetValue(p.DistrictId ?? 0, out var districtName);
                 return new PlaceSummaryDto(
                     p.Id,
                     t?.Name ?? string.Empty,
@@ -226,6 +240,8 @@ public sealed class SearchPlacesQueryHandler
                     p.CoverImageUrl,
                     p.CityId,
                     p.DistrictId,
+                    cityName,
+                    districtName,
                     p.Latitude,
                     p.Longitude,
                     p.Rating,

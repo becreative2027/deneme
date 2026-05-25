@@ -13,6 +13,8 @@ public sealed record PlaceSummaryDto(
     string? CoverImageUrl,
     int? CityId,
     int? DistrictId,
+    string? CityName,
+    string? DistrictName,
     double? Latitude,
     double? Longitude,
     decimal? Rating,
