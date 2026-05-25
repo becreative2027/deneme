@@ -111,6 +111,46 @@ public sealed class NotificationsController : BaseController
     }
 
     /// <summary>
+    /// Internal endpoint — called by content-service after a comment event.
+    /// </summary>
+    [HttpPost("send-comment")]
+    [AllowAnonymous]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    public async Task<IActionResult> SendCommentNotification(
+        [FromBody] SendCommentRequest request,
+        [FromServices] IExpoPushService pushService,
+        CancellationToken ct)
+    {
+        if (request.CommenterId == request.PostOwnerId) return NoContent();
+
+        var commenter = await _ctx.Profiles
+            .FirstOrDefaultAsync(p => p.UserId == request.CommenterId, ct);
+
+        var commenterName = commenter?.DisplayName
+            ?? (await _ctx.Users.Where(u => u.Id == request.CommenterId)
+                              .Select(u => u.Username)
+                              .FirstOrDefaultAsync(ct))
+            ?? "Biri";
+
+        var tokens = await _ctx.PushTokens
+            .Where(t => t.UserId == request.PostOwnerId)
+            .Select(t => t.Token)
+            .ToListAsync(ct);
+
+        if (tokens.Count == 0) return NoContent();
+
+        await pushService.SendAsync(
+            tokens,
+            title: "Yeni yorum 💬",
+            body:  $"{commenterName} gönderine yorum yaptı.",
+            type:  "comment",
+            userId: request.CommenterId.ToString(),
+            ct:    ct);
+
+        return NoContent();
+    }
+
+    /// <summary>
     /// Internal endpoint — called by content-service after a like event.
     /// </summary>
     [HttpPost("send-like")]
@@ -156,3 +196,4 @@ public sealed record RegisterDeviceRequest(string Token, string? Platform);
 public sealed record TokensByUsersRequest(IReadOnlyList<Guid> UserIds);
 public sealed record SendFollowRequest(Guid FollowerId, Guid FollowingId);
 public sealed record SendLikeRequest(Guid LikerId, Guid PostOwnerId, string PostId);
+public sealed record SendCommentRequest(Guid CommenterId, Guid PostOwnerId, string PostId);
