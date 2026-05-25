@@ -19,7 +19,7 @@ services:
     container_name: spotfinder-identity
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
-      - ConnectionStrings__IdentityDb=Host=${DO_DB_HOST};Port=${DO_DB_PORT};Database=spotfinder_identity;Username=${DO_DB_USER};Password=${DO_DB_PASSWORD};SSL Mode=Require;Trust Server Certificate=true
+      - ConnectionStrings__IdentityDb=Host=${DO_DB_HOST};Port=${DO_DB_PORT};Database=spotfinder;Username=${DO_DB_USER};Password=${DO_DB_PASSWORD};SSL Mode=Require;Trust Server Certificate=true
       - Resend__ApiKey=${RESEND_API_KEY}
 
   geo-service:
