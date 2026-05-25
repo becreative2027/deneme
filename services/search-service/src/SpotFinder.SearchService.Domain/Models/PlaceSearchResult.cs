@@ -8,6 +8,8 @@ public sealed class PlaceSearchResult
     public double Latitude { get; init; }
     public double Longitude { get; init; }
     public int CityId { get; init; }
+    public string? CityName { get; init; }
+    public string? DistrictName { get; init; }
     public List<string> LabelSlugs { get; init; } = new();
     public double? DistanceKm { get; init; }
     public double RelevanceScore { get; init; }

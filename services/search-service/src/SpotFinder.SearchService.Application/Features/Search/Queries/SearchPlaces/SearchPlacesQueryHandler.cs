@@ -28,7 +28,7 @@ public sealed class SearchPlacesQueryHandler : IQueryHandler<SearchPlacesQuery, 
 
         var result = await _searchEngine.SearchAsync(filter, request.LanguageCode, cancellationToken);
         var dtos = result.Items.Select(r => new PlaceSearchResultDto(
-            r.PlaceId, r.Slug, r.Name, r.Latitude, r.Longitude, r.CityId, r.LabelSlugs, r.DistanceKm, r.RelevanceScore
+            r.PlaceId, r.Slug, r.Name, r.Latitude, r.Longitude, r.CityId, r.CityName, r.DistrictName, r.LabelSlugs, r.DistanceKm, r.RelevanceScore
         )).ToList();
 
         return PagedResult<PlaceSearchResultDto>.Create(dtos, result.TotalCount, result.Page, result.PageSize);

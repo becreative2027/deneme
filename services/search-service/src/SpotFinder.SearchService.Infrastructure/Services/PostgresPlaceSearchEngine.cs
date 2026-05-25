@@ -33,6 +33,8 @@ public sealed class PostgresPlaceSearchEngine : IPlaceSearchEngine
             Latitude = r.Latitude,
             Longitude = r.Longitude,
             CityId = r.CityId,
+            CityName = r.CityName,
+            DistrictName = r.DistrictName,
             RelevanceScore = 1.0
         }).ToList();
 
@@ -61,9 +63,12 @@ public sealed class PostgresPlaceSearchEngine : IPlaceSearchEngine
         var offset = (filter.Page - 1) * filter.PageSize;
         return $"""
             SELECT p.id AS "PlaceId", COALESCE(pt.slug, p.id::text) AS "Slug", COALESCE(pt.name, p.id::text) AS "Name",
-                   COALESCE(p.latitude, 0) AS "Latitude", COALESCE(p.longitude, 0) AS "Longitude", COALESCE(p.city_id, 0) AS "CityId"
+                   COALESCE(p.latitude, 0) AS "Latitude", COALESCE(p.longitude, 0) AS "Longitude", COALESCE(p.city_id, 0) AS "CityId",
+                   ct.name AS "CityName", dt.name AS "DistrictName"
             FROM place.places p
             LEFT JOIN place.place_translations pt ON pt.place_id = p.id
+            LEFT JOIN geo.city_translations ct ON ct.city_id = p.city_id AND ct.language_id = 1
+            LEFT JOIN geo.district_translations dt ON dt.district_id = p.district_id AND dt.language_id = 1
             WHERE p.is_deleted = false {conditions}
             ORDER BY p.created_at DESC
             LIMIT {filter.PageSize} OFFSET {offset}
@@ -102,6 +107,8 @@ internal record PlaceSearchRaw
     public double Latitude { get; init; }
     public double Longitude { get; init; }
     public int CityId { get; init; }
+    public string? CityName { get; init; }
+    public string? DistrictName { get; init; }
 }
 
 internal record CountResult
