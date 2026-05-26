@@ -1,7 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using SpotFinder.PlaceService.Application.Abstractions;
+using SpotFinder.PlaceService.Domain.Services;
 
 namespace SpotFinder.PlaceService.Infrastructure.BackgroundJobs;
 

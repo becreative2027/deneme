@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using SpotFinder.PlaceService.Application.Abstractions;
+using SpotFinder.PlaceService.Domain.Services;
 using SpotFinder.PlaceService.Domain.Entities;
 using SpotFinder.PlaceService.Infrastructure.Persistence;
 
