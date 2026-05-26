@@ -19,6 +19,7 @@ import { haptic } from '../../utils/haptics';
 import { useTheme, ThemeColors } from '../../theme';
 import { PostCard } from '../../components/PostCard';
 import { CommentsModal } from '../../components/CommentsModal';
+import { ExploreTab } from './ExploreTab';
 import { PostSkeleton } from '../../components/SkeletonLoader';
 import { ErrorState } from '../../components/ErrorState';
 import { EmptyState } from '../../components/EmptyState';
@@ -105,7 +106,7 @@ export function FeedScreen({ navigation }: Props) {
 
   const keyExtractor = useCallback((item: Post) => item.id, []);
 
-  if (activeQuery.isLoading) {
+  if (activeTab !== 'explore' && activeQuery.isLoading) {
     return (
       <SafeAreaView style={s.container} edges={['top']}>
         <TabBar activeTab={activeTab} onSelect={handleTabChange} colors={theme.colors} />
@@ -114,7 +115,7 @@ export function FeedScreen({ navigation }: Props) {
     );
   }
 
-  if (activeQuery.isError) {
+  if (activeTab !== 'explore' && activeQuery.isError) {
     return (
       <SafeAreaView style={s.container} edges={['top']}>
         <TabBar activeTab={activeTab} onSelect={handleTabChange} colors={theme.colors} />
@@ -126,37 +127,49 @@ export function FeedScreen({ navigation }: Props) {
   return (
     <SafeAreaView style={s.container} edges={['top']}>
       <TabBar activeTab={activeTab} onSelect={handleTabChange} colors={theme.colors} />
-      <FlatList
-        data={allPosts}
-        keyExtractor={keyExtractor}
-        renderItem={renderPost}
-        initialNumToRender={4}
-        maxToRenderPerBatch={5}
-        windowSize={8}
-        onEndReached={handleEndReached}
-        onEndReachedThreshold={0.4}
-        refreshControl={
-          <RefreshControl
-            refreshing={activeQuery.isRefetching}
-            onRefresh={() => activeQuery.refetch()}
-            tintColor={theme.colors.primary}
-          />
-        }
-        ListEmptyComponent={
-          <EmptyState
-            icon="newspaper-outline"
-            title="No posts yet"
-            subtitle="Follow people or explore to see content here."
-          />
-        }
-        ListFooterComponent={
-          activeQuery.isFetchingNextPage ? (
-            <ActivityIndicator color={theme.colors.primary} style={{ padding: 16 }} />
-          ) : null
-        }
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={allPosts.length === 0 ? { flex: 1 } : { paddingBottom: tabBarHeight }}
-      />
+
+      {activeTab === 'explore' ? (
+        <ExploreTab
+          onPressPlace={(placeId) => {
+            navigation.push('PlaceDetail', { placeId });
+            trackEvent('place_open', { placeId, source: 'explore' });
+          }}
+          bottomPadding={tabBarHeight}
+        />
+      ) : (
+        <FlatList
+          data={allPosts}
+          keyExtractor={keyExtractor}
+          renderItem={renderPost}
+          initialNumToRender={4}
+          maxToRenderPerBatch={5}
+          windowSize={8}
+          onEndReached={handleEndReached}
+          onEndReachedThreshold={0.4}
+          refreshControl={
+            <RefreshControl
+              refreshing={activeQuery.isRefetching}
+              onRefresh={() => activeQuery.refetch()}
+              tintColor={theme.colors.primary}
+            />
+          }
+          ListEmptyComponent={
+            <EmptyState
+              icon="newspaper-outline"
+              title="No posts yet"
+              subtitle="Follow people or explore to see content here."
+            />
+          }
+          ListFooterComponent={
+            activeQuery.isFetchingNextPage ? (
+              <ActivityIndicator color={theme.colors.primary} style={{ padding: 16 }} />
+            ) : null
+          }
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={allPosts.length === 0 ? { flex: 1 } : { paddingBottom: tabBarHeight }}
+        />
+      )}
+
       <CommentsModal
         visible={!!commentPostId}
         postId={commentPostId ?? ''}

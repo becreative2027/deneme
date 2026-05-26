@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Place } from '../types';
 import { formatRating, formatCount } from '../utils/formatters';
 import { OptimizedImage } from './OptimizedImage';
+import { useLocationStore, distanceKm, formatDistance } from '../store/locationStore';
 
 interface Props {
   place: Place;
@@ -11,9 +12,17 @@ interface Props {
 }
 
 export const PlaceCard = memo(function PlaceCard({ place, onPress }: Props) {
+  const { lat, lon } = useLocationStore();
+
+  const distance =
+    lat != null && lon != null && place.latitude != null && place.longitude != null
+      ? formatDistance(distanceKm(lat, lon, place.latitude, place.longitude))
+      : null;
+
+  const locationLabel = [place.districtName, place.city].filter(Boolean).join(', ');
+
   return (
     <TouchableOpacity style={styles.card} onPress={() => onPress(place.id)} activeOpacity={0.85}>
-      {/* Phase 8.1: OptimizedImage replaces plain Image */}
       <OptimizedImage
         uri={place.imageUrl}
         style={styles.image}
@@ -24,16 +33,35 @@ export const PlaceCard = memo(function PlaceCard({ place, onPress }: Props) {
         <Text style={styles.name} numberOfLines={1}>
           {place.name}
         </Text>
-        <Text style={styles.category}>{place.categoryName}</Text>
+        {place.categoryName ? (
+          <Text style={styles.category}>{place.categoryName}</Text>
+        ) : null}
+
+        {/* Rating + distance row */}
         <View style={styles.meta}>
-          <Ionicons name="location-outline" size={12} color="#888" />
-          <Text style={styles.city}>{place.city}</Text>
-          {place.averageRating > 0 && (
-            <>
-              <Ionicons name="star" size={12} color="#f39c12" style={styles.starIcon} />
-              <Text style={styles.rating}>{formatRating(place.averageRating)}</Text>
-              <Text style={styles.reviews}>({formatCount(place.reviewCount)})</Text>
-            </>
+          <View style={styles.metaLeft}>
+            {place.averageRating > 0 ? (
+              <>
+                <Ionicons name="star" size={12} color="#f39c12" />
+                <Text style={styles.rating}>{formatRating(place.averageRating)}</Text>
+                <Text style={styles.reviews}>({formatCount(place.reviewCount)})</Text>
+              </>
+            ) : (
+              <Text style={styles.noRating}>Henüz değerlendirme yok</Text>
+            )}
+            {locationLabel ? (
+              <>
+                <Text style={styles.dot}>·</Text>
+                <Ionicons name="location-outline" size={11} color="#aaa" />
+                <Text style={styles.location}>{locationLabel}</Text>
+              </>
+            ) : null}
+          </View>
+          {distance && (
+            <View style={styles.distanceBadge}>
+              <Ionicons name="navigate-outline" size={11} color="#6c63ff" />
+              <Text style={styles.distanceText}>{distance}</Text>
+            </View>
           )}
         </View>
       </View>
@@ -53,13 +81,30 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.08,
     shadowRadius: 4,
   },
-  image: { width: '100%', height: 160 },
-  info: { padding: 12 },
-  name: { fontSize: 15, fontWeight: '700', color: '#1a1a1a' },
+  image:    { width: '100%', height: 160 },
+  info:     { padding: 12 },
+  name:     { fontSize: 15, fontWeight: '700', color: '#1a1a1a' },
   category: { fontSize: 12, color: '#6c63ff', marginTop: 2, fontWeight: '500' },
-  meta: { flexDirection: 'row', alignItems: 'center', marginTop: 6, gap: 3 },
-  city: { fontSize: 12, color: '#888', marginRight: 8 },
-  starIcon: { marginLeft: 4 },
-  rating: { fontSize: 12, fontWeight: '600', color: '#333' },
-  reviews: { fontSize: 11, color: '#aaa', marginLeft: 2 },
+
+  meta:     { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 6 },
+  metaLeft: { flexDirection: 'row', alignItems: 'center', gap: 3, flex: 1, flexWrap: 'wrap' },
+
+  rating:   { fontSize: 12, fontWeight: '600', color: '#333' },
+  reviews:  { fontSize: 11, color: '#aaa' },
+  noRating: { fontSize: 11, color: '#bbb' },
+
+  dot:      { fontSize: 11, color: '#ccc', marginHorizontal: 1 },
+  location: { fontSize: 11, color: '#aaa' },
+
+  distanceBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    backgroundColor: '#f0eeff',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 20,
+    marginLeft: 8,
+  },
+  distanceText: { fontSize: 11, color: '#6c63ff', fontWeight: '600' },
 });

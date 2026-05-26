@@ -1,9 +1,10 @@
-import React from 'react';
-import { Image, StyleSheet, View } from 'react-native';
+import React, { useState } from 'react';
+import { Image, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../theme';
 import { shadow } from '../../theme';
+import { AvatarViewer } from '../AvatarViewer';
 
 interface Props {
   uri?: string;
@@ -14,8 +15,9 @@ interface Props {
 export function AvatarRing({ uri, size = 88, ringWidth = 3 }: Props) {
   const { colors } = useTheme();
   const outerSize = size + ringWidth * 2 + 4;
+  const [viewing, setViewing] = useState(false);
 
-  return (
+  const inner = (
     <View style={{ width: outerSize, height: outerSize }}>
       <LinearGradient
         colors={[colors.accent, colors.accentDeep]}
@@ -66,6 +68,22 @@ export function AvatarRing({ uri, size = 88, ringWidth = 3 }: Props) {
         </View>
       </LinearGradient>
     </View>
+  );
+
+  if (!uri) return inner;
+
+  return (
+    <>
+      <TouchableOpacity onPress={() => setViewing(true)} activeOpacity={0.85}>
+        {inner}
+      </TouchableOpacity>
+      <AvatarViewer
+        uri={uri}
+        visible={viewing}
+        onClose={() => setViewing(false)}
+        originSize={size}
+      />
+    </>
   );
 }
 

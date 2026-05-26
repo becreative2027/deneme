@@ -29,12 +29,15 @@
       <dict>
         <key>CFBundleURLSchemes</key>
         <array>
+          <string>spotfinder</string>
           <string>com.ayberkkemal.spotfinder</string>
         </array>
       </dict>
     </array>
     <key>CFBundleVersion</key>
-    <string>22</string>
+    <string>28</string>
+    <key>ITSAppUsesNonExemptEncryption</key>
+    <false/>
     <key>LSRequiresIPhoneOS</key>
     <true/>
     <key>NSAppTransportSecurity</key>
@@ -45,8 +48,18 @@
     <key>NSCameraUsageDescription</key>
     <string>SpotFinder uses your camera to capture spot photos.</string>
     <key>NSFaceIDUsageDescription</key>
-    <string>Allow $(PRODUCT_NAME) to access your Face ID biometric data.</string>
-<key>NSPhotoLibraryUsageDescription</key>
+    <string>SpotFinder uses Face ID to securely authenticate you.</string>
+    <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+    <string>Allow $(PRODUCT_NAME) to access your location</string>
+    <key>NSLocationAlwaysUsageDescription</key>
+    <string>Allow $(PRODUCT_NAME) to access your location</string>
+    <key>NSLocationWhenInUseUsageDescription</key>
+    <string>SpotFinder, yakınındaki mekanları göstermek için konumuna ihtiyaç duyar.</string>
+    <key>NSMicrophoneUsageDescription</key>
+    <string>Allow $(PRODUCT_NAME) to access your microphone</string>
+    <key>NSMotionUsageDescription</key>
+    <string>Allow $(PRODUCT_NAME) to detect your current motion activity</string>
+    <key>NSPhotoLibraryUsageDescription</key>
     <string>SpotFinder uses your photo library to attach photos to posts.</string>
     <key>UILaunchStoryboardName</key>
     <string>SplashScreen</string>

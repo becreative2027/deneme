@@ -95,6 +95,8 @@ public sealed class PlaceQueryDbContext : DbContext
             b.HasKey(x => x.Id);
             b.Property(x => x.Id).HasColumnName("id");
             b.Property(x => x.PlaceId).HasColumnName("place_id");
+            b.Property(x => x.Rating).HasColumnName("rating");
+            b.Property(x => x.CreatedAt).HasColumnName("created_at");
         });
 
         // ── label schema ──────────────────────────────────────────────────────

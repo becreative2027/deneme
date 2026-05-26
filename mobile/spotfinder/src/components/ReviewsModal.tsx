@@ -10,12 +10,12 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
-  ScrollView,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getPlaceReviews, addOrUpdateReview, ReviewDto } from '../api/reviews';
+import { getPlacePosts } from '../api/places';
 import { getUserProfile } from '../api/users';
 import { useAuthStore } from '../store/authStore';
 import { Avatar } from './Avatar';
@@ -61,11 +61,16 @@ function StarPicker({ value, onChange }: { value: number; onChange: (v: number) 
   );
 }
 
-function ReviewCard({ review, isMe }: { review: ReviewDto; isMe: boolean }) {
+function ReviewCard({ review, isMe, onPressUser }: { review: ReviewDto; isMe: boolean; onPressUser?: (userId: string) => void }) {
   return (
     <View style={[s.reviewCard, isMe && s.reviewCardMe]}>
-      <View style={s.reviewHeader}>
-        <Avatar uri={review.avatarUrl} name={review.displayName} size={36} />
+      <TouchableOpacity
+        style={s.reviewHeader}
+        onPress={() => onPressUser?.(review.userId)}
+        activeOpacity={onPressUser ? 0.7 : 1}
+        disabled={!onPressUser}
+      >
+        <Avatar uri={review.avatarUrl} name={review.displayName} size={36} expandable={false} />
         <View style={s.reviewMeta}>
           <View style={s.reviewNameRow}>
             <Text style={s.reviewName}>{review.displayName}</Text>
@@ -73,7 +78,7 @@ function ReviewCard({ review, isMe }: { review: ReviewDto; isMe: boolean }) {
           </View>
           <Text style={s.reviewUsername}>@{review.username}</Text>
         </View>
-      </View>
+      </TouchableOpacity>
       <View style={s.reviewRatingRow}>
         <StarRow rating={review.rating} size={13} />
         <Text style={s.reviewTime}>{timeAgo(review.createdAt)}</Text>
@@ -119,7 +124,11 @@ function WriteForm({
   return (
     <View style={s.writeForm}>
       <Text style={s.writeTitle}>{existing ? 'Değerlendirmeni Güncelle' : 'Değerlendir'}</Text>
+      <Text style={s.starHint}>Puan seç</Text>
       <StarPicker value={rating} onChange={setRating} />
+      {rating === 0 && (
+        <Text style={s.starRequired}>Devam etmek için bir puan seçmelisin</Text>
+      )}
       <TextInput
         style={s.commentInput}
         value={comment}
@@ -159,9 +168,10 @@ interface Props {
   placeId: string;
   visible: boolean;
   onClose: () => void;
+  onPressUser?: (userId: string) => void;
 }
 
-export function ReviewsModal({ placeId, visible, onClose }: Props) {
+export function ReviewsModal({ placeId, visible, onClose, onPressUser }: Props) {
   const insets = useSafeAreaInsets();
   const user = useAuthStore((s) => s.user);
   const [writeOpen, setWriteOpen] = useState(false);
@@ -170,11 +180,9 @@ export function ReviewsModal({ placeId, visible, onClose }: Props) {
     queryKey: ['placeReviews', placeId],
     queryFn: async () => {
       const page = await getPlaceReviews(placeId);
-      // Fill in missing user info for each review
       const enriched = await Promise.all(
         page.items.map(async (r) => {
           if (r.displayName && r.username) return r;
-          // Match against current logged-in user first (no extra API call)
           if (r.userId === user?.id) {
             return {
               ...r,
@@ -183,7 +191,6 @@ export function ReviewsModal({ placeId, visible, onClose }: Props) {
               avatarUrl: r.avatarUrl ?? user.avatarUrl,
             };
           }
-          // Otherwise fetch user profile
           try {
             const profile = await getUserProfile(r.userId);
             return {
@@ -202,6 +209,16 @@ export function ReviewsModal({ placeId, visible, onClose }: Props) {
     staleTime: 30_000,
     enabled: visible,
   });
+
+  const postsQuery = useQuery({
+    queryKey: ['placePosts', placeId],
+    queryFn: () => getPlacePosts(placeId),
+    staleTime: 60_000,
+    enabled: visible,
+  });
+  const textPosts = (postsQuery.data?.items ?? []).filter(
+    (p) => !p.imageUrl && p.caption,
+  );
 
   const reviews = query.data?.items ?? [];
   const myReview = reviews.find((r) => r.userId === user?.id);
@@ -256,13 +273,43 @@ export function ReviewsModal({ placeId, visible, onClose }: Props) {
               data={displayList}
               keyExtractor={(item) => item.id}
               renderItem={({ item }) => (
-                <ReviewCard review={item} isMe={item.userId === user?.id} />
+                <ReviewCard review={item} isMe={item.userId === user?.id} onPressUser={onPressUser} />
               )}
               ListEmptyComponent={
-                <View style={s.centered}>
-                  <Ionicons name="star-outline" size={40} color="#ddd" />
-                  <Text style={s.emptyText}>Henüz değerlendirme yok</Text>
-                </View>
+                textPosts.length === 0 ? (
+                  <View style={s.centered}>
+                    <Ionicons name="star-outline" size={40} color="#ddd" />
+                    <Text style={s.emptyText}>Henüz değerlendirme yok</Text>
+                  </View>
+                ) : null
+              }
+              ListFooterComponent={
+                textPosts.length > 0 ? (
+                  <View>
+                    <View style={s.postsDivider}>
+                      <Ionicons name="chatbubble-outline" size={13} color="#aaa" />
+                      <Text style={s.postsDividerText}>YORUMLAR</Text>
+                    </View>
+                    {textPosts.map((p) => (
+                      <View key={p.id} style={s.postCard}>
+                        <TouchableOpacity
+                          style={s.postHeader}
+                          onPress={() => onPressUser?.(p.userId)}
+                          activeOpacity={onPressUser ? 0.7 : 1}
+                          disabled={!onPressUser}
+                        >
+                          <Avatar uri={p.avatarUrl} name={p.username} size={32} expandable={false} />
+                          <View style={s.postMeta}>
+                            <Text style={s.postName}>{p.displayName || p.username}</Text>
+                            <Text style={s.postUsername}>@{p.username}</Text>
+                          </View>
+                          <Text style={s.postTime}>{timeAgo(p.createdAt)}</Text>
+                        </TouchableOpacity>
+                        <Text style={s.postText}>{p.caption}</Text>
+                      </View>
+                    ))}
+                  </View>
+                ) : null
               }
               showsVerticalScrollIndicator={false}
             />
@@ -326,6 +373,17 @@ const s = StyleSheet.create({
 
   emptyText:    { fontSize: 14, color: '#aaa' },
 
+  // Text posts section
+  postsDivider:     { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 16, paddingVertical: 12, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: '#eee', marginTop: 4 },
+  postsDividerText: { fontSize: 11, fontWeight: '700', color: '#aaa', letterSpacing: 0.8 },
+  postCard:         { paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#f0f0f0' },
+  postHeader:       { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 8 },
+  postMeta:         { flex: 1 },
+  postName:         { fontSize: 13, fontWeight: '600', color: '#111' },
+  postUsername:     { fontSize: 12, color: '#888', marginTop: 1 },
+  postTime:         { fontSize: 12, color: '#aaa' },
+  postText:         { fontSize: 14, color: '#444', lineHeight: 20 },
+
   // Write form
   writeToggle:      { padding: 16, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: '#eee' },
   writeToggleBtn:   { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 12, borderRadius: 12, borderWidth: 2, borderColor: PRIMARY },
@@ -341,4 +399,6 @@ const s = StyleSheet.create({
   submitBtnDisabled: { opacity: 0.45 },
   submitBtnText:{ fontSize: 14, fontWeight: '700', color: '#fff' },
   errorText:    { fontSize: 12, color: '#ef4444', textAlign: 'center', marginTop: 8 },
+  starHint:     { fontSize: 12, color: '#888', textAlign: 'center', marginBottom: 8 },
+  starRequired: { fontSize: 12, color: '#f59e0b', textAlign: 'center', marginBottom: 8 },
 });

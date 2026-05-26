@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { StatusBar } from 'expo-status-bar';
-import React from 'react';
+import * as Location from 'expo-location';
+import React, { useEffect } from 'react';
 // if (__DEV__) { require('./src/utils/reactotron'); }
 import { View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -11,6 +12,7 @@ import { RootNavigator } from './src/navigation/RootNavigator';
 import { ThemeProvider, useTheme } from './src/theme';
 import { retryDelay, shouldRetry } from './src/utils/retry';
 import { initSentry } from './src/utils/sentry';
+import { useLocationStore } from './src/store/locationStore';
 
 // Initialize crash reporting before anything renders
 initSentry();
@@ -30,11 +32,30 @@ const queryClient = new QueryClient({
   },
 });
 
+// ── Location initializer — requests permission once at app start ─────────────
+function LocationInit() {
+  const setLocation = useLocationStore((s) => s.setLocation);
+  useEffect(() => {
+    (async () => {
+      try {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== 'granted') return;
+        const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+        setLocation(pos.coords.latitude, pos.coords.longitude);
+      } catch {
+        // Location unavailable — distance badges simply won't show
+      }
+    })();
+  }, []);
+  return null;
+}
+
 // ── Inner root — reads theme after ThemeProvider is mounted ───────────────────
 function AppContent() {
   const { colors } = useTheme();
   return (
     <>
+      <LocationInit />
       <StatusBar style={colors.statusBar} />
       {/* Global offline indicator — rendered above all screens */}
       <OfflineBanner />

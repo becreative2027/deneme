@@ -15,7 +15,7 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.ayberkkemal.spotfinder",
-      "buildNumber": "22",
+      "buildNumber": "28",
       "usesAppleSignIn": true,
       "infoPlist": {
         "NSPhotoLibraryUsageDescription": "SpotFinder uses your photo library to attach photos to posts.",
@@ -75,7 +75,13 @@
           "sounds": []
         }
       ],
-      "expo-font"
+      "expo-font",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "SpotFinder, yakınındaki mekanları göstermek için konumuna ihtiyaç duyar."
+        }
+      ]
     ],
     "scheme": "spotfinder",
     "extra": {

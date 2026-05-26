@@ -58,7 +58,7 @@ export const PostCard = memo(function PostCard({ post, onLike, onPressPlace, onP
       {/* Header */}
       <View style={s.header}>
         <Pressable style={s.headerLeft} onPress={() => onPressUser?.(post.userId)}>
-          <Avatar uri={post.avatarUrl} name={post.displayName} size={36} />
+          <Avatar uri={post.avatarUrl} name={post.displayName} size={36} expandable={false} />
           <View style={s.headerText}>
             <Text style={s.displayName}>{post.displayName || post.username || 'Kullanıcı'}</Text>
             <Text style={s.username}>@{post.username || 'kullanici'}</Text>
@@ -72,11 +72,13 @@ export const PostCard = memo(function PostCard({ post, onLike, onPressPlace, onP
 
       {/* Phase 8.1: OptimizedImage with shimmer placeholder + fade-in */}
       {post.imageUrl ? (
-        <OptimizedImage
-          uri={post.imageUrl}
-          style={s.image}
-          resizeMode="cover"
-        />
+        <TouchableOpacity activeOpacity={0.95} onPress={() => onPressUser?.(post.userId)}>
+          <OptimizedImage
+            uri={post.imageUrl}
+            style={s.image}
+            resizeMode="cover"
+          />
+        </TouchableOpacity>
       ) : null}
 
       {/* Caption */}
