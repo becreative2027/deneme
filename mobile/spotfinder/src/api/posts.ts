@@ -34,6 +34,17 @@ export interface PostComment {
   createdAt: string;
 }
 
+export interface PostSummary {
+  id: string;
+  placeId: string;
+  userId: string;
+}
+
+export async function getPost(postId: string): Promise<PostSummary> {
+  const { data } = await apiClient.get<any>(`/api/posts/${postId}`);
+  return (data.data ?? data) as PostSummary;
+}
+
 export async function getPostComments(postId: string, page = 1, pageSize = 30): Promise<PostComment[]> {
   const { data } = await apiClient.get<any>(`/api/posts/${postId}/comments`, { params: { page, pageSize } });
   return (data.data ?? []) as PostComment[];

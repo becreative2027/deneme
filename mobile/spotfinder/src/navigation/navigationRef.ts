@@ -1,88 +1,111 @@
 import { createNavigationContainerRef, CommonActions } from '@react-navigation/native';
 import { RootStackParamList } from '../types';
+import { getPost } from '../api/posts';
 
 /**
  * Global navigation ref — used outside the React component tree
  * (e.g., notification tap handlers, analytics utilities).
- *
- * Pass this ref to <NavigationContainer ref={navigationRef} />.
  */
 export const navigationRef = createNavigationContainerRef<RootStackParamList>();
 
-// ── Notification routing helpers ──────────────────────────────────────────────
+// ── Types ─────────────────────────────────────────────────────────────────────
 
 export type NotificationPayload = {
-  /** Identifies the notification category for routing */
   type: 'like' | 'comment' | 'follow' | 'new_post' | 'recommendation';
-  /** ID of the referenced post (like, comment, new_post) */
   postId?: string;
-  /** ID of the referenced user (follow, like, comment) */
   userId?: string;
-  /** ID of the referenced place (recommendation) */
   placeId?: string;
 };
 
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+/** Wait until the navigator is ready (max ~3 s after app launch). */
+function waitReady(maxMs = 3000): Promise<void> {
+  return new Promise((resolve) => {
+    if (navigationRef.isReady()) { resolve(); return; }
+    const start = Date.now();
+    const check = setInterval(() => {
+      if (navigationRef.isReady() || Date.now() - start > maxMs) {
+        clearInterval(check);
+        resolve();
+      }
+    }, 100);
+  });
+}
+
+function goToPlace(placeId: string) {
+  navigationRef.dispatch(
+    CommonActions.navigate('Main', {
+      screen: 'FeedTab',
+      params: { screen: 'PlaceDetail', params: { placeId } },
+    } as any),
+  );
+}
+
+function goToUser(userId: string) {
+  navigationRef.dispatch(
+    CommonActions.navigate('Main', {
+      screen: 'FeedTab',
+      params: { screen: 'UserProfile', params: { userId } },
+    } as any),
+  );
+}
+
+function goToFeed() {
+  navigationRef.dispatch(
+    CommonActions.navigate('Main', { screen: 'FeedTab' } as any),
+  );
+}
+
+// ── Main router ───────────────────────────────────────────────────────────────
+
 /**
- * Routes to the correct screen based on notification payload.
- * Safe to call even if the navigator is not yet mounted — guards with `isReady()`.
+ * Routes to the correct screen based on a push notification payload.
+ *
+ * Priority logic:
+ *   like / comment / new_post → PlaceDetail (via placeId, or fetched from postId)
+ *   follow                    → UserProfile (userId)
+ *   recommendation            → PlaceDetail (placeId)
  */
-export function routeNotification(payload: NotificationPayload): void {
-  if (!navigationRef.isReady()) return;
+export async function routeNotification(payload: NotificationPayload): Promise<void> {
+  await waitReady();
 
   switch (payload.type) {
     case 'like':
     case 'comment':
-    case 'new_post':
-      // Navigate into the Feed tab (no PostDetail screen yet — future phase)
-      navigationRef.dispatch(
-        CommonActions.navigate('Main', {
-          screen: 'FeedTab',
-          params: { screen: 'Feed' },
-        } as any),
-      );
-      break;
+    case 'new_post': {
+      // Best case: placeId already in payload
+      if (payload.placeId) {
+        goToPlace(payload.placeId);
+        return;
+      }
+      // Fallback: fetch post to get placeId
+      if (payload.postId) {
+        try {
+          const post = await getPost(payload.postId);
+          if (post?.placeId) { goToPlace(post.placeId); return; }
+        } catch {}
+      }
+      // Last resort: open feed
+      goToFeed();
+      return;
+    }
 
     case 'follow':
-      // Open the follower's profile if userId is provided, else own ProfileTab
-      if (payload.userId) {
-        navigationRef.dispatch(
-          CommonActions.navigate('Main', {
-            screen: 'FeedTab',
-            params: {
-              screen: 'UserProfile',
-              params: { userId: payload.userId },
-            },
-          } as any),
-        );
-      } else {
-        navigationRef.dispatch(
-          CommonActions.navigate('Main', { screen: 'ProfileTab' } as any),
-        );
-      }
-      break;
+      if (payload.userId) { goToUser(payload.userId); return; }
+      navigationRef.dispatch(
+        CommonActions.navigate('Main', { screen: 'ProfileTab' } as any),
+      );
+      return;
 
     case 'recommendation':
-      if (payload.placeId) {
-        navigationRef.dispatch(
-          CommonActions.navigate('Main', {
-            screen: 'SearchTab',
-            params: {
-              screen: 'PlaceDetail',
-              params: { placeId: payload.placeId },
-            },
-          } as any),
-        );
-      } else {
-        navigationRef.dispatch(
-          CommonActions.navigate('Main', { screen: 'SearchTab' } as any),
-        );
-      }
-      break;
+      if (payload.placeId) { goToPlace(payload.placeId); return; }
+      navigationRef.dispatch(
+        CommonActions.navigate('Main', { screen: 'SearchTab' } as any),
+      );
+      return;
 
     default:
-      // Unknown type — navigate home
-      navigationRef.dispatch(
-        CommonActions.navigate('Main', { screen: 'FeedTab' } as any),
-      );
+      goToFeed();
   }
 }

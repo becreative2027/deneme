@@ -8,7 +8,7 @@ public interface IExpoPushService
 {
     Task SendAsync(IReadOnlyList<string> tokens, string title, string body,
         string type, string? userId = null, string? placeId = null,
-        CancellationToken ct = default);
+        string? postId = null, CancellationToken ct = default);
 }
 
 public sealed class ExpoPushService : IExpoPushService
@@ -27,7 +27,7 @@ public sealed class ExpoPushService : IExpoPushService
 
     public async Task SendAsync(IReadOnlyList<string> tokens, string title, string body,
         string type, string? userId = null, string? placeId = null,
-        CancellationToken ct = default)
+        string? postId = null, CancellationToken ct = default)
     {
         if (tokens.Count == 0) return;
 
@@ -41,7 +41,7 @@ public sealed class ExpoPushService : IExpoPushService
                 To    = token,
                 Title = title,
                 Body  = body,
-                Data  = BuildData(type, userId, placeId),
+                Data  = BuildData(type, userId, placeId, postId),
                 Sound = "default",
             }).ToList();
 
@@ -61,11 +61,12 @@ public sealed class ExpoPushService : IExpoPushService
         }
     }
 
-    private static Dictionary<string, string> BuildData(string type, string? userId, string? placeId)
+    private static Dictionary<string, string> BuildData(string type, string? userId, string? placeId, string? postId)
     {
         var data = new Dictionary<string, string> { ["type"] = type };
         if (userId  is not null) data["userId"]  = userId;
         if (placeId is not null) data["placeId"] = placeId;
+        if (postId  is not null) data["postId"]  = postId;
         return data;
     }
 }

@@ -38,11 +38,13 @@ import { getFavoritePlaceIds } from '../../api/favorites';
 import { getPlaceById } from '../../api/places';
 import { useTheme, radius, spacing, typography, shadow } from '../../theme';
 import { AvatarRing, AmberButton, CategoryBadge, Eyebrow } from '../../components/ui';
+import { NotificationsTab } from './NotificationsTab';
+import { useStoredNotifications } from '../../hooks/useStoredNotifications';
 
 const { width } = Dimensions.get('window');
 
 type Props = NativeStackScreenProps<ProfileStackParamList, 'OwnProfile' | 'UserProfile'>;
-type Tab = 'places' | 'all' | 'favorites';
+type Tab = 'places' | 'all' | 'favorites' | 'notifications';
 type PlaceGroup = { placeId: string; placeName: string; posts: Post[] };
 type FlatItem =
   | { kind: 'header'; group: PlaceGroup }
@@ -81,6 +83,7 @@ export function ProfileScreen({ route, navigation }: Props) {
 
   const [activeTab, setActiveTab] = useState<Tab>('places');
   const [expandedPlaces, setExpandedPlaces] = useState<Set<string>>(new Set());
+  const { unread: notifUnread } = useStoredNotifications();
   const [followSheet, setFollowSheet] = useState<'followers' | 'following' | null>(null);
   const [commentPostId, setCommentPostId] = useState<string | null>(null);
   const qc = useQueryClient();
@@ -405,9 +408,13 @@ export function ProfileScreen({ route, navigation }: Props) {
           {([
             { key: 'places', label: 'Mekanlar', icon: 'location-outline' },
             { key: 'all', label: 'Gönderiler', icon: 'images-outline' },
-            ...(isOwnProfile ? [{ key: 'favorites', label: 'Favoriler', icon: 'heart-outline' }] : []),
+            ...(isOwnProfile ? [
+              { key: 'favorites', label: 'Favoriler', icon: 'heart-outline' },
+              { key: 'notifications', label: 'Bildirimler', icon: 'notifications-outline' },
+            ] : []),
           ] as { key: Tab; label: string; icon: string }[]).map((tab) => {
             const active = activeTab === tab.key;
+            const showBadge = tab.key === 'notifications' && notifUnread > 0;
             return (
               <TouchableOpacity
                 key={tab.key}
@@ -416,11 +423,16 @@ export function ProfileScreen({ route, navigation }: Props) {
                 accessibilityRole="tab"
                 accessibilityState={{ selected: active }}
               >
-                <Ionicons
-                  name={tab.icon as any}
-                  size={16}
-                  color={active ? colors.accent : colors.icon}
-                />
+                <View style={{ position: 'relative' }}>
+                  <Ionicons
+                    name={tab.icon as any}
+                    size={16}
+                    color={active ? colors.accent : colors.icon}
+                  />
+                  {showBadge && (
+                    <View style={s.tabBadge} />
+                  )}
+                </View>
                 <Text style={[typography.caption, { color: active ? colors.accent : colors.icon, fontWeight: '700', marginLeft: 4 }]}>
                   {tab.label}
                 </Text>
@@ -487,6 +499,7 @@ export function ProfileScreen({ route, navigation }: Props) {
           postId={commentPostId ?? ''}
           onClose={() => setCommentPostId(null)}
           onCommentAdded={handleCommentAdded}
+          onPressUser={(id) => { setCommentPostId(null); handlePressUser(id); }}
         />
       </View>
     );
@@ -524,6 +537,33 @@ export function ProfileScreen({ route, navigation }: Props) {
           }
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingHorizontal: spacing.lg, paddingBottom: 120 }}
+        />
+        <FollowListModal
+          userId={userId}
+          type={followSheet ?? 'followers'}
+          visible={!!followSheet}
+          onClose={() => setFollowSheet(null)}
+          onUserPress={(id) => { setFollowSheet(null); handlePressUser(id); }}
+        />
+      </View>
+    );
+  }
+
+  // ── "Bildirimler" tab ──────────────────────────────────────────────────────
+  if (activeTab === 'notifications') {
+    return (
+      <View style={[s.container, { backgroundColor: colors.background }]}>
+        <FlatList
+          data={[]}
+          keyExtractor={() => ''}
+          renderItem={null}
+          ListHeaderComponent={
+            <>
+              {Header}
+              <NotificationsTab bottomPadding={120} />
+            </>
+          }
+          showsVerticalScrollIndicator={false}
         />
         <FollowListModal
           userId={userId}
@@ -626,6 +666,7 @@ export function ProfileScreen({ route, navigation }: Props) {
         postId={commentPostId ?? ''}
         onClose={() => setCommentPostId(null)}
         onCommentAdded={handleCommentAdded}
+        onPressUser={(id) => { setCommentPostId(null); handlePressUser(id); }}
       />
     </View>
   );
@@ -754,6 +795,15 @@ const s = StyleSheet.create({
     paddingVertical: spacing.md,
     borderBottomWidth: 2,
     borderBottomColor: 'transparent',
+  },
+  tabBadge: {
+    position: 'absolute',
+    top: -2,
+    right: -4,
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    backgroundColor: '#F5A623',
   },
 
   // Place header

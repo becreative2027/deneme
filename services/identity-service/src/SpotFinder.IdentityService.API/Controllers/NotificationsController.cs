@@ -141,11 +141,13 @@ public sealed class NotificationsController : BaseController
 
         await pushService.SendAsync(
             tokens,
-            title: "Yeni yorum 💬",
-            body:  $"{commenterName} gönderine yorum yaptı.",
-            type:  "comment",
-            userId: request.CommenterId.ToString(),
-            ct:    ct);
+            title:   "Yeni yorum 💬",
+            body:    $"{commenterName} gönderine yorum yaptı.",
+            type:    "comment",
+            userId:  request.CommenterId.ToString(),
+            placeId: request.PlaceId,
+            postId:  request.PostId,
+            ct:      ct);
 
         return NoContent();
     }
@@ -182,11 +184,13 @@ public sealed class NotificationsController : BaseController
 
         await pushService.SendAsync(
             tokens,
-            title: "Yeni beğeni ❤️",
-            body:  $"{likerName} gönderini beğendi.",
-            type:  "like",
-            userId: request.LikerId.ToString(),
-            ct:    ct);
+            title:   "Yeni beğeni ❤️",
+            body:    $"{likerName} gönderini beğendi.",
+            type:    "like",
+            userId:  request.LikerId.ToString(),
+            placeId: request.PlaceId,
+            postId:  request.PostId,
+            ct:      ct);
 
         return NoContent();
     }
@@ -195,5 +199,5 @@ public sealed class NotificationsController : BaseController
 public sealed record RegisterDeviceRequest(string Token, string? Platform);
 public sealed record TokensByUsersRequest(IReadOnlyList<Guid> UserIds);
 public sealed record SendFollowRequest(Guid FollowerId, Guid FollowingId);
-public sealed record SendLikeRequest(Guid LikerId, Guid PostOwnerId, string PostId);
-public sealed record SendCommentRequest(Guid CommenterId, Guid PostOwnerId, string PostId);
+public sealed record SendLikeRequest(Guid LikerId, Guid PostOwnerId, string PostId, string? PlaceId = null);
+public sealed record SendCommentRequest(Guid CommenterId, Guid PostOwnerId, string PostId, string? PlaceId = null);

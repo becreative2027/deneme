@@ -56,19 +56,19 @@ public sealed class CommentPostCommandHandler(
             cmd.UserId, cmd.PostId, comment.Id, options.Value.Weights.Comment, sw.ElapsedMilliseconds);
 
         // Fire-and-forget push notification (non-critical)
-        _ = SendCommentNotificationAsync(cmd.UserId, post.UserId, cmd.PostId);
+        _ = SendCommentNotificationAsync(cmd.UserId, post.UserId, cmd.PostId, post.PlaceId);
 
         return ApiResult<Guid>.Ok(comment.Id);
     }
 
-    private async Task SendCommentNotificationAsync(Guid commenterId, Guid postOwnerId, Guid postId)
+    private async Task SendCommentNotificationAsync(Guid commenterId, Guid postOwnerId, Guid postId, Guid placeId)
     {
         try
         {
             var http = httpClientFactory.CreateClient();
             await http.PostAsJsonAsync(
                 "http://spotfinder-identity:8080/api/notifications/send-comment",
-                new { commenterId, postOwnerId, postId = postId.ToString() });
+                new { commenterId, postOwnerId, postId = postId.ToString(), placeId = placeId.ToString() });
         }
         catch (Exception ex)
         {

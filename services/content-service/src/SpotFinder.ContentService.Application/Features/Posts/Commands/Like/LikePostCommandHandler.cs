@@ -60,19 +60,19 @@ public sealed class LikePostCommandHandler(
             cmd.UserId, cmd.PostId, options.Value.Weights.Like, sw.ElapsedMilliseconds);
 
         // Fire-and-forget push notification (non-critical)
-        _ = SendLikeNotificationAsync(cmd.UserId, post.UserId, cmd.PostId);
+        _ = SendLikeNotificationAsync(cmd.UserId, post.UserId, cmd.PostId, post.PlaceId);
 
         return ApiResult<bool>.Ok(true);
     }
 
-    private async Task SendLikeNotificationAsync(Guid likerId, Guid postOwnerId, Guid postId)
+    private async Task SendLikeNotificationAsync(Guid likerId, Guid postOwnerId, Guid postId, Guid placeId)
     {
         try
         {
             var http = httpClientFactory.CreateClient();
             await http.PostAsJsonAsync(
                 "http://spotfinder-identity:8080/api/notifications/send-like",
-                new { likerId, postOwnerId, postId = postId.ToString() });
+                new { likerId, postOwnerId, postId = postId.ToString(), placeId = placeId.ToString() });
         }
         catch (Exception ex)
         {
