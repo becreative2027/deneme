@@ -74,8 +74,13 @@ export function FloatingTabBar({ state, navigation }: BottomTabBarProps) {
       {/* Centre Create */}
       <TouchableOpacity
         onPress={() => {
+          if (createFocused) {
+            // X button — close CreatePost, go back to Feed
+            navigation.navigate('FeedTab' as any);
+            return;
+          }
           const event = navigation.emit({ type: 'tabPress', target: createRoute.key, canPreventDefault: true });
-          if (!createFocused && !event.defaultPrevented) navigation.navigate(createRoute.name);
+          if (!event.defaultPrevented) navigation.navigate(createRoute.name);
         }}
         activeOpacity={0.85}
         style={styles.createWrap}
