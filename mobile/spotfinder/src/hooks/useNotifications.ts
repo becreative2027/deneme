@@ -5,7 +5,6 @@ import Constants from 'expo-constants';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { registerDevice } from '../api/notifications';
 import { routeNotification, NotificationPayload } from '../navigation/navigationRef';
-import { saveNotification } from '../utils/notificationStorage';
 
 // ── Global notification handler (foreground display policy) ──────────────────
 
@@ -135,31 +134,22 @@ export function useNotificationPermissionPrompt(onShowToast: (msg: string) => vo
 /**
  * Subscribes to notification tap events (background / killed-state).
  */
-function saveAndRoute(notification: Notifications.Notification): void {
-  const { title, body } = notification.request.content;
-  const payload = extractPayload(notification);
-  saveNotification({
-    title: title ?? 'SpotFinder',
-    body: body ?? '',
-    type: payload?.type,
-    postId: payload?.postId,
-    userId: payload?.userId,
-    placeId: payload?.placeId,
-  });
-  if (payload) routeNotification(payload);
-}
-
 export function useNotificationResponseHandler(): void {
   const listenerRef = useRef<Notifications.Subscription | null>(null);
 
   useEffect(() => {
     listenerRef.current = Notifications.addNotificationResponseReceivedListener(
-      (response) => saveAndRoute(response.notification),
+      (response) => {
+        const payload = extractPayload(response.notification);
+        if (payload) routeNotification(payload);
+      },
     );
 
-    // Handle tap on notification that launched the app from killed state
     Notifications.getLastNotificationResponseAsync().then((response) => {
-      if (response) saveAndRoute(response.notification);
+      if (response) {
+        const payload = extractPayload(response.notification);
+        if (payload) routeNotification(payload);
+      }
     });
 
     return () => {
