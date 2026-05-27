@@ -70,6 +70,8 @@ services:
       - ASPNETCORE_ENVIRONMENT=Production
       - ConnectionStrings__AdminDb=Host=${DO_DB_HOST};Port=${DO_DB_PORT};Database=spotfinder;Username=${DO_DB_USER};Password=${DO_DB_PASSWORD};SSL Mode=Require;Trust Server Certificate=true
       - ConnectionStrings__Redis=redis:6379
+      - Services__ContentService=http://spotfinder-content:8080
+      - Services__PlaceService=http://spotfinder-place:8080
 
   social-graph-service:
     build:
