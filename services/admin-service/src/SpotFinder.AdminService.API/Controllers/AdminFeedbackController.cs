@@ -2,6 +2,7 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SpotFinder.AdminService.Application.Features.Feedback.Commands.MarkReviewed;
+using SpotFinder.AdminService.Application.Features.Feedback.Commands.RespondToFeedback;
 using SpotFinder.AdminService.Application.Features.Feedback.Queries.GetFeedback;
 using SpotFinder.BuildingBlocks.Api;
 
@@ -30,4 +31,17 @@ public sealed class AdminFeedbackController : BaseController
         await Sender.Send(new MarkFeedbackReviewedCommand(id), ct);
         return OkResult("Marked as reviewed.");
     }
+
+    /// <summary>Send a push notification response to the user and mark feedback as reviewed.</summary>
+    [HttpPost("{id:guid}/respond")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Respond(Guid id, [FromBody] RespondRequest request, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(request.Message)) return BadRequest("Message is required.");
+        await Sender.Send(new RespondToFeedbackCommand(id, request.Message), ct);
+        return NoContent();
+    }
 }
+
+public sealed record RespondRequest(string Message);

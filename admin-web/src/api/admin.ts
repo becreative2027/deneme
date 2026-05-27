@@ -277,6 +277,10 @@ export async function markFeedbackReviewed(id: string) {
   await adminClient.patch(`/api/admin/feedback/${id}/review`);
 }
 
+export async function respondToFeedback(id: string, message: string) {
+  await adminClient.post(`/api/admin/feedback/${id}/respond`, { message });
+}
+
 // ── Place Owner ────────────────────────────────────────────────────────────
 
 export async function updatePlaceMedia(

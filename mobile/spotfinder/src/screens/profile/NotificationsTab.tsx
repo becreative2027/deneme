@@ -26,6 +26,8 @@ function iconFor(type?: string): IconCfg {
       return { name: 'chatbubble', bg: '#eff6ff', color: '#3b82f6' };
     case 'new_post':
       return { name: 'images', bg: '#fffbeb', color: '#f59e0b' };
+    case 'admin_response':
+      return { name: 'megaphone', bg: '#fff7ed', color: '#f97316' };
     default:
       return { name: 'notifications', bg: '#f5f5f5', color: '#888' };
   }

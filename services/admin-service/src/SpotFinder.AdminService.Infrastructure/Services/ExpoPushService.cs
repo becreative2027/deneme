@@ -7,15 +7,15 @@ namespace SpotFinder.AdminService.Infrastructure.Services;
 public interface IExpoPushService
 {
     Task SendAsync(IReadOnlyList<string> tokens, string title, string body,
-        string type, string placeId, CancellationToken ct = default);
+        string type, string? placeId = null, CancellationToken ct = default);
 }
 
 public sealed class ExpoPushService : IExpoPushService
 {
-    private const string ExpoUrl = "https://exp.host/--/api/v2/push/send";
-    private const int    ChunkSize = 100; // Expo recommends max 100 per request
+    private const string ExpoUrl   = "https://exp.host/--/api/v2/push/send";
+    private const int    ChunkSize = 100;
 
-    private readonly IHttpClientFactory _httpFactory;
+    private readonly IHttpClientFactory       _httpFactory;
     private readonly ILogger<ExpoPushService> _logger;
 
     public ExpoPushService(IHttpClientFactory httpFactory, ILogger<ExpoPushService> logger)
@@ -25,13 +25,11 @@ public sealed class ExpoPushService : IExpoPushService
     }
 
     public async Task SendAsync(IReadOnlyList<string> tokens, string title, string body,
-        string type, string placeId, CancellationToken ct = default)
+        string type, string? placeId = null, CancellationToken ct = default)
     {
         if (tokens.Count == 0) return;
 
-        var http = _httpFactory.CreateClient();
-
-        // Expo push tokens must start with "ExponentPushToken["
+        var http  = _httpFactory.CreateClient();
         var valid = tokens.Where(t => t.StartsWith("ExponentPushToken[")).ToList();
 
         for (int i = 0; i < valid.Count; i += ChunkSize)
@@ -41,12 +39,7 @@ public sealed class ExpoPushService : IExpoPushService
                 To    = token,
                 Title = title,
                 Body  = body,
-                Data  = new Dictionary<string, string>
-                {
-                    ["type"]    = "place_notification",
-                    ["placeId"] = placeId,
-                    ["notifType"] = type,
-                },
+                Data  = BuildData(type, placeId),
                 Sound = "default",
             }).ToList();
 
@@ -64,6 +57,13 @@ public sealed class ExpoPushService : IExpoPushService
                 _logger.LogError(ex, "Expo push send error for chunk starting at {Index}", i);
             }
         }
+    }
+
+    private static Dictionary<string, string> BuildData(string type, string? placeId)
+    {
+        var data = new Dictionary<string, string> { ["type"] = type };
+        if (placeId is not null) data["placeId"] = placeId;
+        return data;
     }
 }
 

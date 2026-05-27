@@ -77,9 +77,12 @@ export const PostCard = memo(function PostCard({ post, onLike, onPressPlace, onP
           onPress: () =>
             reportContent('Post', post.id).then(() =>
               Alert.alert('Teşekkürler', 'Bildiriminiz incelemeye alındı.'),
-            ).catch(() =>
-              Alert.alert('Hata', 'Bir sorun oluştu, lütfen tekrar dene.'),
-            ),
+            ).catch((err: any) => {
+              if (err?.response?.status === 409)
+                Alert.alert('Zaten Şikayet Edildi', 'Bu gönderiyi daha önce zaten bildirdin.');
+              else
+                Alert.alert('Hata', 'Bir sorun oluştu, lütfen tekrar dene.');
+            }),
         },
       ],
     );
