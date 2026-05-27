@@ -22,6 +22,7 @@ const QUICK_REPLIES = [
 export default function FeedbackPage() {
   const [items, setItems]         = useState<any[]>([]);
   const [loading, setLoading]     = useState(true);
+  const [error, setError]         = useState<string | null>(null);
   const [filter, setFilter]       = useState<'pending' | 'reviewed'>('pending');
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [message, setMessage]     = useState('');
@@ -31,8 +32,15 @@ export default function FeedbackPage() {
 
   useEffect(() => {
     setLoading(true);
+    setError(null);
     getFeedback(filter === 'reviewed')
       .then((d) => setItems(d.items ?? []))
+      .catch((err: any) => {
+        const msg = err?.response?.data?.error ?? err?.response?.data?.message ?? err?.message ?? 'Bilinmeyen hata';
+        const status = err?.response?.status ?? '?';
+        setError(`${status}: ${msg}`);
+        setItems([]);
+      })
       .finally(() => setLoading(false));
   }, [filter]);
 
@@ -93,6 +101,12 @@ export default function FeedbackPage() {
           </button>
         ))}
       </div>
+
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 mb-4 text-sm text-red-700 font-mono">
+          {error}
+        </div>
+      )}
 
       {loading ? (
         <div className="flex justify-center py-20">
