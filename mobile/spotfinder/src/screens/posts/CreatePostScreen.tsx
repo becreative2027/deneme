@@ -30,6 +30,7 @@ import { uploadImage } from '../../api/upload';
 import { attachPostMedia } from '../../api/posts';
 import { haptic } from '../../utils/haptics';
 import { UploadProgressBar } from '../../components/UploadProgressBar';
+import { CropModal } from '../../components/CropModal';
 import { Place } from '../../types';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -53,6 +54,7 @@ export function CreatePostScreen() {
   // Phase 8.3: upload progress fraction 0–1 for UploadProgressBar
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
+  const [cropPendingUri, setCropPendingUri] = useState<string | null>(null);
 
   // Phase 8.1: prevent double-submit with a ref (faster than state)
   const isSubmittingRef = useRef(false);
@@ -141,8 +143,7 @@ export function CreatePostScreen() {
     try {
       result = await ImagePicker.launchCameraAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [1, 1],
+        allowsEditing: false,
         quality: 1,
       });
     } catch {
@@ -151,9 +152,9 @@ export function CreatePostScreen() {
     }
 
     if (!result.canceled && result.assets[0]) {
-      await processAndSet(result.assets[0].uri);
+      setCropPendingUri(result.assets[0].uri);
     }
-  }, [processAndSet, showToast]);
+  }, [showToast]);
 
   const launchGallery = useCallback(async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -164,14 +165,13 @@ export function CreatePostScreen() {
     }
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
+      allowsEditing: false,
       quality: 1,
     });
     if (!result.canceled && result.assets[0]) {
-      await processAndSet(result.assets[0].uri);
+      setCropPendingUri(result.assets[0].uri);
     }
-  }, [processAndSet, showToast]);
+  }, [showToast]);
 
   const pickImage = useCallback(() => {
     if (Platform.OS === 'ios') {
@@ -319,7 +319,7 @@ export function CreatePostScreen() {
               </View>
             ) : imageUri ? (
               <>
-                <Image source={{ uri: imageUri }} style={styles.preview} />
+                <Image source={{ uri: imageUri }} style={styles.preview} resizeMode="contain" />
                 <View style={styles.changePhotoOverlay}>
                   <Ionicons name="camera" size={20} color="#fff" />
                   <Text style={styles.changePhotoText}>Change</Text>
@@ -437,6 +437,19 @@ export function CreatePostScreen() {
           </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      {/* Custom crop modal */}
+      {cropPendingUri ? (
+        <CropModal
+          uri={cropPendingUri}
+          visible
+          onCancel={() => setCropPendingUri(null)}
+          onCrop={(croppedUri) => {
+            setCropPendingUri(null);
+            processAndSet(croppedUri);
+          }}
+        />
+      ) : null}
     </SafeAreaView>
   );
 }
@@ -458,13 +471,12 @@ const styles = StyleSheet.create({
 
   photoPicker: {
     width: '100%',
-    aspectRatio: 1,
     borderRadius: 12,
     overflow: 'hidden',
     backgroundColor: '#f5f5f5',
     marginBottom: 16,
   },
-  preview: { width: '100%', height: '100%' },
+  preview: { width: '100%', minHeight: 200, maxHeight: 500 },
   changePhotoOverlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(0,0,0,0.35)',
@@ -473,7 +485,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   changePhotoText: { color: '#fff', fontSize: 12, fontWeight: '700' },
-  photoPlaceholder: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8 },
+  photoPlaceholder: { flex: 1, minHeight: 160, alignItems: 'center', justifyContent: 'center', gap: 8 },
   photoHint: { fontSize: 14, color: '#aaa' },
 
   captionInput: {

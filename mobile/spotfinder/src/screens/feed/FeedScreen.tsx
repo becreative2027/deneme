@@ -174,6 +174,10 @@ export function FeedScreen({ navigation }: Props) {
         visible={!!commentPostId}
         postId={commentPostId ?? ''}
         onClose={() => setCommentPostId(null)}
+        onPressUser={(userId) => {
+          setCommentPostId(null);
+          navigation.push('UserProfile', { userId });
+        }}
       />
     </SafeAreaView>
   );

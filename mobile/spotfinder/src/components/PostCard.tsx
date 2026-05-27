@@ -1,4 +1,4 @@
-import React, { memo, useMemo } from 'react';
+import React, { memo, useMemo, useRef, useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,7 +6,11 @@ import {
   StyleSheet,
   Pressable,
   Alert,
+  Image,
+  Dimensions,
 } from 'react-native';
+
+const SW = Dimensions.get('window').width;
 import { Ionicons } from '@expo/vector-icons';
 import { Post } from '../types';
 import { formatRelativeTime, formatCount } from '../utils/formatters';
@@ -27,6 +31,34 @@ interface Props {
 export const PostCard = memo(function PostCard({ post, onLike, onPressPlace, onPressUser, onPressComment }: Props) {
   const theme = useTheme();
   const s = useMemo(() => createStyles(theme.colors), [theme.colors]);
+
+  // Natural image height derived from actual image dimensions
+  const [imgHeight, setImgHeight] = useState<number>(SW);
+  useEffect(() => {
+    if (!post.imageUrl) return;
+    Image.getSize(
+      post.imageUrl,
+      (w, h) => {
+        const ratio = h / w;
+        // Cap at 5:4 portrait so very tall images don't flood the feed
+        setImgHeight(Math.round(SW * Math.min(ratio, 1.25)));
+      },
+      () => setImgHeight(SW),
+    );
+  }, [post.imageUrl]);
+
+  // Double-tap to like
+  const lastTapRef = useRef<number>(0);
+  const handleImageTap = () => {
+    const now = Date.now();
+    if (now - lastTapRef.current < 300) {
+      if (!post.isLiked) {
+        haptic.light();
+        onLike(post.id, false);
+      }
+    }
+    lastTapRef.current = now;
+  };
 
   const handleLike = () => {
     haptic.light();
@@ -58,7 +90,7 @@ export const PostCard = memo(function PostCard({ post, onLike, onPressPlace, onP
       {/* Header */}
       <View style={s.header}>
         <Pressable style={s.headerLeft} onPress={() => onPressUser?.(post.userId)}>
-          <Avatar uri={post.avatarUrl} name={post.displayName} size={36} expandable={false} />
+          <Avatar uri={post.avatarUrl} name={post.displayName} size={36} onPress={() => onPressUser?.(post.userId)} />
           <View style={s.headerText}>
             <Text style={s.displayName}>{post.displayName || post.username || 'Kullanıcı'}</Text>
             <Text style={s.username}>@{post.username || 'kullanici'}</Text>
@@ -70,12 +102,11 @@ export const PostCard = memo(function PostCard({ post, onLike, onPressPlace, onP
         </TouchableOpacity>
       </View>
 
-      {/* Phase 8.1: OptimizedImage with shimmer placeholder + fade-in */}
       {post.imageUrl ? (
-        <TouchableOpacity activeOpacity={0.95} onPress={() => onPressUser?.(post.userId)}>
+        <TouchableOpacity activeOpacity={1} onPress={handleImageTap}>
           <OptimizedImage
             uri={post.imageUrl}
-            style={s.image}
+            style={[s.image, { height: imgHeight }]}
             resizeMode="cover"
           />
         </TouchableOpacity>
@@ -142,7 +173,7 @@ const createStyles = (c: ThemeColors) =>
     displayName: { fontWeight: '600', fontSize: 14, color: c.text },
     username: { fontSize: 12, color: c.textTertiary, marginTop: 1 },
     time: { fontSize: 11, color: c.textMuted },
-    image: { width: '100%', aspectRatio: 1 },
+    image: { width: '100%' },
     caption: {
       paddingHorizontal: 14,
       paddingTop: 10,

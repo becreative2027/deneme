@@ -8,7 +8,7 @@ const Stack = createNativeStackNavigator<WishlistStackParamList>();
 
 export function WishlistNavigator() {
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false, contentStyle: { backgroundColor: '#fff' } }}>
+    <Stack.Navigator screenOptions={{ headerShown: false, contentStyle: { backgroundColor: '#fff' }, gestureEnabled: true, fullScreenGestureEnabled: true }}>
       <Stack.Screen name="Wishlist" component={WishlistScreen} />
       <Stack.Screen name="PlaceDetail" component={PlaceDetailScreen} />
     </Stack.Navigator>

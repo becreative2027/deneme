@@ -25,9 +25,10 @@ interface Props {
   onClose: () => void;
   postId: string;
   onCommentAdded?: () => void;
+  onPressUser?: (userId: string) => void;
 }
 
-export function CommentsModal({ visible, onClose, postId, onCommentAdded }: Props) {
+export function CommentsModal({ visible, onClose, postId, onCommentAdded, onPressUser }: Props) {
   const insets = useSafeAreaInsets();
   const [comments, setComments] = useState<PostComment[]>([]);
   const [loading, setLoading]   = useState(false);
@@ -71,7 +72,12 @@ export function CommentsModal({ visible, onClose, postId, onCommentAdded }: Prop
 
   const renderComment = useCallback(({ item }: { item: PostComment }) => (
     <View style={s.commentRow}>
-      <Avatar uri={item.avatarUrl} name={item.displayName ?? item.username} size={32} />
+      <Avatar
+        uri={item.avatarUrl}
+        name={item.displayName ?? item.username}
+        size={32}
+        onPress={item.userId ? () => onPressUser?.(item.userId!) : undefined}
+      />
       <View style={s.commentBody}>
         <View style={s.commentHeader}>
           <Text style={s.commentName}>{item.displayName ?? item.username}</Text>

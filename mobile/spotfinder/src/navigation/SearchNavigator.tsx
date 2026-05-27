@@ -8,7 +8,7 @@ const Stack = createNativeStackNavigator<SearchStackParamList>();
 
 export function SearchNavigator() {
   return (
-    <Stack.Navigator>
+    <Stack.Navigator screenOptions={{ gestureEnabled: true, fullScreenGestureEnabled: true }}>
       <Stack.Screen name="Search" component={SearchScreen} options={{ headerShown: false }} />
       <Stack.Screen
         name="PlaceDetail"

@@ -11,7 +11,7 @@ const Stack = createNativeStackNavigator<ProfileStackParamList>();
 
 export function ProfileNavigator() {
   return (
-    <Stack.Navigator>
+    <Stack.Navigator screenOptions={{ gestureEnabled: true, fullScreenGestureEnabled: true }}>
       <Stack.Screen name="OwnProfile" component={ProfileScreen} options={{ headerShown: false }} />
       <Stack.Screen
         name="EditProfile"

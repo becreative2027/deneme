@@ -9,7 +9,7 @@ const Stack = createNativeStackNavigator<FeedStackParamList>();
 
 export function FeedNavigator() {
   return (
-    <Stack.Navigator>
+    <Stack.Navigator screenOptions={{ gestureEnabled: true, fullScreenGestureEnabled: true }}>
       <Stack.Screen name="Feed" component={FeedScreen} options={{ headerShown: false }} />
       <Stack.Screen
         name="PlaceDetail"

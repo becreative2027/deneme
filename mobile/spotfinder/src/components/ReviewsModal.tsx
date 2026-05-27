@@ -70,7 +70,7 @@ function ReviewCard({ review, isMe, onPressUser }: { review: ReviewDto; isMe: bo
         activeOpacity={onPressUser ? 0.7 : 1}
         disabled={!onPressUser}
       >
-        <Avatar uri={review.avatarUrl} name={review.displayName} size={36} expandable={false} />
+        <Avatar uri={review.avatarUrl} name={review.displayName} size={36} />
         <View style={s.reviewMeta}>
           <View style={s.reviewNameRow}>
             <Text style={s.reviewName}>{review.displayName}</Text>
@@ -298,7 +298,7 @@ export function ReviewsModal({ placeId, visible, onClose, onPressUser }: Props) 
                           activeOpacity={onPressUser ? 0.7 : 1}
                           disabled={!onPressUser}
                         >
-                          <Avatar uri={p.avatarUrl} name={p.username} size={32} expandable={false} />
+                          <Avatar uri={p.avatarUrl} name={p.username} size={32} />
                           <View style={s.postMeta}>
                             <Text style={s.postName}>{p.displayName || p.username}</Text>
                             <Text style={s.postUsername}>@{p.username}</Text>

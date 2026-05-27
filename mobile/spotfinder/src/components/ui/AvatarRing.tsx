@@ -77,12 +77,7 @@ export function AvatarRing({ uri, size = 88, ringWidth = 3 }: Props) {
       <TouchableOpacity onPress={() => setViewing(true)} activeOpacity={0.85}>
         {inner}
       </TouchableOpacity>
-      <AvatarViewer
-        uri={uri}
-        visible={viewing}
-        onClose={() => setViewing(false)}
-        originSize={size}
-      />
+      <AvatarViewer uri={uri} visible={viewing} onClose={() => setViewing(false)} originSize={size} />
     </>
   );
 }

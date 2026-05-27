@@ -35,7 +35,7 @@ type Props =
   | NativeStackScreenProps<WishlistStackParamList, 'PlaceDetail'>;
 
 const { width } = Dimensions.get('window');
-const PHOTO_SIZE = (width - 2) / 3;
+const PHOTO_SIZE = (width - 3) / 3;
 
 const PRIMARY = '#6c63ff';
 
