@@ -2,12 +2,14 @@ using System.Security.Claims;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using SpotFinder.BuildingBlocks.Api;
 using SpotFinder.ContentService.Application.Features.Posts.Commands.AddMedia;
 using SpotFinder.ContentService.Application.Features.Posts.Commands.Comment;
 using SpotFinder.ContentService.Application.Features.Posts.Commands.Create;
 using SpotFinder.ContentService.Application.Features.Posts.Commands.Like;
 using SpotFinder.ContentService.Application.Features.Posts.Commands.Unlike;
+using SpotFinder.ContentService.Infrastructure.Persistence;
 
 namespace SpotFinder.ContentService.API.Controllers;
 
@@ -16,6 +18,31 @@ namespace SpotFinder.ContentService.API.Controllers;
 public sealed class PostsController : BaseController
 {
     public PostsController(ISender sender) : base(sender) { }
+
+    /// <summary>Internal — returns post detail for admin moderation.</summary>
+    [HttpGet("{id:guid}")]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(PostDetailDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetById(
+        Guid id,
+        [FromServices] ContentDbContext db,
+        CancellationToken ct)
+    {
+        var post = await db.Posts
+            .Include(p => p.Media)
+            .FirstOrDefaultAsync(p => p.Id == id, ct);
+        if (post is null) return NotFound();
+        return Ok(new PostDetailDto(
+            post.Id,
+            post.UserId,
+            post.PlaceId,
+            post.Caption,
+            post.Media.Select(m => m.Url).FirstOrDefault(),
+            post.LikeCount,
+            post.CommentCount,
+            post.CreatedAt));
+    }
 
     [HttpPost]
     [ProducesResponseType(typeof(ApiResponse<Guid>), StatusCodes.Status201Created)]
@@ -88,3 +115,4 @@ public sealed class PostsController : BaseController
 public sealed record CreatePostRequest(Guid PlaceId, string? Caption);
 public sealed record AddMediaRequest(string Url, string? Type);
 public sealed record CommentRequest(string Text);
+public sealed record PostDetailDto(Guid Id, Guid UserId, Guid PlaceId, string? Caption, string? ImageUrl, int LikeCount, int CommentCount, DateTime CreatedAt);

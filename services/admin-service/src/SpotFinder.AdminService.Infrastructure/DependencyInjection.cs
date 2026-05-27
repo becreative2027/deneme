@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Npgsql;
+using SpotFinder.AdminService.Application.Features.Moderation.Queries.GetPendingItems;
 using SpotFinder.AdminService.Domain.Repositories;
 using SpotFinder.AdminService.Infrastructure.Persistence;
 using SpotFinder.AdminService.Infrastructure.Repositories;
@@ -45,6 +46,9 @@ public static class DependencyInjection
         // Content deletion via internal HTTP calls on moderation approval
         services.AddHttpClient("internal");
         services.AddScoped<IContentDeletionService, ContentDeletionService>();
+
+        // Cross-schema enrichment for moderation items (posts + users from shared DB)
+        services.AddScoped<IModerationEnrichmentService, ModerationEnrichmentService>();
 
         // Expo push notification delivery
         services.AddScoped<IExpoPushService, ExpoPushService>();
