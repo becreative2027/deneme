@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -7,8 +7,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useStoredNotifications } from '../../hooks/useStoredNotifications';
-import { StoredNotification } from '../../utils/notificationStorage';
+import { ApiNotification, getMyNotifications } from '../../api/notifications';
 import { formatRelativeTime } from '../../utils/formatters';
 import { useTheme, typography, spacing } from '../../theme';
 
@@ -39,7 +38,7 @@ function NotifRow({
   notif,
   colors,
 }: {
-  notif: StoredNotification;
+  notif: ApiNotification;
   colors: ReturnType<typeof useTheme>['colors'];
 }) {
   const cfg = iconFor(notif.type);
@@ -48,7 +47,7 @@ function NotifRow({
     <View style={[s.row, { borderBottomColor: colors.borderLight }]}>
       {/* Unread dot */}
       <View style={s.dotCol}>
-        {!notif.read && <View style={s.unreadDot} />}
+        {!notif.isRead && <View style={s.unreadDot} />}
       </View>
 
       {/* Icon */}
@@ -59,7 +58,7 @@ function NotifRow({
       {/* Text */}
       <View style={s.textCol}>
         <Text
-          style={[s.title, { color: colors.text }, !notif.read && s.titleUnread]}
+          style={[s.title, { color: colors.text }, !notif.isRead && s.titleUnread]}
           numberOfLines={1}
         >
           {notif.title}
@@ -73,7 +72,7 @@ function NotifRow({
 
       {/* Time */}
       <Text style={[s.time, { color: colors.textMuted }]}>
-        {formatRelativeTime(notif.receivedAt)}
+        {formatRelativeTime(notif.createdAt)}
       </Text>
     </View>
   );
@@ -88,8 +87,24 @@ interface Props {
 
 export function NotificationsTab({ bottomPadding = 0 }: Props) {
   const { colors } = useTheme();
-  const { notifications, loading, unread, markAllRead, clearAll, refresh } =
-    useStoredNotifications();
+  const [notifications, setNotifications] = useState<ApiNotification[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const refresh = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await getMyNotifications();
+      setNotifications(data);
+    } catch {
+      setNotifications([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { refresh(); }, []);
+
+  const unread = notifications.filter((n) => !n.isRead).length;
 
   if (loading) {
     return (
@@ -108,15 +123,17 @@ export function NotificationsTab({ bottomPadding = 0 }: Props) {
         </Text>
         <View style={s.headerActions}>
           {unread > 0 && (
-            <TouchableOpacity onPress={markAllRead} style={s.headerBtn} hitSlop={8}>
+            <TouchableOpacity
+              onPress={() => setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })))}
+              style={s.headerBtn}
+              hitSlop={8}
+            >
               <Text style={[s.headerBtnText, { color: colors.accent }]}>Okundu işaretle</Text>
             </TouchableOpacity>
           )}
-          {notifications.length > 0 && (
-            <TouchableOpacity onPress={clearAll} style={s.headerBtn} hitSlop={8}>
-              <Ionicons name="trash-outline" size={14} color={colors.textTertiary} />
-            </TouchableOpacity>
-          )}
+          <TouchableOpacity onPress={refresh} style={s.headerBtn} hitSlop={8}>
+            <Ionicons name="refresh-outline" size={14} color={colors.textTertiary} />
+          </TouchableOpacity>
         </View>
       </View>
 
@@ -138,10 +155,6 @@ export function NotificationsTab({ bottomPadding = 0 }: Props) {
           {notifications.map((n) => (
             <NotifRow key={n.id} notif={n} colors={colors} />
           ))}
-          <TouchableOpacity style={s.refreshBtn} onPress={refresh} hitSlop={8}>
-            <Ionicons name="refresh-outline" size={13} color={colors.textMuted} />
-            <Text style={[s.refreshText, { color: colors.textMuted }]}>Yenile</Text>
-          </TouchableOpacity>
         </View>
       )}
     </View>

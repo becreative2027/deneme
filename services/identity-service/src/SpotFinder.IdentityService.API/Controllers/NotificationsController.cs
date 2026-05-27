@@ -50,6 +50,62 @@ public sealed class NotificationsController : BaseController
         return NoContent();
     }
 
+    /// <summary>Returns the current user's recent notification history.</summary>
+    [HttpGet("my")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetMyNotifications(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 30,
+        CancellationToken ct = default)
+    {
+        var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var items = await _ctx.UserNotifications
+            .Where(n => n.UserId == userId)
+            .OrderByDescending(n => n.CreatedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .Select(n => new {
+                n.Id, n.Title, n.Body, n.Type,
+                n.PostId, n.PlaceId, n.ActorId,
+                n.IsRead, n.CreatedAt
+            })
+            .ToListAsync(ct);
+        return OkResult(items);
+    }
+
+    /// <summary>Marks all notifications as read for the current user.</summary>
+    [HttpPatch("my/read-all")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    public async Task<IActionResult> MarkAllRead(CancellationToken ct)
+    {
+        var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        await _ctx.UserNotifications
+            .Where(n => n.UserId == userId && !n.IsRead)
+            .ExecuteUpdateAsync(s => s.SetProperty(n => n.IsRead, true), ct);
+        return NoContent();
+    }
+
+    /// <summary>Internal: store a notification record (called by other services after push send).</summary>
+    [HttpPost("store")]
+    [AllowAnonymous]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    public async Task<IActionResult> Store([FromBody] StoreNotificationRequest req, CancellationToken ct)
+    {
+        if (req.UserId == Guid.Empty) return NoContent();
+        _ctx.UserNotifications.Add(new SpotFinder.IdentityService.Domain.Entities.UserNotification
+        {
+            UserId  = req.UserId,
+            Title   = req.Title,
+            Body    = req.Body,
+            Type    = req.Type,
+            PostId  = req.PostId,
+            PlaceId = req.PlaceId,
+            ActorId = req.ActorId,
+        });
+        await _ctx.SaveChangesAsync(ct);
+        return NoContent();
+    }
+
     /// <summary>Returns Expo push tokens for a list of user IDs (internal/admin use).</summary>
     [HttpPost("tokens-by-users")]
     [Authorize(Roles = "Admin,SuperAdmin,PlaceOwner")]
@@ -97,8 +153,6 @@ public sealed class NotificationsController : BaseController
             .Select(t => t.Token)
             .ToListAsync(ct);
 
-        if (tokens.Count == 0) return NoContent();
-
         await pushService.SendAsync(
             tokens,
             title: "Yeni takipçi 🎉",
@@ -107,6 +161,14 @@ public sealed class NotificationsController : BaseController
             userId: request.FollowerId.ToString(),
             ct:    ct);
 
+        _ctx.UserNotifications.Add(new SpotFinder.IdentityService.Domain.Entities.UserNotification {
+            UserId  = request.FollowingId,
+            Title   = "Yeni takipçi 🎉",
+            Body    = $"{followerName} seni takip etmeye başladı.",
+            Type    = "follow",
+            ActorId = request.FollowerId.ToString(),
+        });
+        await _ctx.SaveChangesAsync(ct);
         return NoContent();
     }
 
@@ -137,8 +199,6 @@ public sealed class NotificationsController : BaseController
             .Select(t => t.Token)
             .ToListAsync(ct);
 
-        if (tokens.Count == 0) return NoContent();
-
         await pushService.SendAsync(
             tokens,
             title:   "Yeni yorum 💬",
@@ -149,6 +209,16 @@ public sealed class NotificationsController : BaseController
             postId:  request.PostId,
             ct:      ct);
 
+        _ctx.UserNotifications.Add(new SpotFinder.IdentityService.Domain.Entities.UserNotification {
+            UserId  = request.PostOwnerId,
+            Title   = "Yeni yorum 💬",
+            Body    = $"{commenterName} gönderine yorum yaptı.",
+            Type    = "comment",
+            PostId  = request.PostId,
+            PlaceId = request.PlaceId,
+            ActorId = request.CommenterId.ToString(),
+        });
+        await _ctx.SaveChangesAsync(ct);
         return NoContent();
     }
 
@@ -192,6 +262,16 @@ public sealed class NotificationsController : BaseController
             postId:  request.PostId,
             ct:      ct);
 
+        _ctx.UserNotifications.Add(new SpotFinder.IdentityService.Domain.Entities.UserNotification {
+            UserId  = request.PostOwnerId,
+            Title   = "Yeni beğeni ❤️",
+            Body    = $"{likerName} gönderini beğendi.",
+            Type    = "like",
+            PostId  = request.PostId,
+            PlaceId = request.PlaceId,
+            ActorId = request.LikerId.ToString(),
+        });
+        await _ctx.SaveChangesAsync(ct);
         return NoContent();
     }
 }
@@ -201,3 +281,4 @@ public sealed record TokensByUsersRequest(IReadOnlyList<Guid> UserIds);
 public sealed record SendFollowRequest(Guid FollowerId, Guid FollowingId);
 public sealed record SendLikeRequest(Guid LikerId, Guid PostOwnerId, string PostId, string? PlaceId = null);
 public sealed record SendCommentRequest(Guid CommenterId, Guid PostOwnerId, string PostId, string? PlaceId = null);
+public sealed record StoreNotificationRequest(Guid UserId, string Title, string Body, string Type, string? PostId = null, string? PlaceId = null, string? ActorId = null);

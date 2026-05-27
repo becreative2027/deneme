@@ -24,7 +24,7 @@ public sealed class RespondToFeedbackCommandHandler(
         feedbackRepo.Update(feedback);
         await db.SaveChangesAsync(ct);
 
-        // Send push notification if user has a registered device
+        // Send push + store notification history if user has a registered device
         if (!string.IsNullOrWhiteSpace(feedback.UserId) && Guid.TryParse(feedback.UserId, out var userId))
         {
             var tokens = await db.Database
@@ -52,6 +52,15 @@ public sealed class RespondToFeedbackCommandHandler(
                     "No push tokens for userId={UserId}, feedback {FeedbackId} marked reviewed without notification.",
                     userId, cmd.FeedbackId);
             }
+
+            // Always store in notification history (even without push tokens)
+            await db.Database.ExecuteSqlRawAsync(
+                """
+                INSERT INTO identity.user_notifications (id, user_id, title, body, type, post_id, place_id, actor_id, is_read, created_at)
+                VALUES (gen_random_uuid(), @userId, 'SpotFinder''dan yanıt 📬', @body, 'admin_response', NULL, NULL, NULL, false, NOW())
+                """,
+                new Npgsql.NpgsqlParameter("userId", userId),
+                new Npgsql.NpgsqlParameter("body", cmd.Message));
         }
     }
 }

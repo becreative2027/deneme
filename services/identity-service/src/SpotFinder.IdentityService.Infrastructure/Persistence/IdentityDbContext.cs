@@ -13,6 +13,7 @@ public sealed class IdentityDbContext : DbContext, IUnitOfWork
     public DbSet<UserProfile> Profiles => Set<UserProfile>();
     public DbSet<PlaceOwnership> PlaceOwnerships => Set<PlaceOwnership>();
     public DbSet<PushToken> PushTokens => Set<PushToken>();
+    public DbSet<UserNotification> UserNotifications => Set<UserNotification>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
