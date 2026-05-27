@@ -24,13 +24,9 @@ public sealed class GetPendingModerationQueryHandler(
             .Select(i => Guid.Parse(i.ReporterId!))
             .Distinct().ToList();
 
-        var postsTask   = postIds.Count    > 0 ? enrichment.GetPostsAsync(postIds, ct)    : Task.FromResult(new Dictionary<Guid, PostSummary>());
-        var usersTask   = reporterIds.Count > 0 ? enrichment.GetUsersAsync(reporterIds, ct) : Task.FromResult(new Dictionary<Guid, UserSummary>());
-
-        await Task.WhenAll(postsTask, usersTask);
-
-        var posts = await postsTask;
-        var users = await usersTask;
+        // Sequential — EF Core DbContext does not allow concurrent operations on the same instance
+        var posts = postIds.Count    > 0 ? await enrichment.GetPostsAsync(postIds, ct)    : new Dictionary<Guid, PostSummary>();
+        var users = reporterIds.Count > 0 ? await enrichment.GetUsersAsync(reporterIds, ct) : new Dictionary<Guid, UserSummary>();
 
         var authorIds = posts.Values.Select(p => p.AuthorId).Distinct().Except(reporterIds).ToList();
         if (authorIds.Count > 0)
