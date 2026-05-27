@@ -1,4 +1,5 @@
 using SpotFinder.AdminService.Domain.Enums;
+using SpotFinder.AdminService.Infrastructure.Services;
 using SpotFinder.BuildingBlocks.Application;
 
 namespace SpotFinder.AdminService.Application.Features.Moderation.Queries.GetPendingItems;
@@ -15,19 +16,3 @@ public sealed record ModerationItemDto(
     DateTime CreatedAt,
     PostSummary? Post,
     UserSummary? Reporter);
-
-public sealed record PostSummary(
-    Guid Id,
-    string? Caption,
-    string? ImageUrl,
-    Guid AuthorId,
-    string? AuthorUsername,
-    string? AuthorAvatarUrl,
-    int LikeCount,
-    int CommentCount);
-
-public sealed record UserSummary(
-    Guid Id,
-    string? Username,
-    string? DisplayName,
-    string? AvatarUrl);

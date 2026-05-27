@@ -2,7 +2,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Npgsql;
-using SpotFinder.AdminService.Application.Features.Moderation.Queries.GetPendingItems;
 using SpotFinder.AdminService.Domain.Repositories;
 using SpotFinder.AdminService.Infrastructure.Persistence;
 using SpotFinder.AdminService.Infrastructure.Repositories;

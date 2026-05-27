@@ -1,5 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using SpotFinder.AdminService.Application.Features.Moderation.Queries.GetPendingItems;
 using SpotFinder.AdminService.Infrastructure.Persistence;
 
 namespace SpotFinder.AdminService.Infrastructure.Services;

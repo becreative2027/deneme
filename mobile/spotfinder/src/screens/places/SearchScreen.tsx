@@ -19,12 +19,12 @@ import { PlaceSkeleton } from '../../components/SkeletonLoader';
 import { ErrorState } from '../../components/ErrorState';
 import { EmptyState } from '../../components/EmptyState';
 import { useAnalytics } from '../../hooks/useAnalytics';
+import { useTheme } from '../../theme';
 
 type Props = { navigation: NativeStackNavigationProp<SearchStackParamList, 'Search'> };
 
-const PRIMARY = '#6c63ff';
-
 export function SearchScreen({ navigation }: Props) {
+  const { colors } = useTheme();
   const [query, setQuery]                   = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const [selectedLabelIds, setSelectedLabelIds] = useState<number[]>([]);
@@ -93,8 +93,6 @@ export function SearchScreen({ navigation }: Props) {
   const searchResults: Place[] = searchQuery.data?.items ?? [];
   const recPlaces:    Place[] = recsQuery.data?.recommendations.map((r) => r.place) ?? [];
   const popularPlaces: Place[] = popularQuery.data?.items ?? [];
-  // Recommendations API sadece placeId/placeName döndürüyor (imageUrl yok).
-  // Gerçek görseli olan recommendations yoksa popular places'a düş.
   const recWithImages = recPlaces.filter((p) => !!p.imageUrl);
   const useRecs = recWithImages.length > 0;
   const discoveryPlaces = useRecs ? recPlaces : popularPlaces;
@@ -103,33 +101,41 @@ export function SearchScreen({ navigation }: Props) {
   const discoveryIcon  = useRecs ? 'sparkles-outline' : 'flame-outline';
 
   return (
-    <SafeAreaView style={s.container} edges={['top']}>
+    <SafeAreaView style={[s.container, { backgroundColor: colors.background }]} edges={['top']}>
       {/* ── Search bar ──────────────────────────────────────────────────── */}
-      <View style={s.topBar}>
+      <View style={[s.topBar, { backgroundColor: colors.background }]}>
         <View style={s.searchRow}>
-          <View style={s.searchBox}>
-            <Ionicons name="search" size={18} color="#aaa" />
+          <View style={[s.searchBox, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+            <Ionicons name="search" size={18} color={colors.textTertiary} />
             <TextInput
-              style={s.searchInput}
+              style={[s.searchInput, { color: colors.text }]}
               placeholder="Mekan ara…"
               value={query}
               onChangeText={setQuery}
               returnKeyType="search"
-              placeholderTextColor="#aaa"
+              placeholderTextColor={colors.textMuted}
               autoCorrect={false}
             />
             {query.length > 0 && (
               <TouchableOpacity onPress={handleClear} hitSlop={8}>
-                <Ionicons name="close-circle" size={18} color="#aaa" />
+                <Ionicons name="close-circle" size={18} color={colors.textTertiary} />
               </TouchableOpacity>
             )}
           </View>
           <TouchableOpacity
-            style={[s.filterBtn, hasLabels && s.filterBtnActive]}
+            style={[
+              s.filterBtn,
+              { backgroundColor: colors.surface, borderColor: colors.border },
+              hasLabels && { backgroundColor: colors.accent, borderColor: colors.accent },
+            ]}
             onPress={() => setShowFilters((v) => !v)}
             activeOpacity={0.8}
           >
-            <Ionicons name="options-outline" size={20} color={hasLabels ? '#fff' : '#555'} />
+            <Ionicons
+              name="options-outline"
+              size={20}
+              color={hasLabels ? colors.accentOnAccent : colors.textSecondary}
+            />
             {hasLabels && (
               <View style={s.filterBadge}>
                 <Text style={s.filterBadgeText}>{selectedLabelIds.length}</Text>
@@ -140,25 +146,39 @@ export function SearchScreen({ navigation }: Props) {
 
         {/* ── Filter panel ─────────────────────────────────────────────── */}
         {showFilters && categories.length > 0 && (
-          <ScrollView style={s.filterPanel} contentContainerStyle={{ paddingBottom: 4 }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" nestedScrollEnabled>
+          <ScrollView
+            style={[s.filterPanel, { backgroundColor: colors.surface, borderColor: colors.border }]}
+            contentContainerStyle={{ paddingBottom: 4 }}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            nestedScrollEnabled
+          >
             {categories.map((cat) => {
               const isExpanded = expandedCategories.has(cat.id);
               const visibleLabels = isExpanded ? cat.labels : cat.labels.slice(0, 6);
               const hasMore = cat.labels.length > 6;
               return (
                 <View key={cat.id} style={s.categorySection}>
-                  <Text style={s.categoryTitle}>{cat.displayName.toUpperCase()}</Text>
+                  <Text style={[s.categoryTitle, { color: colors.textMuted }]}>{cat.displayName.toUpperCase()}</Text>
                   <View style={s.filterLabels}>
                     {visibleLabels.map((lbl) => {
                       const active = selectedLabelIds.includes(lbl.id);
                       return (
                         <TouchableOpacity
                           key={lbl.id}
-                          style={[s.filterChip, active && s.filterChipActive]}
+                          style={[
+                            s.filterChip,
+                            { backgroundColor: colors.glassBg, borderColor: colors.glassBorder },
+                            active && { backgroundColor: colors.accentSoft, borderColor: colors.accentBorder },
+                          ]}
                           onPress={() => toggleLabel(lbl.id)}
                           activeOpacity={0.75}
                         >
-                          <Text style={[s.filterChipText, active && s.filterChipTextActive]}>
+                          <Text style={[
+                            s.filterChipText,
+                            { color: colors.textSecondary },
+                            active && { color: colors.accent, fontWeight: '700' },
+                          ]}>
                             {lbl.displayName}
                           </Text>
                         </TouchableOpacity>
@@ -167,7 +187,7 @@ export function SearchScreen({ navigation }: Props) {
                   </View>
                   {hasMore && (
                     <TouchableOpacity onPress={() => toggleCategory(cat.id)} style={s.showMoreBtn}>
-                      <Text style={s.showMoreText}>
+                      <Text style={[s.showMoreText, { color: colors.accent }]}>
                         {isExpanded ? 'Daha az göster ▲' : `+${cat.labels.length - 6} daha göster ▼`}
                       </Text>
                     </TouchableOpacity>
@@ -177,7 +197,7 @@ export function SearchScreen({ navigation }: Props) {
             })}
             {hasLabels && (
               <TouchableOpacity onPress={handleClearFilters} style={s.clearFiltersBtn}>
-                <Text style={s.clearFiltersText}>Filtreleri Temizle</Text>
+                <Text style={[s.clearFiltersText, { color: colors.danger }]}>Filtreleri Temizle</Text>
               </TouchableOpacity>
             )}
           </ScrollView>
@@ -191,11 +211,11 @@ export function SearchScreen({ navigation }: Props) {
               return (
                 <TouchableOpacity
                   key={id}
-                  style={s.activeLabelChip}
+                  style={[s.activeLabelChip, { backgroundColor: colors.accentSoft, borderColor: colors.accentBorder }]}
                   onPress={() => toggleLabel(id)}
                 >
-                  <Text style={s.activeLabelChipText}>{lbl?.displayName ?? `#${id}`}</Text>
-                  <Ionicons name="close" size={11} color={PRIMARY} />
+                  <Text style={[s.activeLabelChipText, { color: colors.accent }]}>{lbl?.displayName ?? `#${id}`}</Text>
+                  <Ionicons name="close" size={11} color={colors.accent} />
                 </TouchableOpacity>
               );
             })}
@@ -228,7 +248,7 @@ export function SearchScreen({ navigation }: Props) {
               contentContainerStyle={s.list}
               showsVerticalScrollIndicator={false}
               ListHeaderComponent={
-                <Text style={s.sectionLabel}>{searchResults.length} sonuç</Text>
+                <Text style={[s.sectionLabel, { color: colors.textMuted }]}>{searchResults.length} sonuç</Text>
               }
             />
           )}
@@ -245,8 +265,8 @@ export function SearchScreen({ navigation }: Props) {
           showsVerticalScrollIndicator={false}
           ListHeaderComponent={
             <View style={s.sectionHeaderRow}>
-              <Ionicons name={discoveryIcon} size={14} color={PRIMARY} />
-              <Text style={s.sectionLabel}>{discoveryLabel}</Text>
+              <Ionicons name={discoveryIcon} size={14} color={colors.accent} />
+              <Text style={[s.sectionLabel, { color: colors.textMuted }]}>{discoveryLabel}</Text>
             </View>
           }
           ListEmptyComponent={
@@ -269,35 +289,30 @@ export function SearchScreen({ navigation }: Props) {
 }
 
 const s = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f8f8f8' },
+  container: { flex: 1 },
 
   // Top bar
-  topBar:     { backgroundColor: '#f8f8f8', paddingHorizontal: 16, paddingTop: 8, paddingBottom: 4 },
+  topBar:     { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 4 },
   searchRow:  { flexDirection: 'row', alignItems: 'center', gap: 10 },
   searchBox:  {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
     borderRadius: 12,
     paddingHorizontal: 12,
     height: 44,
     borderWidth: 1,
-    borderColor: '#e8e8e8',
     gap: 8,
   },
-  searchInput: { flex: 1, fontSize: 15, color: '#333' },
+  searchInput: { flex: 1, fontSize: 15 },
   filterBtn: {
     width: 44,
     height: 44,
     borderRadius: 12,
-    backgroundColor: '#fff',
     borderWidth: 1,
-    borderColor: '#e8e8e8',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  filterBtnActive:    { backgroundColor: PRIMARY, borderColor: PRIMARY },
   filterBadge: {
     position: 'absolute',
     top: -6,
@@ -313,26 +328,21 @@ const s = StyleSheet.create({
   filterBadgeText: { color: '#fff', fontSize: 10, fontWeight: '700' },
 
   // Filter panel
-  filterPanel:      { backgroundColor: '#fff', borderRadius: 12, padding: 14, marginTop: 8, borderWidth: 1, borderColor: '#e8e8e8', maxHeight: 340 },
-  filterPanelTitle: { fontSize: 11, fontWeight: '700', color: '#aaa', letterSpacing: 0.8, marginBottom: 10 },
+  filterPanel:      { borderRadius: 12, padding: 14, marginTop: 8, borderWidth: 1, maxHeight: 340 },
   categorySection:  { marginBottom: 12 },
-  categoryTitle:    { fontSize: 10, fontWeight: '700', color: '#bbb', letterSpacing: 1, marginBottom: 8 },
+  categoryTitle:    { fontSize: 10, fontWeight: '700', letterSpacing: 1, marginBottom: 8 },
   showMoreBtn:      { marginTop: 6, alignSelf: 'flex-start' },
-  showMoreText:     { fontSize: 12, color: PRIMARY, fontWeight: '600' },
+  showMoreText:     { fontSize: 12, fontWeight: '600' },
   filterLabels:     { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   filterChip: {
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 20,
-    backgroundColor: '#f0f0f0',
     borderWidth: 1,
-    borderColor: 'transparent',
   },
-  filterChipActive:     { backgroundColor: `${PRIMARY}18`, borderColor: PRIMARY },
-  filterChipText:       { fontSize: 12, fontWeight: '500', color: '#555' },
-  filterChipTextActive: { color: PRIMARY, fontWeight: '700' },
-  clearFiltersBtn:      { marginTop: 10, alignSelf: 'flex-start' },
-  clearFiltersText:     { fontSize: 12, color: '#ef4444', fontWeight: '600' },
+  filterChipText:   { fontSize: 12, fontWeight: '500' },
+  clearFiltersBtn:  { marginTop: 10, alignSelf: 'flex-start' },
+  clearFiltersText: { fontSize: 12, fontWeight: '600' },
 
   // Active chips bar
   activeLabelScroll: { marginTop: 8, marginBottom: 2 },
@@ -343,13 +353,13 @@ const s = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 20,
-    backgroundColor: `${PRIMARY}18`,
+    borderWidth: 1,
     marginRight: 6,
   },
-  activeLabelChipText: { fontSize: 12, color: PRIMARY, fontWeight: '600' },
+  activeLabelChipText: { fontSize: 12, fontWeight: '600' },
 
   // Content
-  list:           { paddingHorizontal: 16, paddingBottom: 20, paddingTop: 4 },
+  list:             { paddingHorizontal: 16, paddingBottom: 20, paddingTop: 4 },
   sectionHeaderRow: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingVertical: 10 },
-  sectionLabel:   { fontSize: 11, fontWeight: '700', color: '#aaa', letterSpacing: 0.8, paddingVertical: 10 },
+  sectionLabel:     { fontSize: 11, fontWeight: '700', letterSpacing: 0.8, paddingVertical: 10 },
 });

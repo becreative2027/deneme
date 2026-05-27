@@ -1,5 +1,6 @@
 using SpotFinder.AdminService.Domain.Enums;
 using SpotFinder.AdminService.Domain.Repositories;
+using SpotFinder.AdminService.Infrastructure.Services;
 using SpotFinder.BuildingBlocks.Application;
 
 namespace SpotFinder.AdminService.Application.Features.Moderation.Queries.GetPendingItems;
@@ -13,21 +14,17 @@ public sealed class GetPendingModerationQueryHandler(
     {
         var result = await moderationRepository.GetPendingAsync(request.TargetType, request.Page, request.PageSize, ct);
 
-        // Collect IDs to batch-fetch
-        var postIds  = result.Items
+        var postIds = result.Items
             .Where(i => i.TargetType == ModerationTargetType.Post)
             .Select(i => i.TargetId)
-            .Distinct()
-            .ToList();
+            .Distinct().ToList();
 
         var reporterIds = result.Items
             .Where(i => i.ReporterId is not null && Guid.TryParse(i.ReporterId, out _))
             .Select(i => Guid.Parse(i.ReporterId!))
-            .Distinct()
-            .ToList();
+            .Distinct().ToList();
 
-        // Fetch in parallel
-        var postsTask   = postIds.Count   > 0 ? enrichment.GetPostsAsync(postIds, ct)   : Task.FromResult(new Dictionary<Guid, PostSummary>());
+        var postsTask   = postIds.Count    > 0 ? enrichment.GetPostsAsync(postIds, ct)    : Task.FromResult(new Dictionary<Guid, PostSummary>());
         var usersTask   = reporterIds.Count > 0 ? enrichment.GetUsersAsync(reporterIds, ct) : Task.FromResult(new Dictionary<Guid, UserSummary>());
 
         await Task.WhenAll(postsTask, usersTask);
@@ -35,7 +32,6 @@ public sealed class GetPendingModerationQueryHandler(
         var posts = await postsTask;
         var users = await usersTask;
 
-        // Also fetch post author users if not already included
         var authorIds = posts.Values.Select(p => p.AuthorId).Distinct().Except(reporterIds).ToList();
         if (authorIds.Count > 0)
         {
@@ -50,7 +46,6 @@ public sealed class GetPendingModerationQueryHandler(
             if (i.ReporterId is not null && Guid.TryParse(i.ReporterId, out var rid))
                 users.TryGetValue(rid, out reporter);
 
-            // Attach author info to post summary
             if (postSummary is not null && users.TryGetValue(postSummary.AuthorId, out var author))
                 postSummary = postSummary with { AuthorUsername = author.Username, AuthorAvatarUrl = author.AvatarUrl };
 
