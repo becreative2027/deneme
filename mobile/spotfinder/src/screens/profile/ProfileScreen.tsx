@@ -39,7 +39,7 @@ import { getPlaceById } from '../../api/places';
 import { useTheme, radius, spacing, typography, shadow } from '../../theme';
 import { AvatarRing, AmberButton, CategoryBadge, Eyebrow } from '../../components/ui';
 import { NotificationsTab } from './NotificationsTab';
-import { useStoredNotifications } from '../../hooks/useStoredNotifications';
+import { getMyNotifications } from '../../api/notifications';
 
 const { width } = Dimensions.get('window');
 
@@ -83,7 +83,11 @@ export function ProfileScreen({ route, navigation }: Props) {
 
   const [activeTab, setActiveTab] = useState<Tab>('places');
   const [expandedPlaces, setExpandedPlaces] = useState<Set<string>>(new Set());
-  const { unread: notifUnread } = useStoredNotifications();
+  const [notifUnread, setNotifUnread] = useState(0);
+  useEffect(() => {
+    if (!isOwnProfile) return;
+    getMyNotifications().then((items) => setNotifUnread(items.filter((n) => !n.isRead).length)).catch(() => {});
+  }, [isOwnProfile]);
   const [followSheet, setFollowSheet] = useState<'followers' | 'following' | null>(null);
   const [commentPostId, setCommentPostId] = useState<string | null>(null);
   const qc = useQueryClient();
@@ -433,7 +437,14 @@ export function ProfileScreen({ route, navigation }: Props) {
                     <View style={s.tabBadge} />
                   )}
                 </View>
-                <Text style={[typography.caption, { color: active ? colors.accent : colors.icon, fontWeight: '700', marginLeft: 4 }]}>
+                <Text style={[
+                  typography.caption,
+                  {
+                    color: active ? colors.accent : (showBadge ? colors.text : colors.icon),
+                    fontWeight: showBadge ? '900' : '500',
+                    marginLeft: 4,
+                  },
+                ]}>
                   {tab.label}
                 </Text>
               </TouchableOpacity>
