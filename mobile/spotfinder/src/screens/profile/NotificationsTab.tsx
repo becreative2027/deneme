@@ -7,7 +7,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { ApiNotification, getMyNotifications } from '../../api/notifications';
+import { ApiNotification, getMyNotifications, markAllNotificationsRead } from '../../api/notifications';
 import { formatRelativeTime } from '../../utils/formatters';
 import { useTheme, typography, spacing } from '../../theme';
 
@@ -95,6 +95,10 @@ export function NotificationsTab({ bottomPadding = 0 }: Props) {
     try {
       const data = await getMyNotifications();
       setNotifications(data);
+      // Auto-mark all as read on load if there are unread ones
+      if (data.some((n) => !n.isRead)) {
+        await markAllNotificationsRead().catch(() => {});
+      }
     } catch {
       setNotifications([]);
     } finally {
@@ -124,7 +128,10 @@ export function NotificationsTab({ bottomPadding = 0 }: Props) {
         <View style={s.headerActions}>
           {unread > 0 && (
             <TouchableOpacity
-              onPress={() => setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })))}
+              onPress={async () => {
+                setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+                await markAllNotificationsRead().catch(() => {});
+              }}
               style={s.headerBtn}
               hitSlop={8}
             >

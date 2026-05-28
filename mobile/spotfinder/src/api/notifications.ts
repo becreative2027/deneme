@@ -26,3 +26,7 @@ export async function getMyNotifications(page = 1, pageSize = 30): Promise<ApiNo
   const inner = data?.data ?? data;
   return Array.isArray(inner) ? inner : [];
 }
+
+export async function markAllNotificationsRead(): Promise<void> {
+  await apiClient.patch('/api/notifications/my/read-all');
+}
