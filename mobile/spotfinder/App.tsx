@@ -3,7 +3,13 @@ import { StatusBar } from 'expo-status-bar';
 import * as Location from 'expo-location';
 import React, { useEffect } from 'react';
 // if (__DEV__) { require('./src/utils/reactotron'); }
-import { View } from 'react-native';
+import { LogBox, View } from 'react-native';
+
+// Suppress known simulator-only warnings (APNs/keychain unavailable on sim)
+LogBox.ignoreLogs([
+  'Could not fetch registration information from keychain',
+  "Error: Could not fetch registration information from keychain",
+]);
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ErrorBoundary } from './src/components/ErrorBoundary';
 import { OfflineBanner } from './src/components/OfflineBanner';
