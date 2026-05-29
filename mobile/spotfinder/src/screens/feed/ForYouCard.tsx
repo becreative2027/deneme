@@ -9,6 +9,7 @@ import {
   Image,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import { Post } from '../../types';
 import { useTheme } from '../../theme';
@@ -89,20 +90,32 @@ export function ForYouCard({
 
   return (
     <View style={s.card}>
-      {/* ── Full-screen image ── */}
+      {/* ── Blurred background (letterbox fill) ── */}
+      {post.imageUrl ? (
+        <>
+          <Image
+            source={{ uri: post.imageUrl }}
+            style={[StyleSheet.absoluteFill, s.bgImage]}
+            resizeMode="cover"
+          />
+          <BlurView intensity={80} tint="dark" style={StyleSheet.absoluteFill} />
+        </>
+      ) : (
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: '#111' }]} />
+      )}
+
+      {/* ── Full-screen tap + contained image ── */}
       <TouchableOpacity
         activeOpacity={1}
         onPress={handleImageTap}
         style={StyleSheet.absoluteFill}
       >
-        {post.imageUrl ? (
+        {post.imageUrl && (
           <Image
             source={{ uri: post.imageUrl }}
             style={StyleSheet.absoluteFill}
-            resizeMode="cover"
+            resizeMode="contain"
           />
-        ) : (
-          <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.surfaceElevated }]} />
         )}
       </TouchableOpacity>
 
@@ -211,6 +224,10 @@ const s = StyleSheet.create({
     width: W,
     height: H,
     backgroundColor: '#000',
+    overflow: 'hidden',
+  },
+  bgImage: {
+    opacity: 0.6,
   },
 
   topGradient: {
