@@ -14,6 +14,12 @@ import { useTheme } from '../../theme';
 import { shadow } from '../../theme';
 import { useWishlistStore } from '../../store/wishlistStore';
 
+// Tab bar blur & color constants
+const BLUR_INTENSITY_LIGHT = 65;
+const BLUR_INTENSITY_DARK  = 85;
+const ICON_INACTIVE_DARK   = 'rgba(255,255,255,0.60)';
+const ICON_ACTIVE_DARK     = '#fff';
+
 type IconName = React.ComponentProps<typeof Ionicons>['name'];
 
 const TAB_ICONS: Record<string, [IconName, IconName]> = {
@@ -39,7 +45,9 @@ export function FloatingTabBar({ state, navigation }: BottomTabBarProps) {
     const idx = state.routes.indexOf(route);
     const isFocused = state.index === idx;
     const [activeIcon, inactiveIcon] = TAB_ICONS[route.name] ?? ['ellipse', 'ellipse-outline'];
-    const color = isFocused ? colors.accent : colors.icon;
+    const color = isDark
+      ? (isFocused ? ICON_ACTIVE_DARK : ICON_INACTIVE_DARK)
+      : (isFocused ? colors.accent : colors.icon);
 
     const onPress = () => {
       const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
@@ -56,7 +64,10 @@ export function FloatingTabBar({ state, navigation }: BottomTabBarProps) {
         accessibilityState={{ selected: isFocused }}
         accessibilityLabel={route.name.replace('Tab', '')}
       >
-        <View style={[styles.tabInner, isFocused && { backgroundColor: colors.accentSoft }]}>
+        <View style={[
+          styles.tabInner,
+          isFocused && { backgroundColor: isDark ? 'rgba(255,255,255,0.12)' : colors.accentSoft },
+        ]}>
           <Ionicons name={isFocused ? activeIcon : inactiveIcon} size={22} color={color} />
         </View>
         {route.name === 'WishlistTab' && wishlistCount > 0 && (
@@ -111,13 +122,17 @@ export function FloatingTabBar({ state, navigation }: BottomTabBarProps) {
     >
       {Platform.OS === 'ios' ? (
         <BlurView
-          intensity={50}
+          intensity={isDark ? BLUR_INTENSITY_DARK : BLUR_INTENSITY_LIGHT}
           tint={isDark ? 'dark' : 'light'}
           style={[
             styles.bar,
-            { borderColor: colors.tabBarBorder, height: barHeight, paddingBottom: insets.bottom },
+            { borderColor: isDark ? 'rgba(255,255,255,0.10)' : colors.tabBarBorder, height: barHeight, paddingBottom: insets.bottom },
           ]}
         >
+          {/* Extra dark scrim so icons pop over full-screen video */}
+          {isDark && (
+            <View style={styles.darkScrim} pointerEvents="none" />
+          )}
           {barContent}
         </BlurView>
       ) : (
@@ -193,6 +208,10 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  darkScrim: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.28)',
   },
   dot: {
     position: 'absolute',
