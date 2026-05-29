@@ -120,6 +120,7 @@ public sealed class GetPersonalizedFeedQueryHandler
             // ── STEP 2b: Fetch candidate posts from those places ──────────────
             candidates = await _db.Posts
                 .Where(p => interestedPlaceIds.Contains(p.PlaceId))
+                .Where(p => p.UserId != request.UserId)
                 .Where(p => !hasCursor
                             || p.FeedScore < cs
                             || (p.FeedScore == cs && p.CreatedAt < cAt)
@@ -140,6 +141,7 @@ public sealed class GetPersonalizedFeedQueryHandler
                 "GetPersonalizedFeed — cold start fallback for userId={UserId}", request.UserId);
 
             candidates = await _db.Posts
+                .Where(p => p.UserId != request.UserId)
                 .Where(p => !hasCursor
                             || p.FeedScore < cs
                             || (p.FeedScore == cs && p.CreatedAt < cAt)
