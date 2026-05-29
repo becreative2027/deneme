@@ -8,11 +8,11 @@ import {
   RefreshControl,
   ActivityIndicator,
 } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { FeedStackParamList, Post } from '../../types';
-import { useFollowingFeed, useExploreFeed, usePersonalizedFeed } from '../../hooks/useFeed';
+import { useFollowingFeed, useExploreFeed } from '../../hooks/useFeed';
 import { useFeedStore, FeedTab } from '../../store/feedStore';
 import { useAnalytics } from '../../hooks/useAnalytics';
 import { haptic } from '../../utils/haptics';
@@ -20,6 +20,7 @@ import { useTheme, ThemeColors } from '../../theme';
 import { PostCard } from '../../components/PostCard';
 import { CommentsModal } from '../../components/CommentsModal';
 import { ExploreTab } from './ExploreTab';
+import { ForYouFeed } from './ForYouFeed';
 import { PostSkeleton } from '../../components/SkeletonLoader';
 import { ErrorState } from '../../components/ErrorState';
 import { EmptyState } from '../../components/EmptyState';
@@ -38,7 +39,6 @@ export function FeedScreen({ navigation }: Props) {
   const { activeTab, setActiveTab } = useFeedStore();
   const following = useFollowingFeed();
   const explore = useExploreFeed();
-  const personalized = usePersonalizedFeed();
   const likeMutation = useLikePost();
   const [commentPostId, setCommentPostId] = useState<string | null>(null);
   const { trackScreen, trackEvent } = useAnalytics();
@@ -51,11 +51,7 @@ export function FeedScreen({ navigation }: Props) {
     trackScreen('FeedScreen');
   }, []);
 
-  const activeQuery =
-    activeTab === 'following' ? following
-    : activeTab === 'explore' ? explore
-    : personalized;
-
+  const activeQuery = activeTab === 'following' ? following : explore;
   const allPosts: Post[] = (activeQuery.data?.pages.flatMap((p) => p.items) ?? []).filter((p) => !!p.imageUrl);
 
   const handleTabChange = useCallback(
@@ -105,6 +101,33 @@ export function FeedScreen({ navigation }: Props) {
   }, [activeQuery]);
 
   const keyExtractor = useCallback((item: Post) => item.id, []);
+
+  // For You tab: full-screen immersive feed (no SafeAreaView chrome, no tab bar)
+  if (activeTab === 'personalized') {
+    return (
+      <View style={s.fullScreen}>
+        {/* Floating tab bar overlay for tab switching */}
+        <View style={s.floatingTabs}>
+          {TABS.map((t) => (
+            <TouchableOpacity
+              key={t.key}
+              onPress={() => { handleTabChange(t.key); }}
+              style={s.floatingTab}
+            >
+              <Text style={[
+                s.floatingTabText,
+                activeTab === t.key && s.floatingTabTextActive,
+              ]}>
+                {t.label}
+              </Text>
+              {activeTab === t.key && <View style={s.floatingTabUnderline} />}
+            </TouchableOpacity>
+          ))}
+        </View>
+        <ForYouFeed navigation={navigation} bottomPadding={tabBarHeight} />
+      </View>
+    );
+  }
 
   if (activeTab !== 'explore' && activeQuery.isLoading) {
     return (
@@ -227,4 +250,36 @@ const createStyles = (c: ThemeColors) =>
     tabActive: { borderBottomWidth: 2, borderBottomColor: c.primary },
     tabText: { fontSize: 14, color: c.textMuted, fontWeight: '500' },
     tabTextActive: { color: c.primary, fontWeight: '700' },
+
+    // ── For You immersive mode ─────────────────────────────────────────────
+    fullScreen: { flex: 1, backgroundColor: '#000' },
+    floatingTabs: {
+      position: 'absolute',
+      top: 56, // below status bar
+      left: 0, right: 0,
+      flexDirection: 'row',
+      justifyContent: 'center',
+      gap: 24,
+      zIndex: 10,
+    },
+    floatingTab: { alignItems: 'center', paddingHorizontal: 4, paddingBottom: 4 },
+    floatingTabText: {
+      fontSize: 15,
+      fontWeight: '600',
+      color: 'rgba(255,255,255,0.55)',
+      textShadowColor: 'rgba(0,0,0,0.4)',
+      textShadowOffset: { width: 0, height: 1 },
+      textShadowRadius: 3,
+    },
+    floatingTabTextActive: {
+      color: '#fff',
+      fontWeight: '700',
+    },
+    floatingTabUnderline: {
+      marginTop: 3,
+      height: 2,
+      width: '100%',
+      backgroundColor: '#fff',
+      borderRadius: 1,
+    },
   });
