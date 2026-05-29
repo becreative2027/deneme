@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { useFollowList, useFollowUser } from '../hooks/useProfile';
 import { useAuthStore } from '../store/authStore';
 import { Avatar } from './Avatar';
@@ -36,6 +37,7 @@ function UserRow({
   myFollowingIds: string[];
   onPress?: (id: string) => void;
 }) {
+  const { t } = useTranslation();
   const isMe = user.id === currentUserId;
   const isFollowing = myFollowingIds.includes(user.id);
   const followMutation = useFollowUser();
@@ -67,7 +69,7 @@ function UserRow({
             color={isFollowing ? '#555' : '#fff'}
           />
           <Text style={[s.followBtnText, isFollowing && s.followingBtnText]}>
-            {followMutation.isPending ? '…' : isFollowing ? 'Takip ediliyor' : 'Takip et'}
+            {followMutation.isPending ? '…' : isFollowing ? t('followList.followingBtn') : t('followList.follow')}
           </Text>
         </TouchableOpacity>
       )}
@@ -76,13 +78,14 @@ function UserRow({
 }
 
 export function FollowListModal({ userId, type, visible, onClose, onUserPress }: Props) {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const currentUserId = useAuthStore((s) => s.user?.id ?? '');
   const listQuery = useFollowList(userId, type);
   const myFollowingQuery = useFollowList(currentUserId, 'following');
   const myFollowingIds = myFollowingQuery.data?.map((u) => u.id) ?? [];
 
-  const title = type === 'followers' ? 'Takipçiler' : 'Takip Edilenler';
+  const title = type === 'followers' ? t('followList.followers') : t('followList.following');
   const users = listQuery.data ?? [];
 
   return (
@@ -115,7 +118,7 @@ export function FollowListModal({ userId, type, visible, onClose, onUserPress }:
           <View style={s.centered}>
             <Ionicons name="people-outline" size={40} color="#ddd" />
             <Text style={s.emptyText}>
-              {type === 'followers' ? 'Henüz takipçi yok' : 'Henüz kimse takip edilmiyor'}
+              {type === 'followers' ? t('followList.noFollowers') : t('followList.noFollowing')}
             </Text>
           </View>
         ) : (

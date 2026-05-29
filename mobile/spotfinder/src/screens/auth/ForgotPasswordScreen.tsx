@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useTranslation } from 'react-i18next';
 import { AuthStackParamList } from '../../types';
 import { forgotPassword, resetPassword } from '../../api/auth';
 import { useAuthStore } from '../../store/authStore';
@@ -20,6 +21,7 @@ import { Ionicons } from '@expo/vector-icons';
 type Props = { navigation: NativeStackNavigationProp<AuthStackParamList, 'ForgotPassword'> };
 
 export function ForgotPasswordScreen({ navigation }: Props) {
+  const { t } = useTranslation();
   const [step, setStep] = useState<'email' | 'reset'>('email');
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
@@ -33,20 +35,20 @@ export function ForgotPasswordScreen({ navigation }: Props) {
 
   async function handleSendCode() {
     if (!email.trim()) {
-      showToast('E-posta adresini gir.', 'warning');
+      showToast(t('auth.forgotPassword.emailRequired'), 'warning');
       return;
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email.trim())) {
-      showToast('Geçerli bir e-posta adresi gir.', 'warning');
+      showToast(t('auth.forgotPassword.emailInvalid'), 'warning');
       return;
     }
     setLoading(true);
     try {
       await forgotPassword(email.trim().toLowerCase());
-      showToast('Sıfırlama kodu e-postana gönderildi.', 'success');
+      showToast(t('auth.forgotPassword.codeSent'), 'success');
       setStep('reset');
     } catch (err: any) {
-      showToast(err.message ?? 'Bir hata oluştu, tekrar dene.', 'error');
+      showToast(err.message ?? t('auth.forgotPassword.genericError'), 'error');
     } finally {
       setLoading(false);
     }
@@ -54,24 +56,24 @@ export function ForgotPasswordScreen({ navigation }: Props) {
 
   async function handleResetPassword() {
     if (!code.trim()) {
-      showToast('Kodu gir.', 'warning');
+      showToast(t('auth.forgotPassword.codeRequired'), 'warning');
       return;
     }
     if (!newPassword || newPassword.length < 6) {
-      showToast('Şifre en az 6 karakter olmalı.', 'warning');
+      showToast(t('auth.forgotPassword.passwordTooShort'), 'warning');
       return;
     }
     if (newPassword !== confirmPassword) {
-      showToast('Şifreler eşleşmiyor.', 'warning');
+      showToast(t('auth.forgotPassword.passwordMismatch'), 'warning');
       return;
     }
     setLoading(true);
     try {
       await resetPassword(email.trim().toLowerCase(), code.trim(), newPassword);
-      showToast('Şifren başarıyla sıfırlandı! Giriş yapabilirsin.', 'success');
+      showToast(t('auth.forgotPassword.resetSuccess'), 'success');
       navigation.navigate('Login');
     } catch (err: any) {
-      showToast(err.message ?? 'Kod hatalı veya süresi dolmuş.', 'error');
+      showToast(err.message ?? t('auth.forgotPassword.codeError'), 'error');
     } finally {
       setLoading(false);
     }
@@ -102,12 +104,12 @@ export function ForgotPasswordScreen({ navigation }: Props) {
               <Ionicons name="lock-open-outline" size={32} color={colors.accent} />
             </View>
             <Text style={[typography.titleL, { color: colors.text, marginTop: spacing.lg }]}>
-              {step === 'email' ? 'Şifremi Unuttum' : 'Yeni Şifre Belirle'}
+              {step === 'email' ? t('auth.forgotPassword.title') : t('auth.forgotPassword.titleReset')}
             </Text>
             <Text style={[typography.bodyDim, { color: colors.textSecondary, marginTop: spacing.sm, textAlign: 'center' }]}>
               {step === 'email'
-                ? 'E-posta adresini gir, sıfırlama kodunu gönderelim.'
-                : `${email} adresine gönderilen kodu ve yeni şifreni gir.`}
+                ? t('auth.forgotPassword.subtitleEmail')
+                : t('auth.forgotPassword.subtitleReset', { email })}
             </Text>
           </View>
 
@@ -115,8 +117,8 @@ export function ForgotPasswordScreen({ navigation }: Props) {
             <GlassCard strong style={styles.card}>
               <AmberInput
                 icon="mail-outline"
-                eyebrow="E-POSTA"
-                placeholder="ornek@email.com"
+                eyebrow={t('auth.forgotPassword.emailLabel')}
+                placeholder={t('auth.forgotPassword.emailPlaceholder')}
                 value={email}
                 onChangeText={setEmail}
                 keyboardType="email-address"
@@ -128,8 +130,8 @@ export function ForgotPasswordScreen({ navigation }: Props) {
             <GlassCard strong style={styles.card}>
               <AmberInput
                 icon="keypad-outline"
-                eyebrow="SIFIRLAMA KODU"
-                placeholder="123456"
+                eyebrow={t('auth.forgotPassword.resetCodeLabel')}
+                placeholder={t('auth.forgotPassword.resetCodePlaceholder')}
                 value={code}
                 onChangeText={setCode}
                 keyboardType="number-pad"
@@ -138,7 +140,7 @@ export function ForgotPasswordScreen({ navigation }: Props) {
               <View style={[styles.divider, { backgroundColor: colors.glassBorder }]} />
               <AmberInput
                 icon="lock-closed-outline"
-                eyebrow="YENİ ŞİFRE"
+                eyebrow={t('auth.forgotPassword.newPasswordLabel')}
                 placeholder="••••••••"
                 value={newPassword}
                 onChangeText={setNewPassword}
@@ -147,7 +149,7 @@ export function ForgotPasswordScreen({ navigation }: Props) {
               <View style={[styles.divider, { backgroundColor: colors.glassBorder }]} />
               <AmberInput
                 icon="lock-closed-outline"
-                eyebrow="YENİ ŞİFRE (TEKRAR)"
+                eyebrow={t('auth.forgotPassword.newPasswordRepeatLabel')}
                 placeholder="••••••••"
                 value={confirmPassword}
                 onChangeText={setConfirmPassword}
@@ -159,8 +161,8 @@ export function ForgotPasswordScreen({ navigation }: Props) {
           <AmberButton
             label={
               loading
-                ? step === 'email' ? 'Gönderiliyor…' : 'Sıfırlanıyor…'
-                : step === 'email' ? 'Kod Gönder' : 'Şifreyi Sıfırla'
+                ? step === 'email' ? t('auth.forgotPassword.sending') : t('auth.forgotPassword.resetting')
+                : step === 'email' ? t('auth.forgotPassword.sendCodeBtn') : t('auth.forgotPassword.resetBtn')
             }
             onPress={step === 'email' ? handleSendCode : handleResetPassword}
             loading={loading}
@@ -169,7 +171,7 @@ export function ForgotPasswordScreen({ navigation }: Props) {
 
           {step === 'reset' && (
             <AmberButton
-              label="Kodu yeniden gönder"
+              label={t('auth.forgotPassword.resendCode')}
               variant="ghost"
               onPress={() => { setStep('email'); setCode(''); }}
               style={styles.btn}

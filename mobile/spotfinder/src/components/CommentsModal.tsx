@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import { Avatar } from './Avatar';
 import { formatRelativeTime } from '../utils/formatters';
 import { getPostComments, createComment, PostComment } from '../api/posts';
@@ -29,6 +30,7 @@ interface Props {
 }
 
 export function CommentsModal({ visible, onClose, postId, onCommentAdded, onPressUser }: Props) {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const [comments, setComments] = useState<PostComment[]>([]);
   const [loading, setLoading]   = useState(false);
@@ -64,7 +66,7 @@ export function CommentsModal({ visible, onClose, postId, onCommentAdded, onPres
       onCommentAdded?.();
       await load();
     } catch {
-      Alert.alert('Hata', 'Yorum gönderilemedi, tekrar dene.');
+      Alert.alert(t('comments.errorTitle'), t('comments.sendError'));
     } finally {
       setSending(false);
     }
@@ -102,7 +104,7 @@ export function CommentsModal({ visible, onClose, postId, onCommentAdded, onPres
 
           {/* Header */}
           <View style={s.header}>
-            <Text style={s.headerTitle}>Yorumlar</Text>
+            <Text style={s.headerTitle}>{t('comments.title')}</Text>
             <TouchableOpacity onPress={onClose} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
               <Ionicons name="close-circle" size={24} color="#ccc" />
             </TouchableOpacity>
@@ -116,7 +118,7 @@ export function CommentsModal({ visible, onClose, postId, onCommentAdded, onPres
           ) : comments.length === 0 ? (
             <View style={s.center}>
               <Ionicons name="chatbubble-outline" size={36} color="#ddd" />
-              <Text style={s.emptyText}>Henüz yorum yok. İlk yorumu sen yap!</Text>
+              <Text style={s.emptyText}>{t('comments.empty')}</Text>
             </View>
           ) : (
             <FlatList
@@ -134,7 +136,7 @@ export function CommentsModal({ visible, onClose, postId, onCommentAdded, onPres
             <TextInput
               ref={inputRef}
               style={s.input}
-              placeholder="Yorum yaz…"
+              placeholder={t('comments.placeholder')}
               placeholderTextColor="#bbb"
               value={text}
               onChangeText={setText}

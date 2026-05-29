@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { FeedStackParamList, SearchStackParamList, ProfileStackParamList } from '../../types';
@@ -39,22 +40,26 @@ const PHOTO_SIZE = (width - 3) / 3;
 
 const PRIMARY = '#6c63ff';
 
-function parkingLabel(status: string): { text: string; color: string } {
-  switch (status.toLowerCase()) {
-    case 'available':
-    case 'free':      return { text: 'Otopark mevcut',   color: '#16a34a' };
-    case 'valet':     return { text: 'Vale park',        color: '#2563eb' };
-    case 'paid':      return { text: 'Ücretli otopark',  color: '#d97706' };
-    case 'limited':   return { text: 'Sınırlı otopark',  color: '#f59e0b' };
-    case 'unavailable':
-    case 'none':      return { text: 'Otopark yok',      color: '#ef4444' };
-    default:          return { text: status,             color: '#888'    };
-  }
-}
+// parkingLabel is now a hook-based function defined inside the component
 
 const TAB_BAR_HEIGHT = 56;
 
 export function PlaceDetailScreen({ route, navigation }: Props) {
+  const { t } = useTranslation();
+
+  function parkingLabel(status: string): { text: string; color: string } {
+    switch (status.toLowerCase()) {
+      case 'available':
+      case 'free':      return { text: t('places.detail.parking.available'), color: '#16a34a' };
+      case 'valet':     return { text: t('places.detail.parking.valet'),     color: '#2563eb' };
+      case 'paid':      return { text: t('places.detail.parking.paid'),      color: '#d97706' };
+      case 'limited':   return { text: t('places.detail.parking.limited'),   color: '#f59e0b' };
+      case 'unavailable':
+      case 'none':      return { text: t('places.detail.parking.unavailable'), color: '#ef4444' };
+      default:          return { text: status,                               color: '#888'    };
+    }
+  }
+
   const { placeId } = route.params;
   const insets = useSafeAreaInsets();
   const { data: place, isLoading, isError, refetch } = usePlaceDetail(placeId);
@@ -144,7 +149,7 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
   }
 
   if (isError || !place) {
-    return <ErrorState message="Mekan yüklenemedi." onRetry={refetch} />;
+    return <ErrorState message={t('places.detail.loadError')} onRetry={refetch} />;
   }
 
   const parking = place.parkingStatus ? parkingLabel(place.parkingStatus) : null;
@@ -217,15 +222,15 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
               <>
                 <Ionicons name="star" size={16} color="#f59e0b" />
                 <Text style={s.ratingValue}>{formatRating(place.averageRating)}</Text>
-                <Text style={s.ratingCount}>({formatCount(place.reviewCount)} değerlendirme)</Text>
+                <Text style={s.ratingCount}>{t('places.detail.ratingCount', { count: formatCount(place.reviewCount) })}</Text>
               </>
             ) : (
-              <Text style={s.ratingCount}>Henüz değerlendirme yok</Text>
+              <Text style={s.ratingCount}>{t('places.detail.noRating')}</Text>
             )}
             {photoPosts.length > 0 && (
               <View style={s.photoCountBadge}>
                 <Ionicons name="images-outline" size={13} color="#888" />
-                <Text style={s.photoCountText}>{photoPosts.length} fotoğraf</Text>
+                <Text style={s.photoCountText}>{t('places.detail.photoCount', { count: photoPosts.length })}</Text>
               </View>
             )}
           </TouchableOpacity>
@@ -238,7 +243,7 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
               {place.latitude && (
                 <View style={s.mapsBtn}>
                   <Ionicons name="navigate-outline" size={11} color={PRIMARY} />
-                  <Text style={s.mapsBtnText}>Haritada Aç</Text>
+                  <Text style={s.mapsBtnText}>{t('places.detail.openMaps')}</Text>
                 </View>
               )}
             </TouchableOpacity>
@@ -254,7 +259,7 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
             <View style={s.section}>
               <View style={s.sectionHeader}>
                 <Ionicons name="pricetag-outline" size={14} color="#888" />
-                <Text style={s.sectionTitle}>ETİKETLER</Text>
+                <Text style={s.sectionTitle}>{t('places.detail.labelsTitle')}</Text>
               </View>
               <View style={s.labelsWrap}>
                 {place.labels.map((label) => (
@@ -280,7 +285,7 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
               {!!(place.latitude && place.longitude) && (
                 <TouchableOpacity style={s.parkingBtn} onPress={openNearbyParking} activeOpacity={0.8}>
                   <Ionicons name="map-outline" size={15} color="#fff" />
-                  <Text style={s.parkingBtnText}>Yakındaki otoparklar</Text>
+                  <Text style={s.parkingBtnText}>{t('places.detail.nearbyParking')}</Text>
                 </TouchableOpacity>
               )}
               {place.menuUrl && (
@@ -288,7 +293,7 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
                   <View style={s.infoIcon}>
                     <Ionicons name="restaurant-outline" size={16} color="#888" />
                   </View>
-                  <Text style={[s.infoText, { color: PRIMARY }]}>Menüyü görüntüle</Text>
+                  <Text style={[s.infoText, { color: PRIMARY }]}>{t('places.detail.viewMenu')}</Text>
                   <Ionicons name="open-outline" size={13} color={PRIMARY} style={{ marginLeft: 4 }} />
                 </TouchableOpacity>
               )}
@@ -299,7 +304,7 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
           {typeof place.trendScore === 'number' && (
             <View style={s.trendRow}>
               <Ionicons name="trending-up-outline" size={14} color={PRIMARY} />
-              <Text style={s.trendText}>Trend skoru: {place.trendScore.toFixed(2)}</Text>
+              <Text style={s.trendText}>{t('places.detail.trendScore', { score: place.trendScore.toFixed(2) })}</Text>
             </View>
           )}
         </View>
@@ -309,7 +314,7 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
           <View style={s.photosSection}>
             <View style={[s.sectionHeader, { paddingHorizontal: 16, marginBottom: 8 }]}>
               <Ionicons name="images-outline" size={14} color="#888" />
-              <Text style={s.sectionTitle}>FOTOĞRAFLAR</Text>
+              <Text style={s.sectionTitle}>{t('places.detail.photosTitle')}</Text>
             </View>
             <View style={s.photoGrid}>
               {photoPosts.map((post, index) => (
@@ -334,7 +339,7 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
               >
                 {postsQuery.isFetchingNextPage
                   ? <ActivityIndicator size="small" color={PRIMARY} />
-                  : <Text style={s.loadMoreText}>Daha fazla yükle</Text>
+                  : <Text style={s.loadMoreText}>{t('places.detail.loadMore')}</Text>
                 }
               </TouchableOpacity>
             )}

@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getPlaceReviews, addOrUpdateReview, ReviewDto } from '../api/reviews';
 import { getPlacePosts } from '../api/places';
@@ -62,6 +63,7 @@ function StarPicker({ value, onChange }: { value: number; onChange: (v: number) 
 }
 
 function ReviewCard({ review, isMe, onPressUser }: { review: ReviewDto; isMe: boolean; onPressUser?: (userId: string) => void }) {
+  const { t } = useTranslation();
   return (
     <View style={[s.reviewCard, isMe && s.reviewCardMe]}>
       <TouchableOpacity
@@ -74,7 +76,7 @@ function ReviewCard({ review, isMe, onPressUser }: { review: ReviewDto; isMe: bo
         <View style={s.reviewMeta}>
           <View style={s.reviewNameRow}>
             <Text style={s.reviewName}>{review.displayName}</Text>
-            {isMe && <View style={s.meBadge}><Text style={s.meBadgeText}>Ben</Text></View>}
+            {isMe && <View style={s.meBadge}><Text style={s.meBadgeText}>{t('reviews.me')}</Text></View>}
           </View>
           <Text style={s.reviewUsername}>@{review.username}</Text>
         </View>
@@ -99,6 +101,7 @@ function WriteForm({
   existing?: ReviewDto;
   onDone: () => void;
 }) {
+  const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
   const qc = useQueryClient();
   const [rating, setRating] = useState(existing?.rating ?? 0);
@@ -123,17 +126,17 @@ function WriteForm({
 
   return (
     <View style={s.writeForm}>
-      <Text style={s.writeTitle}>{existing ? 'Değerlendirmeni Güncelle' : 'Değerlendir'}</Text>
-      <Text style={s.starHint}>Puan seç</Text>
+      <Text style={s.writeTitle}>{existing ? t('reviews.updateReview') : t('reviews.writeReview')}</Text>
+      <Text style={s.starHint}>{t('reviews.selectRating')}</Text>
       <StarPicker value={rating} onChange={setRating} />
       {rating === 0 && (
-        <Text style={s.starRequired}>Devam etmek için bir puan seçmelisin</Text>
+        <Text style={s.starRequired}>{t('reviews.ratingRequired')}</Text>
       )}
       <TextInput
         style={s.commentInput}
         value={comment}
         onChangeText={setComment}
-        placeholder="Yorumunu yaz... (isteğe bağlı)"
+        placeholder={t('reviews.ratePlaceholder')}
         placeholderTextColor="#aaa"
         multiline
         maxLength={500}
@@ -149,7 +152,7 @@ function WriteForm({
         {mutation.isPending ? (
           <ActivityIndicator color="#fff" size="small" />
         ) : (
-          <Text style={s.submitBtnText}>{existing ? 'Güncelle' : 'Gönder'}</Text>
+          <Text style={s.submitBtnText}>{existing ? t('reviews.update') : t('reviews.submit')}</Text>
         )}
       </TouchableOpacity>
       {mutation.isError && (
@@ -157,7 +160,7 @@ function WriteForm({
           {(mutation.error as any)?.response?.data?.message ??
             (mutation.error as any)?.response?.data?.title ??
             (mutation.error as any)?.message ??
-            'Bir hata oluştu, tekrar dene.'}
+            t('reviews.genericError')}
         </Text>
       )}
     </View>
@@ -172,6 +175,7 @@ interface Props {
 }
 
 export function ReviewsModal({ placeId, visible, onClose, onPressUser }: Props) {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const user = useAuthStore((s) => s.user);
   const [writeOpen, setWriteOpen] = useState(false);
@@ -249,12 +253,12 @@ export function ReviewsModal({ placeId, visible, onClose, onPressUser }: Props) 
           {/* Header */}
           <View style={s.header}>
             <View>
-              <Text style={s.headerTitle}>Değerlendirmeler</Text>
+              <Text style={s.headerTitle}>{t('reviews.title')}</Text>
               {reviews.length > 0 && (
                 <View style={s.headerMeta}>
                   <Ionicons name="star" size={13} color="#f59e0b" />
                   <Text style={s.headerAvg}>{avgRating.toFixed(1)}</Text>
-                  <Text style={s.headerCount}>· {reviews.length} değerlendirme</Text>
+                  <Text style={s.headerCount}>{t('reviews.reviewCount', { count: reviews.length })}</Text>
                 </View>
               )}
             </View>
@@ -279,7 +283,7 @@ export function ReviewsModal({ placeId, visible, onClose, onPressUser }: Props) 
                 textPosts.length === 0 ? (
                   <View style={s.centered}>
                     <Ionicons name="star-outline" size={40} color="#ddd" />
-                    <Text style={s.emptyText}>Henüz değerlendirme yok</Text>
+                    <Text style={s.emptyText}>{t('reviews.empty')}</Text>
                   </View>
                 ) : null
               }
@@ -288,7 +292,7 @@ export function ReviewsModal({ placeId, visible, onClose, onPressUser }: Props) 
                   <View>
                     <View style={s.postsDivider}>
                       <Ionicons name="chatbubble-outline" size={13} color="#aaa" />
-                      <Text style={s.postsDividerText}>YORUMLAR</Text>
+                      <Text style={s.postsDividerText}>{t('reviews.comments')}</Text>
                     </View>
                     {textPosts.map((p) => (
                       <View key={p.id} style={s.postCard}>
@@ -332,7 +336,7 @@ export function ReviewsModal({ placeId, visible, onClose, onPressUser }: Props) 
                 >
                   <Ionicons name="pencil-outline" size={16} color={PRIMARY} />
                   <Text style={s.writeToggleBtnText}>
-                    {myReview ? 'Değerlendirmeni Düzenle' : 'Değerlendir'}
+                    {myReview ? t('reviews.editReview') : t('reviews.writeReview')}
                   </Text>
                 </TouchableOpacity>
               </View>

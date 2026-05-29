@@ -14,6 +14,7 @@ import * as AppleAuthentication from 'expo-apple-authentication';
 import * as WebBrowser from 'expo-web-browser';
 import * as Google from 'expo-auth-session/providers/google';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useTranslation } from 'react-i18next';
 import { AuthStackParamList } from '../../types';
 import { login, oauthLogin } from '../../api/auth';
 import { useAuthStore } from '../../store/authStore';
@@ -70,6 +71,7 @@ function CollageCard({ index }: { index: number }) {
 }
 
 export function LoginScreen({ navigation }: Props) {
+  const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -91,7 +93,7 @@ export function LoginScreen({ navigation }: Props) {
       if (idToken) {
         handleOAuthSuccess('google', idToken, undefined, undefined);
       } else {
-        showToast('Google girişi başarısız.', 'error');
+        showToast(t('auth.login.googleError'), 'error');
       }
     }
   }, [googleResponse]);
@@ -99,11 +101,11 @@ export function LoginScreen({ navigation }: Props) {
   // ── Handlers ────────────────────────────────────────────────────────────────
   async function handleLogin() {
     if (!email.trim() || !password) {
-      showToast('E-posta ve şifre gerekli.', 'warning');
+      showToast(t('auth.login.emailRequired'), 'warning');
       return;
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email.trim())) {
-      showToast('Geçerli bir e-posta adresi gir.', 'warning');
+      showToast(t('auth.login.emailInvalid'), 'warning');
       return;
     }
     setLoading(true);
@@ -111,7 +113,7 @@ export function LoginScreen({ navigation }: Props) {
       const response = await login({ email: email.trim().toLowerCase(), password });
       await setAuth(response.token, response.refreshToken, response.user);
     } catch (err: any) {
-      showToast(err.message ?? 'Bilgilerini kontrol et.', 'error');
+      showToast(err.message ?? t('auth.login.loginError'), 'error');
     } finally {
       setLoading(false);
     }
@@ -127,7 +129,7 @@ export function LoginScreen({ navigation }: Props) {
       });
 
       if (!credential.identityToken) {
-        showToast('Apple girişi başarısız.', 'error');
+        showToast(t('auth.login.appleError'), 'error');
         return;
       }
 
@@ -138,7 +140,7 @@ export function LoginScreen({ navigation }: Props) {
       await handleOAuthSuccess('apple', credential.identityToken, credential.email ?? undefined, displayName);
     } catch (err: any) {
       if (err.code !== 'ERR_REQUEST_CANCELED') {
-        showToast('Apple girişi başarısız.', 'error');
+        showToast(t('auth.login.appleError'), 'error');
       }
     }
   }
@@ -148,7 +150,7 @@ export function LoginScreen({ navigation }: Props) {
     try {
       await promptGoogleAsync();
     } catch {
-      showToast('Google girişi başarısız.', 'error');
+      showToast(t('auth.login.googleError'), 'error');
     } finally {
       setGoogleLoading(false);
     }
@@ -165,7 +167,7 @@ export function LoginScreen({ navigation }: Props) {
       const response = await oauthLogin(provider, identityToken, email, displayName);
       await setAuth(response.token, response.refreshToken, response.user);
     } catch (err: any) {
-      showToast(err.message ?? 'Giriş başarısız.', 'error');
+      showToast(err.message ?? t('auth.login.oauthError'), 'error');
     } finally {
       setLoading(false);
     }
@@ -197,23 +199,23 @@ export function LoginScreen({ navigation }: Props) {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <Eyebrow style={{ marginBottom: spacing.sm }}>— Tekrar hoş geldin</Eyebrow>
+          <Eyebrow style={{ marginBottom: spacing.sm }}>{t('auth.login.welcomeBack')}</Eyebrow>
 
           <Text style={[typography.displayL, { color: colors.text, marginBottom: spacing.sm }]}>
-            Lezzetini bul,{'\n'}
-            <Text style={{ color: colors.accent }}>şehrini keşfet.</Text>
+            {t('auth.login.tagline')}{'\n'}
+            <Text style={{ color: colors.accent }}>{t('auth.login.taglineAccent')}</Text>
           </Text>
 
           <Text style={[typography.bodyDim, { color: colors.textSecondary, marginBottom: spacing['2xl'] }]}>
-            Şehrin en iyi mekanlarını keşfet ve paylaş.
+            {t('auth.login.subtitle')}
           </Text>
 
           {/* E-posta / şifre */}
           <GlassCard strong style={styles.inputCard}>
             <AmberInput
               icon="mail-outline"
-              eyebrow="E-POSTA"
-              placeholder="ornek@email.com"
+              eyebrow={t('auth.login.emailLabel')}
+              placeholder={t('auth.login.emailPlaceholder')}
               value={email}
               onChangeText={setEmail}
               keyboardType="email-address"
@@ -223,7 +225,7 @@ export function LoginScreen({ navigation }: Props) {
             <View style={[styles.divider, { backgroundColor: colors.glassBorder }]} />
             <AmberInput
               icon="lock-closed-outline"
-              eyebrow="ŞİFRE"
+              eyebrow={t('auth.login.passwordLabel')}
               placeholder="••••••••"
               value={password}
               onChangeText={setPassword}
@@ -232,14 +234,14 @@ export function LoginScreen({ navigation }: Props) {
           </GlassCard>
 
           <AmberButton
-            label="Giriş yap"
+            label={t('auth.login.loginBtn')}
             onPress={handleLogin}
             loading={loading}
             style={[styles.btn, shadow.amber]}
           />
 
           <AmberButton
-            label="Şifremi Unuttum"
+            label={t('auth.login.forgotPassword')}
             variant="ghost"
             onPress={() => navigation.navigate('ForgotPassword')}
             style={styles.btn}
@@ -249,7 +251,7 @@ export function LoginScreen({ navigation }: Props) {
           <View style={styles.orRow}>
             <View style={[styles.orLine, { backgroundColor: colors.border }]} />
             <Text style={[typography.caption, { color: colors.textTertiary, marginHorizontal: spacing.md }]}>
-              veya
+              {t('common.or')}
             </Text>
             <View style={[styles.orLine, { backgroundColor: colors.border }]} />
           </View>
@@ -269,7 +271,7 @@ export function LoginScreen({ navigation }: Props) {
 
           {/* Google Sign In */}
           <AmberButton
-            label={googleLoading ? 'Bağlanıyor…' : 'Google ile devam et'}
+            label={googleLoading ? t('auth.login.googleConnecting') : t('auth.login.googleBtn')}
             variant="ghost"
             icon="logo-google"
             loading={googleLoading}
@@ -278,7 +280,7 @@ export function LoginScreen({ navigation }: Props) {
           />
 
           <AmberButton
-            label="Yeni misin? Hesap oluştur →"
+            label={t('auth.login.registerLink')}
             variant="ghost"
             onPress={() => navigation.navigate('Register')}
             style={styles.btn}

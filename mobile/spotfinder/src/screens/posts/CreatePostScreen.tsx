@@ -15,6 +15,7 @@ import {
   BackHandler,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import type { MainTabParamList } from '../../types';
@@ -46,6 +47,7 @@ function hasUnsavedChanges(
 // ── Screen ────────────────────────────────────────────────────────────────────
 
 export function CreatePostScreen() {
+  const { t } = useTranslation();
   const [caption, setCaption] = useState('');
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [selectedPlace, setSelectedPlace] = useState<Place | null>(null);
@@ -76,11 +78,11 @@ export function CreatePostScreen() {
       const onBack = () => {
         if (hasUnsavedChanges(caption, imageUri, selectedPlace)) {
           Alert.alert(
-            'Discard changes?',
-            'You have unsaved content. Are you sure you want to leave?',
+            t('createPost.discardTitle'),
+            t('createPost.discardMessage'),
             [
-              { text: 'Keep editing', style: 'cancel' },
-              { text: 'Discard', style: 'destructive', onPress: resetForm },
+              { text: t('createPost.keepEditing'), style: 'cancel' },
+              { text: t('createPost.discardConfirm'), style: 'destructive', onPress: resetForm },
             ],
           );
           return true;
@@ -115,7 +117,7 @@ export function CreatePostScreen() {
       setImageUri(processed.uri);
       haptic.light();
     } catch {
-      showToast('Fotoğraf işlenemedi.', 'error');
+      showToast(t('createPost.photoProcessError'), 'error');
       haptic.error();
     } finally {
       setIsUploading(false);
@@ -128,13 +130,13 @@ export function CreatePostScreen() {
       .catch(() => false);
 
     if (!available) {
-      showToast('Bu cihazda kamera kullanılamıyor.', 'error');
+      showToast(t('createPost.cameraUnavailable'), 'error');
       return;
     }
 
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
     if (status !== 'granted') {
-      showToast('Kamera erişimi gerekiyor.', 'error');
+      showToast(t('createPost.cameraPermission'), 'error');
       haptic.warning();
       return;
     }
@@ -147,7 +149,7 @@ export function CreatePostScreen() {
         quality: 1,
       });
     } catch {
-      showToast('Kamera açılamadı.', 'error');
+      showToast(t('createPost.cameraError'), 'error');
       return;
     }
 
@@ -159,7 +161,7 @@ export function CreatePostScreen() {
   const launchGallery = useCallback(async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
-      showToast('Galeri erişimi gerekiyor.', 'error');
+      showToast(t('createPost.galleryPermission'), 'error');
       haptic.warning();
       return;
     }
@@ -177,7 +179,7 @@ export function CreatePostScreen() {
     if (Platform.OS === 'ios') {
       ActionSheetIOS.showActionSheetWithOptions(
         {
-          options: ['İptal', 'Kameradan Çek', 'Galeriden Seç'],
+          options: [t('common.cancel'), t('createPost.photoOptions.camera'), t('createPost.photoOptions.gallery')],
           cancelButtonIndex: 0,
         },
         (idx) => {
@@ -186,10 +188,10 @@ export function CreatePostScreen() {
         },
       );
     } else {
-      Alert.alert('Fotoğraf Ekle', '', [
-        { text: 'İptal', style: 'cancel' },
-        { text: 'Kameradan Çek', onPress: launchCamera },
-        { text: 'Galeriden Seç', onPress: launchGallery },
+      Alert.alert(t('createPost.photoOptions.title'), '', [
+        { text: t('common.cancel'), style: 'cancel' },
+        { text: t('createPost.photoOptions.camera'), onPress: launchCamera },
+        { text: t('createPost.photoOptions.gallery'), onPress: launchGallery },
       ]);
     }
   }, [launchCamera, launchGallery]);
@@ -200,13 +202,13 @@ export function CreatePostScreen() {
     if (isSubmittingRef.current) return;
 
     if (!imageUri) {
-      showToast('Gönderi için fotoğraf zorunludur.', 'warning');
+      showToast(t('createPost.photoRequired'), 'warning');
       haptic.warning();
       return;
     }
 
     if (!selectedPlace) {
-      showToast('Mekan seçmeden gönderi paylaşamazsın.', 'warning');
+      showToast(t('createPost.placeRequired'), 'warning');
       haptic.warning();
       return;
     }
@@ -226,7 +228,7 @@ export function CreatePostScreen() {
           setUploadProgress(0.6);
         } catch (err: any) {
           console.warn('[Upload error]', err?.message ?? err);
-          showToast('Fotoğraf yüklenemedi. Gönderi fotoğrafsız paylaşılacak.', 'warning');
+          showToast(t('createPost.photoUploadWarning'), 'warning');
           haptic.warning();
         } finally {
           setIsUploading(false);
@@ -255,7 +257,7 @@ export function CreatePostScreen() {
             }
             trackEvent('post_create', { placeId: selectedPlace.id });
             trackAction();
-            showToast('Gönderi paylaşıldı!', 'success');
+            showToast(t('createPost.postSuccess'), 'success');
             haptic.success();
             const sharedPlaceId = selectedPlace.id;
             resetForm();
@@ -265,7 +267,7 @@ export function CreatePostScreen() {
             } as any);
           },
           onError: (err: any) => {
-            showToast(err.message ?? 'Gönderi paylaşılamadı. Tekrar dene.', 'error');
+            showToast(err.message ?? t('createPost.postError'), 'error');
             haptic.error();
             isSubmittingRef.current = false;
           },
@@ -283,10 +285,10 @@ export function CreatePostScreen() {
   const captionNearLimit = caption.length > 450;
 
   const submitLabel = isUploading
-    ? 'Uploading…'
+    ? t('createPost.uploading')
     : createMutation.isPending
-      ? 'Sharing…'
-      : 'Share Post';
+      ? t('createPost.sharing')
+      : t('createPost.submit');
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -297,10 +299,10 @@ export function CreatePostScreen() {
         <ScrollView contentContainerStyle={styles.inner} keyboardShouldPersistTaps="handled">
           {/* Header */}
           <View style={styles.headerRow}>
-            <Text style={styles.heading}>New Post</Text>
+            <Text style={styles.heading}>{t('createPost.title')}</Text>
             {isDirty && (
               <TouchableOpacity onPress={resetForm}>
-                <Text style={styles.discardBtn}>Discard</Text>
+                <Text style={styles.discardBtn}>{t('createPost.discard')}</Text>
               </TouchableOpacity>
             )}
           </View>
@@ -315,20 +317,20 @@ export function CreatePostScreen() {
             {isUploading && !createMutation.isPending ? (
               <View style={styles.photoPlaceholder}>
                 <ActivityIndicator color="#6c63ff" size="large" />
-                <Text style={styles.photoHint}>Processing…</Text>
+                <Text style={styles.photoHint}>{t('createPost.processing')}</Text>
               </View>
             ) : imageUri ? (
               <>
                 <Image source={{ uri: imageUri }} style={styles.preview} resizeMode="contain" />
                 <View style={styles.changePhotoOverlay}>
                   <Ionicons name="camera" size={20} color="#fff" />
-                  <Text style={styles.changePhotoText}>Change</Text>
+                  <Text style={styles.changePhotoText}>{t('createPost.change')}</Text>
                 </View>
               </>
             ) : (
               <View style={styles.photoPlaceholder}>
                 <Ionicons name="camera-outline" size={36} color="#aaa" />
-                <Text style={styles.photoHint}>Tap to add a photo</Text>
+                <Text style={styles.photoHint}>{t('createPost.photoHint')}</Text>
               </View>
             )}
           </TouchableOpacity>
@@ -336,7 +338,7 @@ export function CreatePostScreen() {
           {/* Caption */}
           <TextInput
             style={[styles.captionInput, isLoading && styles.inputDisabled]}
-            placeholder="Write a caption…"
+            placeholder={t('createPost.captionPlaceholder')}
             value={caption}
             onChangeText={setCaption}
             multiline
@@ -368,7 +370,7 @@ export function CreatePostScreen() {
               color={selectedPlace ? '#6c63ff' : '#bbb'}
             />
             <Text style={[styles.placeSelectorText, !selectedPlace && styles.placePlaceholder]}>
-              {selectedPlace ? selectedPlace.name : 'Select a place *'}
+              {selectedPlace ? selectedPlace.name : t('createPost.selectPlace')}
             </Text>
             {selectedPlace && (
               <TouchableOpacity hitSlop={8} onPress={() => setSelectedPlace(null)}>
@@ -386,7 +388,7 @@ export function CreatePostScreen() {
             <View style={styles.placeDropdown}>
               <TextInput
                 style={styles.placeSearchInput}
-                placeholder="Search places…"
+                placeholder={t('createPost.searchPlaces')}
                 value={placeSearch}
                 onChangeText={setPlaceSearch}
                 placeholderTextColor="#bbb"
@@ -395,7 +397,7 @@ export function CreatePostScreen() {
               {searchQuery.isLoading && placeSearch.length > 1 ? (
                 <ActivityIndicator color="#6c63ff" style={{ padding: 12 }} />
               ) : (searchQuery.data?.items ?? []).length === 0 && placeSearch.length > 1 ? (
-                <Text style={styles.noResults}>No places found</Text>
+                <Text style={styles.noResults}>{t('createPost.noResults')}</Text>
               ) : (
                 (searchQuery.data?.items ?? []).map((place) => (
                   <TouchableOpacity
@@ -432,7 +434,7 @@ export function CreatePostScreen() {
                 <Text style={styles.submitText}>{submitLabel}</Text>
               </View>
             ) : (
-              <Text style={styles.submitText}>Share Post</Text>
+              <Text style={styles.submitText}>{t('createPost.submit')}</Text>
             )}
           </TouchableOpacity>
         </ScrollView>

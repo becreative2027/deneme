@@ -11,6 +11,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { Post } from '../../types';
 import { useTheme } from '../../theme';
 
@@ -63,6 +64,7 @@ export function ForYouCard({
   onPressUser,
 }: Props) {
   const { colors } = useTheme();
+  const { t } = useTranslation();
 
   // Double-tap to like
   const lastTap = useRef<number>(0);
@@ -77,7 +79,7 @@ export function ForYouCard({
   const handleShare = useCallback(async () => {
     try {
       await Share.share({
-        message: `${post.placeName} — SpotFinder'da gör`,
+        message: t('feed.forYou.shareMessage', { placeName: post.placeName }),
       });
     } catch {}
   }, [post.placeName]);

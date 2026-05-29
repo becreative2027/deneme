@@ -1,6 +1,13 @@
 import { useQuery, useInfiniteQuery } from '@tanstack/react-query';
 import { searchPlaces, getPlaceById, getRecommendations, getFilters, getPlacePosts } from '../api/places';
 import { PlaceSearchRequest, FeedPage } from '../types';
+import { useLocaleStore } from '../store/localeStore';
+
+/** Maps app language to backend language ID: tr=1, en=2 */
+export function useLangId(): number {
+  const language = useLocaleStore((s) => s.language);
+  return language === 'en' ? 2 : 1;
+}
 
 export function usePlaceSearch(req: PlaceSearchRequest, enabled = true) {
   return useQuery({
@@ -14,9 +21,10 @@ export function usePlaceSearch(req: PlaceSearchRequest, enabled = true) {
 }
 
 export function usePlaceDetail(placeId: string) {
+  const langId = useLangId();
   return useQuery({
-    queryKey: ['places', placeId],
-    queryFn:  () => getPlaceById(placeId),
+    queryKey: ['places', placeId, langId],
+    queryFn:  () => getPlaceById(placeId, langId),
     staleTime: 1000 * 60 * 5,
   });
 }
@@ -29,7 +37,8 @@ export function useRecommendations(pageSize = 10) {
   });
 }
 
-export function useFilters(langId = 1) {
+export function useFilters() {
+  const langId = useLangId();
   return useQuery({
     queryKey: ['filters', langId],
     queryFn:  () => getFilters(langId),
@@ -38,9 +47,10 @@ export function useFilters(langId = 1) {
 }
 
 export function usePopularPlaces(pageSize = 20) {
+  const langId = useLangId();
   return useQuery({
-    queryKey: ['places', 'popular', pageSize],
-    queryFn:  () => searchPlaces({ pageSize, langId: 1 }),
+    queryKey: ['places', 'popular', pageSize, langId],
+    queryFn:  () => searchPlaces({ pageSize, langId }),
     staleTime: 1000 * 60 * 5,
   });
 }

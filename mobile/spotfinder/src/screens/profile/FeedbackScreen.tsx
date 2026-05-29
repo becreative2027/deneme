@@ -11,6 +11,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useTranslation } from 'react-i18next';
 import { ProfileStackParamList } from '../../types';
 import { submitFeedback, FeedbackCategory } from '../../api/feedback';
 import { useToast } from '../../components/Toast';
@@ -19,56 +20,45 @@ import { GlassCard, AmberButton, AmberInput } from '../../components/ui';
 
 type Props = { navigation: NativeStackNavigationProp<ProfileStackParamList, 'Feedback'> };
 
-const CATEGORIES: { key: FeedbackCategory; label: string; icon: string; description: string }[] = [
-  {
-    key: 'PlaceRequest',
-    label: 'Mekan Ekleme Talebi',
-    icon: 'location-outline',
-    description: 'Listede olmayan bir mekanı ekletmek istiyorum',
-  },
-  {
-    key: 'BugReport',
-    label: 'Hata Bildirimi',
-    icon: 'bug-outline',
-    description: 'Uygulamada bir sorun fark ettim',
-  },
-  {
-    key: 'FeatureRequest',
-    label: 'Özellik Önerisi',
-    icon: 'bulb-outline',
-    description: 'Yeni bir özellik önerim var',
-  },
-  {
-    key: 'Other',
-    label: 'Diğer',
-    icon: 'chatbubble-outline',
-    description: 'Başka bir konuda geri bildirim vermek istiyorum',
-  },
-];
+const CATEGORY_ICONS: Record<FeedbackCategory, string> = {
+  PlaceRequest: 'location-outline',
+  LabelRequest: 'pricetag-outline',
+  BugReport: 'bug-outline',
+  FeatureRequest: 'bulb-outline',
+  Other: 'chatbubble-outline',
+};
 
 export function FeedbackScreen({ navigation }: Props) {
+  const { t } = useTranslation();
   const [selected, setSelected] = useState<FeedbackCategory>('PlaceRequest');
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const { colors } = useTheme();
   const { showToast } = useToast();
 
+  const CATEGORIES: { key: FeedbackCategory; label: string; icon: string; description: string }[] = [
+    { key: 'PlaceRequest', label: t('feedback.categories.PlaceRequest.label'), icon: CATEGORY_ICONS.PlaceRequest, description: t('feedback.categories.PlaceRequest.description') },
+    { key: 'BugReport', label: t('feedback.categories.BugReport.label'), icon: CATEGORY_ICONS.BugReport, description: t('feedback.categories.BugReport.description') },
+    { key: 'FeatureRequest', label: t('feedback.categories.FeatureRequest.label'), icon: CATEGORY_ICONS.FeatureRequest, description: t('feedback.categories.FeatureRequest.description') },
+    { key: 'Other', label: t('feedback.categories.Other.label'), icon: CATEGORY_ICONS.Other, description: t('feedback.categories.Other.description') },
+  ];
+
   async function handleSubmit() {
     if (!message.trim()) {
-      showToast('Lütfen bir mesaj yaz.', 'warning');
+      showToast(t('feedback.messageRequired'), 'warning');
       return;
     }
     if (message.trim().length < 10) {
-      showToast('Mesajın çok kısa, biraz daha detay ver.', 'warning');
+      showToast(t('feedback.messageTooShort'), 'warning');
       return;
     }
     setLoading(true);
     try {
       await submitFeedback(selected, message.trim());
-      showToast('Geri bildiriminiz alındı, teşekkürler!', 'success');
+      showToast(t('feedback.success'), 'success');
       navigation.goBack();
     } catch {
-      showToast('Gönderilemedi, tekrar dene.', 'error');
+      showToast(t('feedback.error'), 'error');
     } finally {
       setLoading(false);
     }
@@ -83,7 +73,7 @@ export function FeedbackScreen({ navigation }: Props) {
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
           <Ionicons name="chevron-back" size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={[typography.headingM, { color: colors.text }]}>Geri Bildirim</Text>
+        <Text style={[typography.titleM, { color: colors.text }]}>{t('feedback.title')}</Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -94,7 +84,7 @@ export function FeedbackScreen({ navigation }: Props) {
           showsVerticalScrollIndicator={false}
         >
           <Text style={[typography.bodyDim, { color: colors.textSecondary, marginBottom: spacing.lg }]}>
-            Konu seç
+            {t('feedback.selectCategory')}
           </Text>
 
           {/* Category selector */}
@@ -138,17 +128,17 @@ export function FeedbackScreen({ navigation }: Props) {
           </View>
 
           <Text style={[typography.bodyDim, { color: colors.textSecondary, marginBottom: spacing.sm, marginTop: spacing.xl }]}>
-            Mesajın
+            {t('feedback.message')}
           </Text>
 
           <GlassCard strong style={styles.inputCard}>
             <AmberInput
               icon="create-outline"
-              eyebrow={selected === 'PlaceRequest' ? 'MEKAN BİLGİSİ' : 'MESAJ'}
+              eyebrow={selected === 'PlaceRequest' ? t('feedback.eyebrowPlaceRequest') : t('feedback.eyebrowOther')}
               placeholder={
                 selected === 'PlaceRequest'
-                  ? 'Mekan adı, adresi ve neden eklenmeli...'
-                  : 'Düşüncelerini paylaş...'
+                  ? t('feedback.placeholderPlaceRequest')
+                  : t('feedback.placeholderOther')
               }
               value={message}
               onChangeText={setMessage}
@@ -159,7 +149,7 @@ export function FeedbackScreen({ navigation }: Props) {
           </GlassCard>
 
           <AmberButton
-            label="Gönder"
+            label={t('feedback.submit')}
             onPress={handleSubmit}
             loading={loading}
             style={{ marginTop: spacing.lg }}

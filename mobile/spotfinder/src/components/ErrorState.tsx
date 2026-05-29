@@ -1,20 +1,23 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   message?: string;
   onRetry?: () => void;
 }
 
-export function ErrorState({ message = 'Something went wrong.', onRetry }: Props) {
+export function ErrorState({ message, onRetry }: Props) {
+  const { t } = useTranslation();
+  const resolvedMessage = message ?? t('errors.generic');
   return (
     <View style={styles.container}>
       <Ionicons name="cloud-offline-outline" size={48} color="#ccc" />
-      <Text style={styles.message}>{message}</Text>
+      <Text style={styles.message}>{resolvedMessage}</Text>
       {onRetry && (
         <TouchableOpacity style={styles.btn} onPress={onRetry} activeOpacity={0.8}>
-          <Text style={styles.btnText}>Try again</Text>
+          <Text style={styles.btnText}>{t('errors.retry')}</Text>
         </TouchableOpacity>
       )}
     </View>

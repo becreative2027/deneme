@@ -15,8 +15,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { ProfileStackParamList, Post, Place } from '../../types';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useLocaleStore } from '../../store/localeStore';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMe, useUserProfile, useUserPosts, useFollowUser } from '../../hooks/useProfile';
 import { FollowListModal } from '../../components/FollowListModal';
@@ -51,6 +53,8 @@ type FlatItem =
   | { kind: 'post'; post: Post; placeId: string };
 
 export function ProfileScreen({ route, navigation }: Props) {
+  const { t } = useTranslation();
+  const { language, setLanguage } = useLocaleStore();
   const { colors, isDark } = useTheme();
   const me = useAuthStore((s) => s.user);
   const doLogout = useAuthStore((s) => s.logout);
@@ -159,42 +163,42 @@ export function ProfileScreen({ route, navigation }: Props) {
       { userId: profile.id, isFollowing },
       {
         onSuccess: () => {
-          showToast(isFollowing ? 'Takip bırakıldı' : `${profile.displayName} takip ediliyor`, 'success');
+          showToast(isFollowing ? t('profile.actions.unfollow') : t('profile.actions.followSuccess', { name: profile.displayName }), 'success');
           trackEvent('follow_user', { userId: profile.id, action: isFollowing ? 'unfollow' : 'follow' });
         },
-        onError: () => showToast('İşlem başarısız.', 'error'),
+        onError: () => showToast(t('profile.actions.followError'), 'error'),
       },
     );
-  }, [profile, followMutation, showToast, trackEvent]);
+  }, [profile, followMutation, showToast, trackEvent, t]);
 
   const handleLogout = useCallback(async () => {
-    Alert.alert('Çıkış yap', 'Çıkış yapmak istediğine emin misin?', [
-      { text: 'İptal', style: 'cancel' },
+    Alert.alert(t('profile.logout.title'), t('profile.logout.message'), [
+      { text: t('profile.logout.cancel'), style: 'cancel' },
       {
-        text: 'Çıkış yap',
+        text: t('profile.logout.confirm'),
         style: 'destructive',
         onPress: async () => { await apiLogout(); await doLogout(); },
       },
     ]);
-  }, [doLogout]);
+  }, [doLogout, t]);
 
   const handleDeleteAccount = useCallback(() => {
     Alert.alert(
-      'Hesabı Sil',
-      'Hesabını kalıcı olarak silmek istediğine emin misin? Bu işlem geri alınamaz.',
+      t('profile.deleteAccount.title'),
+      t('profile.deleteAccount.message'),
       [
-        { text: 'İptal', style: 'cancel' },
+        { text: t('profile.deleteAccount.cancel'), style: 'cancel' },
         {
-          text: 'Hesabımı Sil',
+          text: t('profile.deleteAccount.confirm'),
           style: 'destructive',
           onPress: () => {
             Alert.alert(
-              'Son Onay',
-              'Tüm verilerinden vazgeçiyorsun. Devam etmek istiyor musun?',
+              t('profile.deleteAccount.finalTitle'),
+              t('profile.deleteAccount.finalMessage'),
               [
-                { text: 'İptal', style: 'cancel' },
+                { text: t('profile.deleteAccount.cancel'), style: 'cancel' },
                 {
-                  text: 'Evet, Sil',
+                  text: t('profile.deleteAccount.finalConfirm'),
                   style: 'destructive',
                   onPress: async () => {
                     try {
@@ -202,7 +206,7 @@ export function ProfileScreen({ route, navigation }: Props) {
                       await apiLogout();
                       await doLogout();
                     } catch {
-                      showToast('Hesap silinirken hata oluştu.', 'error');
+                      showToast(t('profile.deleteAccount.error'), 'error');
                     }
                   },
                 },
@@ -212,7 +216,7 @@ export function ProfileScreen({ route, navigation }: Props) {
         },
       ],
     );
-  }, [doLogout, showToast]);
+  }, [doLogout, showToast, t]);
 
   if (profileQuery.isLoading) {
     return (
@@ -223,7 +227,7 @@ export function ProfileScreen({ route, navigation }: Props) {
   }
 
   if (profileQuery.isError || !profile) {
-    return <ErrorState message="Profil yüklenemedi." onRetry={() => profileQuery.refetch()} />;
+    return <ErrorState message={t('profile.loadError')} onRetry={() => profileQuery.refetch()} />;
   }
 
   // Cover mosaic — user's post images (up to 9)
@@ -274,17 +278,17 @@ export function ProfileScreen({ route, navigation }: Props) {
             <TouchableOpacity
               onPress={() =>
                 Alert.alert(
-                  'Kullanıcıyı Şikayet Et',
-                  'Bu kullanıcıyı uygunsuz davranış nedeniyle bildirmek istiyor musun?',
+                  t('profile.report.title'),
+                  t('profile.report.message'),
                   [
-                    { text: 'Vazgeç', style: 'cancel' },
+                    { text: t('profile.report.cancel'), style: 'cancel' },
                     {
-                      text: 'Şikayet Et',
+                      text: t('profile.report.confirm'),
                       style: 'destructive',
                       onPress: () =>
                         reportContent('User', userId)
-                          .then(() => Alert.alert('Teşekkürler', 'Bildiriminiz incelemeye alındı.'))
-                          .catch(() => Alert.alert('Hata', 'Bir sorun oluştu, lütfen tekrar dene.')),
+                          .then(() => Alert.alert(t('profile.report.success'), t('profile.report.successMessage')))
+                          .catch(() => Alert.alert(t('profile.report.errorTitle'), t('profile.report.errorMessage'))),
                     },
                   ],
                 )
@@ -338,7 +342,7 @@ export function ProfileScreen({ route, navigation }: Props) {
             <Text style={[typography.caption, { color: colors.textTertiary, marginTop: 2 }]}>
               @{profile.username}
             </Text>
-            <CategoryBadge label="Kaşif" variant="solid" style={{ marginTop: 6 }} />
+            <CategoryBadge label={t('profile.badge')} variant="solid" style={{ marginTop: 6 }} />
           </View>
         </View>
 
@@ -350,10 +354,10 @@ export function ProfileScreen({ route, navigation }: Props) {
 
         {/* Stats */}
         <View style={[s.statsRow, { borderColor: colors.borderLight }]}>
-          <StatItem label="Gönderi" value={profile.postsCount} colors={colors} />
+          <StatItem label={t('profile.stats.posts')} value={profile.postsCount} colors={colors} />
           <View style={[s.statDivider, { backgroundColor: colors.border }]} />
           <StatItem
-            label="Takipçi"
+            label={t('profile.stats.followers')}
             value={profile.followersCount}
             onPress={() => setFollowSheet('followers')}
             colors={colors}
@@ -361,7 +365,7 @@ export function ProfileScreen({ route, navigation }: Props) {
           />
           <View style={[s.statDivider, { backgroundColor: colors.border }]} />
           <StatItem
-            label="Takip"
+            label={t('profile.stats.following')}
             value={profile.followingCount}
             onPress={() => setFollowSheet('following')}
             colors={colors}
@@ -373,7 +377,7 @@ export function ProfileScreen({ route, navigation }: Props) {
           {isOwnProfile ? (
             <>
               <AmberButton
-                label="Profili düzenle"
+                label={t('profile.actions.editProfile')}
                 variant="ghost"
                 style={{ flex: 1 }}
                 onPress={() => navigation.push('EditProfile')}
@@ -390,7 +394,7 @@ export function ProfileScreen({ route, navigation }: Props) {
           ) : (
             <>
               <AmberButton
-                label={followMutation.isPending ? '…' : profile.isFollowing ? 'Takip ediliyor' : 'Takip et'}
+                label={followMutation.isPending ? '…' : profile.isFollowing ? t('profile.actions.following') : t('profile.actions.follow')}
                 variant={profile.isFollowing ? 'ghost' : 'primary'}
                 onPress={handleFollowToggle}
                 loading={followMutation.isPending}
@@ -407,14 +411,37 @@ export function ProfileScreen({ route, navigation }: Props) {
           )}
         </View>
 
+        {/* Language switcher */}
+        {isOwnProfile && (
+          <View style={[s.langRow, { borderColor: colors.borderLight }]}>
+            <Text style={[typography.caption, { color: colors.textTertiary, flex: 1 }]}>
+              {t('profile.settings.language')}
+            </Text>
+            <TouchableOpacity
+              onPress={() => setLanguage('tr')}
+              style={[s.langPill, language === 'tr' && { backgroundColor: colors.accent }]}
+              activeOpacity={0.8}
+            >
+              <Text style={[s.langPillText, { color: language === 'tr' ? '#fff' : colors.textSecondary }]}>TR</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => setLanguage('en')}
+              style={[s.langPill, language === 'en' && { backgroundColor: colors.accent }]}
+              activeOpacity={0.8}
+            >
+              <Text style={[s.langPillText, { color: language === 'en' ? '#fff' : colors.textSecondary }]}>EN</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
         {/* Tab bar */}
         <View style={[s.tabBar, { borderBottomColor: colors.border }]}>
           {([
-            { key: 'places', label: 'Mekanlar', icon: 'location-outline' },
-            { key: 'all', label: 'Gönderiler', icon: 'images-outline' },
+            { key: 'places', label: t('profile.tabs.places'), icon: 'location-outline' },
+            { key: 'all', label: t('profile.tabs.posts'), icon: 'images-outline' },
             ...(isOwnProfile ? [
-              { key: 'favorites', label: 'Favoriler', icon: 'heart-outline' },
-              { key: 'notifications', label: 'Bildirimler', icon: 'notifications-outline' },
+              { key: 'favorites', label: t('profile.tabs.favorites'), icon: 'heart-outline' },
+              { key: 'notifications', label: t('profile.tabs.notifications'), icon: 'notifications-outline' },
             ] : []),
           ] as { key: Tab; label: string; icon: string }[]).map((tab) => {
             const active = activeTab === tab.key;
@@ -486,8 +513,8 @@ export function ProfileScreen({ route, navigation }: Props) {
           ListEmptyComponent={
             <EmptyState
               icon="images-outline"
-              title="Henüz gönderi yok"
-              subtitle={isOwnProfile ? 'İlk mekanını paylaş!' : 'Kullanıcının gönderisi yok.'}
+              title={t('profile.posts.empty.title')}
+              subtitle={isOwnProfile ? t('profile.posts.empty.subtitle') : t('profile.posts.empty.subtitleOther')}
             />
           }
           ListFooterComponent={
@@ -541,8 +568,8 @@ export function ProfileScreen({ route, navigation }: Props) {
             ) : (
               <EmptyState
                 icon="heart-outline"
-                title="Henüz favori yok"
-                subtitle="Beğendiğin mekanlara kalp basarak favori listene ekle"
+                title={t('profile.favorites.empty.title')}
+                subtitle={t('profile.favorites.empty.subtitle')}
               />
             )
           }
@@ -615,7 +642,7 @@ export function ProfileScreen({ route, navigation }: Props) {
                 </View>
                 <View style={s.placeHeaderRight}>
                   <Text style={[typography.caption, { color: colors.textTertiary }]}>
-                    {item.group.posts.length} gönderi
+                    {t('profile.places.postsCount', { count: item.group.posts.length })}
                   </Text>
                   <Ionicons
                     name={expanded ? 'chevron-up' : 'chevron-down'}
@@ -652,8 +679,8 @@ export function ProfileScreen({ route, navigation }: Props) {
           postsQuery.isLoading ? null : (
             <EmptyState
               icon="location-outline"
-              title="Henüz mekan yok"
-              subtitle={isOwnProfile ? 'İlk mekanını paylaş!' : 'Kullanıcının gönderisi yok.'}
+              title={t('profile.places.empty.title')}
+              subtitle={isOwnProfile ? t('profile.places.empty.subtitle') : t('profile.places.empty.subtitleOther')}
             />
           )
         }
@@ -815,6 +842,30 @@ const s = StyleSheet.create({
     height: 7,
     borderRadius: 4,
     backgroundColor: '#F5A623',
+  },
+
+  // Language switcher
+  langRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginTop: spacing.lg,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.xs,
+    borderTopWidth: StyleSheet.hairlineWidth,
+  },
+  langPill: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderRadius: radius.pill,
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: 'transparent',
+  },
+  langPillText: {
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 0.5,
   },
 
   // Place header

@@ -11,6 +11,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useTranslation } from 'react-i18next';
 import { FeedStackParamList, Post } from '../../types';
 import { useFollowingFeed, useExploreFeed } from '../../hooks/useFeed';
 import { useFeedStore, FeedTab } from '../../store/feedStore';
@@ -29,13 +30,15 @@ import { useRatingPrompt } from '../../hooks/useRatingPrompt';
 
 type Props = { navigation: NativeStackNavigationProp<FeedStackParamList, 'Feed'> };
 
-const TABS: { key: FeedTab; label: string }[] = [
-  { key: 'following', label: 'Following' },
-  { key: 'explore', label: 'Explore' },
-  { key: 'personalized', label: 'For You' },
-];
+// TABS is built dynamically inside the component so labels can be translated
 
 export function FeedScreen({ navigation }: Props) {
+  const { t } = useTranslation();
+  const TABS: { key: FeedTab; label: string }[] = [
+    { key: 'following', label: t('feed.tabs.following') },
+    { key: 'explore', label: t('feed.tabs.explore') },
+    { key: 'personalized', label: t('feed.tabs.forYou') },
+  ];
   const { activeTab, setActiveTab } = useFeedStore();
   const following = useFollowingFeed();
   const explore = useExploreFeed();
@@ -132,7 +135,7 @@ export function FeedScreen({ navigation }: Props) {
   if (activeTab !== 'explore' && activeQuery.isLoading) {
     return (
       <SafeAreaView style={s.container} edges={['top']}>
-        <TabBar activeTab={activeTab} onSelect={handleTabChange} colors={theme.colors} />
+        <TabBar activeTab={activeTab} onSelect={handleTabChange} colors={theme.colors} tabs={TABS} />
         {[0, 1, 2].map((i) => <PostSkeleton key={i} />)}
       </SafeAreaView>
     );
@@ -141,7 +144,7 @@ export function FeedScreen({ navigation }: Props) {
   if (activeTab !== 'explore' && activeQuery.isError) {
     return (
       <SafeAreaView style={s.container} edges={['top']}>
-        <TabBar activeTab={activeTab} onSelect={handleTabChange} colors={theme.colors} />
+        <TabBar activeTab={activeTab} onSelect={handleTabChange} colors={theme.colors} tabs={TABS} />
         <ErrorState onRetry={() => activeQuery.refetch()} />
       </SafeAreaView>
     );
@@ -149,7 +152,7 @@ export function FeedScreen({ navigation }: Props) {
 
   return (
     <SafeAreaView style={s.container} edges={['top']}>
-      <TabBar activeTab={activeTab} onSelect={handleTabChange} colors={theme.colors} />
+      <TabBar activeTab={activeTab} onSelect={handleTabChange} colors={theme.colors} tabs={TABS} />
 
       {activeTab === 'explore' ? (
         <ExploreTab
@@ -179,8 +182,8 @@ export function FeedScreen({ navigation }: Props) {
           ListEmptyComponent={
             <EmptyState
               icon="newspaper-outline"
-              title="No posts yet"
-              subtitle="Follow people or explore to see content here."
+              title={t('feed.empty.title')}
+              subtitle={t('feed.empty.subtitle')}
             />
           }
           ListFooterComponent={
@@ -212,22 +215,24 @@ function TabBar({
   activeTab,
   onSelect,
   colors,
+  tabs,
 }: {
   activeTab: FeedTab;
   onSelect: (tab: FeedTab) => void;
   colors: ThemeColors;
+  tabs: { key: FeedTab; label: string }[];
 }) {
   const s = useMemo(() => createStyles(colors), [colors]);
   return (
     <View style={s.tabBar}>
-      {TABS.map((t) => (
+      {tabs.map((tab) => (
         <TouchableOpacity
-          key={t.key}
-          style={[s.tab, activeTab === t.key && s.tabActive]}
-          onPress={() => onSelect(t.key)}
+          key={tab.key}
+          style={[s.tab, activeTab === tab.key && s.tabActive]}
+          onPress={() => onSelect(tab.key)}
         >
-          <Text style={[s.tabText, activeTab === t.key && s.tabTextActive]}>
-            {t.label}
+          <Text style={[s.tabText, activeTab === tab.key && s.tabTextActive]}>
+            {tab.label}
           </Text>
         </TouchableOpacity>
       ))}

@@ -94,8 +94,8 @@ export async function trackPlaceView(placeId: string, userId: string): Promise<v
   }
 }
 
-export async function getPlaceById(id: string): Promise<Place> {
-  const { data } = await apiClient.get<any>(`/api/places/${id}`);
+export async function getPlaceById(id: string, langId = 1): Promise<Place> {
+  const { data } = await apiClient.get<any>(`/api/places/${id}`, { params: { langId } });
   if (!isOk(data)) throw new Error((data?.errors ?? []).join('; ') || 'Place not found');
   return normalizePlace(data.data ?? data);
 }

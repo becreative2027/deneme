@@ -14,6 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useTranslation } from 'react-i18next';
 import { ProfileStackParamList } from '../../types';
 import { useMe, useUpdateProfile } from '../../hooks/useProfile';
 import { uploadImage } from '../../api/upload';
@@ -24,6 +25,7 @@ import { useTheme, radius, spacing, typography, shadow } from '../../theme';
 type Props = NativeStackScreenProps<ProfileStackParamList, 'EditProfile'>;
 
 export function EditProfileScreen({ navigation }: Props) {
+  const { t } = useTranslation();
   const { colors } = useTheme();
   const { showToast } = useToast();
 
@@ -41,7 +43,7 @@ export function EditProfileScreen({ navigation }: Props) {
   const handlePickAvatar = useCallback(async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
-      Alert.alert('İzin gerekli', 'Fotoğraf seçmek için galeri erişimine izin verin.');
+      Alert.alert(t('profile.editProfile.permissionTitle'), t('profile.editProfile.permissionMessage'));
       return;
     }
 
@@ -61,7 +63,7 @@ export function EditProfileScreen({ navigation }: Props) {
   const handleSave = useCallback(async () => {
     const trimmedName = displayName.trim();
     if (!trimmedName) {
-      showToast('Ad soyad boş olamaz.', 'error');
+      showToast(t('profile.editProfile.nameRequired'), 'error');
       return;
     }
 
@@ -73,7 +75,7 @@ export function EditProfileScreen({ navigation }: Props) {
         try {
           newAvatarUrl = await uploadImage(avatarUri);
         } catch {
-          showToast('Fotoğraf yüklenemedi.', 'error');
+          showToast(t('profile.editProfile.photoError'), 'error');
           return;
         } finally {
           setIsUploadingAvatar(false);
@@ -86,10 +88,10 @@ export function EditProfileScreen({ navigation }: Props) {
         ...(newAvatarUrl ? { avatarUrl: newAvatarUrl } : {}),
       });
 
-      showToast('Profil güncellendi.', 'success');
+      showToast(t('profile.editProfile.saveSuccess'), 'success');
       navigation.goBack();
     } catch {
-      showToast('Bir hata oluştu, tekrar dene.', 'error');
+      showToast(t('profile.editProfile.saveError'), 'error');
     }
   }, [displayName, bio, avatarUri, avatarChanged, updateMutation, showToast, navigation]);
 
@@ -107,19 +109,19 @@ export function EditProfileScreen({ navigation }: Props) {
         >
           <Ionicons name="arrow-back" size={22} color={colors.text} />
         </TouchableOpacity>
-        <Text style={[typography.titleM, { color: colors.text }]}>Profili Düzenle</Text>
+        <Text style={[typography.titleM, { color: colors.text }]}>{t('profile.editProfile.title')}</Text>
         <TouchableOpacity
           onPress={handleSave}
           disabled={isSaving}
           style={s.headerBtn}
           accessibilityRole="button"
-          accessibilityLabel="Kaydet"
+          accessibilityLabel={t('profile.editProfile.save')}
         >
           {isSaving ? (
             <ActivityIndicator size="small" color={colors.accent} />
           ) : (
             <Text style={[typography.body, { color: colors.accent, fontWeight: '700' }]}>
-              Kaydet
+              {t('profile.editProfile.save')}
             </Text>
           )}
         </TouchableOpacity>
@@ -144,7 +146,7 @@ export function EditProfileScreen({ navigation }: Props) {
               </View>
             </TouchableOpacity>
             <Text style={[typography.caption, { color: colors.textTertiary, marginTop: spacing.sm }]}>
-              Fotoğrafı değiştirmek için dokun
+              {t('profile.editProfile.changePhoto')}
             </Text>
           </View>
 
@@ -156,7 +158,7 @@ export function EditProfileScreen({ navigation }: Props) {
                 <Ionicons name="at" size={17} color={colors.textSecondary} />
               </View>
               <View style={s.readOnlyText}>
-                <Text style={[typography.eyebrow, { color: colors.textTertiary }]}>Kullanıcı adı</Text>
+                <Text style={[typography.eyebrow, { color: colors.textTertiary }]}>{t('profile.editProfile.usernameLabel')}</Text>
                 <Text style={[typography.body, { color: colors.textSecondary }]}>
                   @{profile?.username ?? ''}
                 </Text>
@@ -169,10 +171,10 @@ export function EditProfileScreen({ navigation }: Props) {
             {/* Display name */}
             <AmberInput
               icon="person-outline"
-              eyebrow="Ad Soyad"
+              eyebrow={t('profile.editProfile.displayNameLabel')}
               value={displayName}
               onChangeText={setDisplayName}
-              placeholder="Adın ve soyadın"
+              placeholder={t('profile.editProfile.displayNamePlaceholder')}
               maxLength={60}
               returnKeyType="next"
               autoCorrect={false}
@@ -183,10 +185,10 @@ export function EditProfileScreen({ navigation }: Props) {
             {/* Bio */}
             <AmberInput
               icon="pencil-outline"
-              eyebrow="Hakkında"
+              eyebrow={t('profile.editProfile.bioLabel')}
               value={bio}
               onChangeText={setBio}
-              placeholder="Kendini kısaca tanıt..."
+              placeholder={t('profile.editProfile.bioPlaceholder')}
               maxLength={160}
               multiline
               numberOfLines={4}
@@ -200,7 +202,7 @@ export function EditProfileScreen({ navigation }: Props) {
 
           {/* Save button */}
           <AmberButton
-            label={isSaving ? 'Kaydediliyor…' : 'Değişiklikleri Kaydet'}
+            label={isSaving ? t('profile.editProfile.savingBtn') : t('profile.editProfile.saveBtn')}
             variant="primary"
             onPress={handleSave}
             loading={isSaving}

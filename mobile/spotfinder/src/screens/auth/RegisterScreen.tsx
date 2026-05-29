@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useTranslation } from 'react-i18next';
 import { AuthStackParamList } from '../../types';
 import { register } from '../../api/auth';
 import { useAuthStore } from '../../store/authStore';
@@ -20,6 +21,7 @@ import { GlassCard, AmberButton, AmberInput, Eyebrow } from '../../components/ui
 type Props = { navigation: NativeStackNavigationProp<AuthStackParamList, 'Register'> };
 
 export function RegisterScreen({ navigation }: Props) {
+  const { t } = useTranslation();
   const [form, setForm] = useState({
     username: '',
     email: '',
@@ -39,23 +41,23 @@ export function RegisterScreen({ navigation }: Props) {
   async function handleRegister() {
     const { username, email, displayName, password, confirmPassword } = form;
     if (!username.trim() || !email.trim() || !displayName.trim() || !password) {
-      showToast('Tüm alanlar zorunludur.', 'warning');
+      showToast(t('auth.register.allRequired'), 'warning');
       return;
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email.trim())) {
-      showToast('Geçerli bir e-posta adresi gir.', 'warning');
+      showToast(t('auth.register.emailInvalid'), 'warning');
       return;
     }
     if (password !== confirmPassword) {
-      showToast('Şifreler eşleşmiyor.', 'warning');
+      showToast(t('auth.register.passwordMismatch'), 'warning');
       return;
     }
     if (password.length < 8) {
-      showToast('Şifre en az 8 karakter olmalı.', 'warning');
+      showToast(t('auth.register.passwordTooShort'), 'warning');
       return;
     }
     if (!/[A-Z]/.test(password) || !/[0-9]/.test(password)) {
-      showToast('Şifre en az 1 büyük harf ve 1 rakam içermeli.', 'warning');
+      showToast(t('auth.register.passwordWeak'), 'warning');
       return;
     }
     setLoading(true);
@@ -68,7 +70,7 @@ export function RegisterScreen({ navigation }: Props) {
       });
       await setAuth(response.token, response.refreshToken, response.user);
     } catch (err: any) {
-      showToast(err.message ?? 'Kayıt başarısız. Tekrar dene.', 'error');
+      showToast(err.message ?? t('auth.register.registerError'), 'error');
     } finally {
       setLoading(false);
     }
@@ -86,23 +88,23 @@ export function RegisterScreen({ navigation }: Props) {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <Eyebrow style={{ marginBottom: spacing.sm }}>— Aramıza katıl</Eyebrow>
+          <Eyebrow style={{ marginBottom: spacing.sm }}>{t('auth.register.joinUs')}</Eyebrow>
 
           <Text style={[typography.displayL, { color: colors.text, marginBottom: spacing.sm }]}>
-            Hesap oluştur,{'\n'}
-            <Text style={{ color: colors.accent }}>maceraya başla.</Text>
+            {t('auth.register.tagline')}{'\n'}
+            <Text style={{ color: colors.accent }}>{t('auth.register.taglineAccent')}</Text>
           </Text>
 
           <Text style={[typography.bodyDim, { color: colors.textSecondary, marginBottom: spacing['2xl'] }]}>
-            Şehrin kalbini keşfet, deneyimlerini paylaş.
+            {t('auth.register.subtitle')}
           </Text>
 
           {/* Inputs */}
           <GlassCard strong style={styles.inputCard}>
             <AmberInput
               icon="person-outline"
-              eyebrow="AD SOYAD"
-              placeholder="Adın"
+              eyebrow={t('auth.register.displayNameLabel')}
+              placeholder={t('auth.register.displayNamePlaceholder')}
               value={form.displayName}
               onChangeText={(v) => update('displayName', v)}
               autoCapitalize="words"
@@ -110,8 +112,8 @@ export function RegisterScreen({ navigation }: Props) {
             <View style={[styles.divider, { backgroundColor: colors.glassBorder }]} />
             <AmberInput
               icon="at-outline"
-              eyebrow="KULLANICI ADI"
-              placeholder="kullaniciadi"
+              eyebrow={t('auth.register.usernameLabel')}
+              placeholder={t('auth.register.usernamePlaceholder')}
               value={form.username}
               onChangeText={(v) => update('username', v)}
               autoCapitalize="none"
@@ -120,8 +122,8 @@ export function RegisterScreen({ navigation }: Props) {
             <View style={[styles.divider, { backgroundColor: colors.glassBorder }]} />
             <AmberInput
               icon="mail-outline"
-              eyebrow="E-POSTA"
-              placeholder="ornek@email.com"
+              eyebrow={t('auth.register.emailLabel')}
+              placeholder={t('auth.register.emailPlaceholder')}
               value={form.email}
               onChangeText={(v) => update('email', v)}
               keyboardType="email-address"
@@ -131,8 +133,8 @@ export function RegisterScreen({ navigation }: Props) {
             <View style={[styles.divider, { backgroundColor: colors.glassBorder }]} />
             <AmberInput
               icon="lock-closed-outline"
-              eyebrow="ŞİFRE"
-              placeholder="Min. 8 karakter"
+              eyebrow={t('auth.register.passwordLabel')}
+              placeholder={t('auth.register.passwordPlaceholder')}
               value={form.password}
               onChangeText={(v) => update('password', v)}
               isPassword
@@ -140,8 +142,8 @@ export function RegisterScreen({ navigation }: Props) {
             <View style={[styles.divider, { backgroundColor: colors.glassBorder }]} />
             <AmberInput
               icon="shield-checkmark-outline"
-              eyebrow="ŞİFRE TEKRAR"
-              placeholder="Şifreni tekrar gir"
+              eyebrow={t('auth.register.confirmPasswordLabel')}
+              placeholder={t('auth.register.confirmPasswordPlaceholder')}
               value={form.confirmPassword}
               onChangeText={(v) => update('confirmPassword', v)}
               isPassword
@@ -149,7 +151,7 @@ export function RegisterScreen({ navigation }: Props) {
           </GlassCard>
 
           <AmberButton
-            label="Hesap Oluştur"
+            label={t('auth.register.registerBtn')}
             onPress={handleRegister}
             loading={loading}
             style={[styles.btn, shadow.amber]}
@@ -161,8 +163,8 @@ export function RegisterScreen({ navigation }: Props) {
             accessibilityRole="button"
           >
             <Text style={[typography.bodyDim, { color: colors.textSecondary }]}>
-              Zaten hesabın var mı?{' '}
-              <Text style={{ color: colors.accent, fontWeight: '700' }}>Giriş yap</Text>
+              {t('auth.register.loginLink')}{' '}
+              <Text style={{ color: colors.accent, fontWeight: '700' }}>{t('auth.register.loginLinkAccent')}</Text>
             </Text>
           </TouchableOpacity>
         </ScrollView>

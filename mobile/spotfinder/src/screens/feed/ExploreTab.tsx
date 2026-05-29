@@ -9,7 +9,9 @@ import {
   RefreshControl,
 } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { useTheme, ThemeColors } from '../../theme';
+import { useLangId } from '../../hooks/usePlaces';
 import { searchPlaces, getFilters } from '../../api/places';
 import { useLocationStore, distanceKm } from '../../store/locationStore';
 import { Place, FilterLabel } from '../../types';
@@ -98,15 +100,17 @@ const sectionStyles = (c: ThemeColors) =>
 // ── ExploreTab ────────────────────────────────────────────────────────────────
 
 export function ExploreTab({ onPressPlace, bottomPadding = 0 }: Props) {
+  const { t } = useTranslation();
   const { colors } = useTheme();
   const s = useMemo(() => createStyles(colors), [colors]);
   const { lat, lon } = useLocationStore();
   const [selectedLabel, setSelectedLabel] = useState<FilterLabel | null>(null);
+  const langId = useLangId();
 
   // ── Labels ──────────────────────────────────────────────────────────────────
   const filtersQuery = useQuery({
-    queryKey: ['filters'],
-    queryFn: () => getFilters(1),
+    queryKey: ['filters', langId],
+    queryFn: () => getFilters(langId),
     staleTime: 10 * 60_000,
   });
 
@@ -117,8 +121,8 @@ export function ExploreTab({ onPressPlace, bottomPadding = 0 }: Props) {
 
   // ── Trend places ────────────────────────────────────────────────────────────
   const trendQuery = useQuery({
-    queryKey: ['explore-trend'],
-    queryFn: () => searchPlaces({ pageSize: 20 }),
+    queryKey: ['explore-trend', langId],
+    queryFn: () => searchPlaces({ pageSize: 20, langId }),
     staleTime: 2 * 60_000,
   });
   const trendPlaces = trendQuery.data?.items ?? [];
@@ -160,23 +164,23 @@ export function ExploreTab({ onPressPlace, bottomPadding = 0 }: Props) {
   }, [trendPlaces, allLabels]);
 
   const label1Query = useQuery({
-    queryKey: ['explore-label', topLabels[0]?.id],
-    queryFn: () => searchPlaces({ labelIds: [topLabels[0].id], pageSize: 15 }),
+    queryKey: ['explore-label', topLabels[0]?.id, langId],
+    queryFn: () => searchPlaces({ labelIds: [topLabels[0].id], pageSize: 15, langId }),
     enabled: !!topLabels[0],
     staleTime: 2 * 60_000,
   });
 
   const label2Query = useQuery({
-    queryKey: ['explore-label', topLabels[1]?.id],
-    queryFn: () => searchPlaces({ labelIds: [topLabels[1].id], pageSize: 15 }),
+    queryKey: ['explore-label', topLabels[1]?.id, langId],
+    queryFn: () => searchPlaces({ labelIds: [topLabels[1].id], pageSize: 15, langId }),
     enabled: !!topLabels[1],
     staleTime: 2 * 60_000,
   });
 
   // ── Filtered (when a pill is active) ───────────────────────────────────────
   const filteredQuery = useQuery({
-    queryKey: ['explore-filtered', selectedLabel?.id],
-    queryFn: () => searchPlaces({ labelIds: [selectedLabel!.id], pageSize: 20 }),
+    queryKey: ['explore-filtered', selectedLabel?.id, langId],
+    queryFn: () => searchPlaces({ labelIds: [selectedLabel!.id], pageSize: 20, langId }),
     enabled: !!selectedLabel,
     staleTime: 2 * 60_000,
   });
@@ -220,7 +224,7 @@ export function ExploreTab({ onPressPlace, bottomPadding = 0 }: Props) {
           onPress={() => setSelectedLabel(null)}
           activeOpacity={0.75}
         >
-          <Text style={[s.pillText, !selectedLabel && s.pillTextActive]}>Tümü</Text>
+          <Text style={[s.pillText, !selectedLabel && s.pillTextActive]}>{t('feed.explore.all')}</Text>
         </TouchableOpacity>
         {allLabels.map((label) => (
           <TouchableOpacity
@@ -255,7 +259,7 @@ export function ExploreTab({ onPressPlace, bottomPadding = 0 }: Props) {
       ) : (
         <>
           <Section
-            title="Trend Mekanlar"
+            title={t('feed.explore.trendPlaces')}
             places={trendPlaces.slice(0, 15)}
             loading={trendQuery.isLoading}
             onPressPlace={onPressPlace}
@@ -263,7 +267,7 @@ export function ExploreTab({ onPressPlace, bottomPadding = 0 }: Props) {
           />
           {nearbyPlaces.length > 0 && (
             <Section
-              title="Yakınındakiler"
+              title={t('feed.explore.nearby')}
               places={nearbyPlaces}
               loading={false}
               onPressPlace={onPressPlace}
@@ -272,7 +276,7 @@ export function ExploreTab({ onPressPlace, bottomPadding = 0 }: Props) {
           )}
           {topLabels[0] && (
             <Section
-              title={`${topLabels[0].displayName} Mekanları`}
+              title={t('feed.explore.labelPlaces', { label: topLabels[0].displayName })}
               places={label1Query.data?.items ?? []}
               loading={label1Query.isLoading}
               onPressPlace={onPressPlace}
@@ -281,7 +285,7 @@ export function ExploreTab({ onPressPlace, bottomPadding = 0 }: Props) {
           )}
           {topLabels[1] && (
             <Section
-              title={`${topLabels[1].displayName} Mekanları`}
+              title={t('feed.explore.labelPlaces', { label: topLabels[1].displayName })}
               places={label2Query.data?.items ?? []}
               loading={label2Query.isLoading}
               onPressPlace={onPressPlace}

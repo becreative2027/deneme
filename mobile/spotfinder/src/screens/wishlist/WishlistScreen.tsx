@@ -13,6 +13,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useTranslation } from 'react-i18next';
 import { useWishlistStore } from '../../store/wishlistStore';
 import { getPlaceById } from '../../api/places';
 import { Place, WishlistStackParamList } from '../../types';
@@ -96,6 +97,7 @@ function WishlistCard({
 }
 
 export function WishlistScreen({ navigation }: Props) {
+  const { t } = useTranslation();
   const { colors } = useTheme();
   const { placeIds, removePlace, clearAll, hydrated, hydrate } = useWishlistStore();
   const [places, setPlaces] = useState<Place[]>([]);
@@ -134,9 +136,7 @@ export function WishlistScreen({ navigation }: Props) {
       }).join('\n');
 
       const count = places.length;
-      const intro = count === 1
-        ? `Sana harika bir mekan önerdim 👀`
-        : `Sana ${count} harika mekan önerdim 👀`;
+      const intro = t('wishlist.shareIntro', { count });
 
       const message = [
         intro,
@@ -147,17 +147,17 @@ export function WishlistScreen({ navigation }: Props) {
         'sptfinder.com',
       ].join('\n');
 
-      await Share.share({ message, title: 'SpotFinder Mekan Listesi' });
+      await Share.share({ message, title: t('wishlist.title') });
     } catch {}
   };
 
   const handleClearAll = () => {
     Alert.alert(
-      'Listeyi Temizle',
-      'Tüm mekanları listeden kaldırmak istediğine emin misin?',
+      t('wishlist.clearAll.title'),
+      t('wishlist.clearAll.message'),
       [
-        { text: 'İptal', style: 'cancel' },
-        { text: 'Temizle', style: 'destructive', onPress: clearAll },
+        { text: t('wishlist.clearAll.cancel'), style: 'cancel' },
+        { text: t('wishlist.clearAll.confirm'), style: 'destructive', onPress: clearAll },
       ],
     );
   };
@@ -172,7 +172,7 @@ export function WishlistScreen({ navigation }: Props) {
           <View style={[s.headerIconWrap, { backgroundColor: colors.accentSoft }]}>
             <Ionicons name="bookmark" size={16} color={colors.accent} />
           </View>
-          <Text style={[s.headerTitle, { color: colors.text }]}>Liste</Text>
+          <Text style={[s.headerTitle, { color: colors.text }]}>{t('wishlist.title')}</Text>
           {places.length > 0 && (
             <View style={[s.countBadge, { backgroundColor: colors.accentSoft }]}>
               <Text style={[s.countBadgeText, { color: colors.accent }]}>{places.length}</Text>
@@ -207,9 +207,9 @@ export function WishlistScreen({ navigation }: Props) {
           <View style={[s.emptyIcon, { backgroundColor: colors.accentSoft }]}>
             <Ionicons name="bookmark-outline" size={28} color={colors.accent} />
           </View>
-          <Text style={[s.emptyTitle, { color: colors.text }]}>Henüz liste boş</Text>
+          <Text style={[s.emptyTitle, { color: colors.text }]}>{t('wishlist.empty.title')}</Text>
           <Text style={[s.emptyHint, { color: colors.textTertiary }]}>
-            Mekan detayında yer işareti butonuna basarak listeye ekle
+            {t('wishlist.empty.subtitle')}
           </Text>
         </View>
       ) : (

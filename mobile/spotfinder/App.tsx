@@ -1,9 +1,12 @@
+import './src/i18n';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { StatusBar } from 'expo-status-bar';
 import * as Location from 'expo-location';
 import React, { useEffect } from 'react';
 // if (__DEV__) { require('./src/utils/reactotron'); }
 import { LogBox, View } from 'react-native';
+import i18n from './src/i18n';
+import { useLocaleStore } from './src/store/localeStore';
 
 // Suppress known simulator-only warnings (APNs/keychain unavailable on sim)
 LogBox.ignoreLogs([
@@ -56,11 +59,21 @@ function LocationInit() {
   return null;
 }
 
+// ── Language sync — apply stored language on startup ─────────────────────────
+function LanguageInit() {
+  const { language } = useLocaleStore();
+  useEffect(() => {
+    i18n.changeLanguage(language);
+  }, []);
+  return null;
+}
+
 // ── Inner root — reads theme after ThemeProvider is mounted ───────────────────
 function AppContent() {
   const { colors } = useTheme();
   return (
     <>
+      <LanguageInit />
       <LocationInit />
       <StatusBar style={colors.statusBar} />
       {/* Global offline indicator — rendered above all screens */}

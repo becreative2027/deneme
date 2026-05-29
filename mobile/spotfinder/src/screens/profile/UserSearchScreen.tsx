@@ -14,6 +14,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useTranslation } from 'react-i18next';
 import { ProfileStackParamList } from '../../types';
 import { searchUsers, UserSearchResult } from '../../api/users';
 import { useTheme, radius, spacing, typography } from '../../theme';
@@ -21,6 +22,7 @@ import { useTheme, radius, spacing, typography } from '../../theme';
 type Props = NativeStackScreenProps<ProfileStackParamList, 'UserSearch'>;
 
 export function UserSearchScreen({ navigation }: Props) {
+  const { t } = useTranslation();
   const { colors, isDark } = useTheme();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<UserSearchResult[]>([]);
@@ -130,7 +132,7 @@ export function UserSearchScreen({ navigation }: Props) {
         <Ionicons name="person-outline" size={28} color={colors.icon} />
       </View>
       <Text style={[typography.bodyDim, { color: colors.textSecondary, marginTop: spacing.md, textAlign: 'center' }]}>
-        "{query.trim()}" ile eşleşen{'\n'}kullanıcı bulunamadı.
+        {t('userSearch.notFound', { query: query.trim() })}
       </Text>
     </View>
   ) : !searched ? (
@@ -139,7 +141,7 @@ export function UserSearchScreen({ navigation }: Props) {
         <Ionicons name="search-outline" size={28} color={colors.icon} />
       </View>
       <Text style={[typography.bodyDim, { color: colors.textSecondary, marginTop: spacing.md, textAlign: 'center' }]}>
-        Kullanıcı adı veya isimle{'\n'}arama yapabilirsin.
+        {t('userSearch.hint')}
       </Text>
     </View>
   ) : null;
@@ -160,7 +162,7 @@ export function UserSearchScreen({ navigation }: Props) {
           </TouchableOpacity>
 
           <Text style={[typography.titleM, { color: colors.text, flex: 1, marginLeft: spacing.md }]}>
-            Kişi Ara
+            {t('userSearch.title')}
           </Text>
         </View>
 
@@ -178,7 +180,7 @@ export function UserSearchScreen({ navigation }: Props) {
               ref={inputRef}
               value={query}
               onChangeText={handleChangeText}
-              placeholder="İsim veya kullanıcı adı..."
+              placeholder={t('userSearch.placeholder')}
               placeholderTextColor={colors.textTertiary}
               style={[s.input, { color: colors.text }]}
               returnKeyType="search"

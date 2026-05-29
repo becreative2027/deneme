@@ -8,6 +8,7 @@ import {
   ViewToken,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useTranslation } from 'react-i18next';
 import { FeedStackParamList, Post } from '../../types';
 import { usePersonalizedFeed } from '../../hooks/useFeed';
 import { useLikePost } from '../../hooks/usePosts';
@@ -25,6 +26,7 @@ interface Props {
 }
 
 export function ForYouFeed({ navigation, bottomPadding = 0 }: Props) {
+  const { t } = useTranslation();
   const { colors } = useTheme();
   const feed = usePersonalizedFeed();
   const likeMutation = useLikePost();
@@ -112,8 +114,8 @@ export function ForYouFeed({ navigation, bottomPadding = 0 }: Props) {
           <View style={[s.empty, { backgroundColor: colors.background }]}>
             <EmptyState
               icon="compass-outline"
-              title="Henüz içerik yok"
-              subtitle="Uygulamayı kullandıkça For You sana göre şekillenecek."
+              title={t('feed.forYou.emptyTitle')}
+              subtitle={t('feed.forYou.emptySubtitle')}
             />
           </View>
         }

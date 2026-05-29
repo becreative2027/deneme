@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { updateUsername } from '../../api/users';
 import { useAuthStore } from '../../store/authStore';
 import { useToast } from '../../components/Toast';
@@ -16,6 +17,7 @@ import { AmberButton, AmberInput, GlassCard } from '../../components/ui';
 import { useTheme, spacing, typography } from '../../theme';
 
 export function UsernameSetupScreen() {
+  const { t } = useTranslation();
   const [username, setUsername] = useState('');
   const [loading, setLoading] = useState(false);
   const { showToast } = useToast();
@@ -26,7 +28,7 @@ export function UsernameSetupScreen() {
 
   async function handleContinue() {
     if (!isValid) {
-      showToast('Kullanıcı adı 3-20 karakter, sadece harf/rakam/_ içerebilir.', 'warning');
+      showToast(t('auth.usernameSetup.validationError'), 'warning');
       return;
     }
     setLoading(true);
@@ -35,7 +37,7 @@ export function UsernameSetupScreen() {
       if (user) setUser({ ...user, username });
       setNeedsUsernameSetup(false);
     } catch (err: any) {
-      const msg = err?.response?.data?.message ?? err.message ?? 'Bir hata oluştu.';
+      const msg = err?.response?.data?.message ?? err.message ?? t('auth.usernameSetup.genericError');
       showToast(msg, 'error');
     } finally {
       setLoading(false);
@@ -54,17 +56,17 @@ export function UsernameSetupScreen() {
           </View>
 
           <Text style={[typography.displayL, { color: colors.text, textAlign: 'center' }]}>
-            Kullanıcı adını seç
+            {t('auth.usernameSetup.title')}
           </Text>
           <Text style={[typography.bodyDim, { color: colors.textSecondary, textAlign: 'center', marginTop: spacing.sm, marginBottom: spacing['2xl'] }]}>
-            Diğer kullanıcılar seni bu adla bulacak.{'\n'}Daha sonra değiştiremezsin.
+            {t('auth.usernameSetup.subtitle')}
           </Text>
 
           <GlassCard strong style={s.card}>
             <AmberInput
               icon="at"
-              eyebrow="KULLANICI ADI"
-              placeholder="ornek_kullanici"
+              eyebrow={t('auth.usernameSetup.usernameLabel')}
+              placeholder={t('auth.usernameSetup.usernamePlaceholder')}
               value={username}
               onChangeText={(t) => setUsername(t.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
               autoCapitalize="none"
@@ -76,14 +78,14 @@ export function UsernameSetupScreen() {
 
           <Text style={[s.hint, { color: isValid || username.length === 0 ? colors.textMuted : '#ef4444' }]}>
             {username.length === 0
-              ? '3-20 karakter, harf, rakam ve _ kullanabilirsin'
+              ? t('auth.usernameSetup.hint')
               : isValid
-              ? '✓ Kullanılabilir format'
-              : 'En az 3 karakter gerekli'}
+              ? t('auth.usernameSetup.hintValid')
+              : t('auth.usernameSetup.hintInvalid')}
           </Text>
 
           <AmberButton
-            label={loading ? 'Kaydediliyor…' : 'Devam Et'}
+            label={loading ? t('auth.usernameSetup.saving') : t('auth.usernameSetup.continueBtn')}
             onPress={handleContinue}
             loading={loading}
             style={[s.btn, !isValid && { opacity: 0.45 }]}

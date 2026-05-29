@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { ApiNotification, getMyNotifications, markAllNotificationsRead } from '../../api/notifications';
 import { formatRelativeTime } from '../../utils/formatters';
 import { useTheme, typography, spacing } from '../../theme';
@@ -86,6 +87,7 @@ interface Props {
 }
 
 export function NotificationsTab({ bottomPadding = 0 }: Props) {
+  const { t } = useTranslation();
   const { colors } = useTheme();
   const [notifications, setNotifications] = useState<ApiNotification[]>([]);
   const [loading, setLoading] = useState(true);
@@ -122,8 +124,8 @@ export function NotificationsTab({ bottomPadding = 0 }: Props) {
     <View style={[s.container, { backgroundColor: colors.background }]}>
       {/* Header row */}
       <View style={[s.header, { borderBottomColor: colors.borderLight }]}>
-        <Text style={[typography.captionBold, { color: colors.textTertiary, letterSpacing: 0.8 }]}>
-          SON BİLDİRİMLER
+        <Text style={[typography.caption, { color: colors.textTertiary, letterSpacing: 0.8, fontWeight: '700' }]}>
+          {t('notifications.header')}
         </Text>
         <View style={s.headerActions}>
           {unread > 0 && (
@@ -135,7 +137,7 @@ export function NotificationsTab({ bottomPadding = 0 }: Props) {
               style={s.headerBtn}
               hitSlop={8}
             >
-              <Text style={[s.headerBtnText, { color: colors.accent }]}>Okundu işaretle</Text>
+              <Text style={[s.headerBtnText, { color: colors.accent }]}>{t('notifications.markRead')}</Text>
             </TouchableOpacity>
           )}
           <TouchableOpacity onPress={refresh} style={s.headerBtn} hitSlop={8}>
@@ -151,10 +153,10 @@ export function NotificationsTab({ bottomPadding = 0 }: Props) {
             <Ionicons name="notifications-off-outline" size={28} color={colors.textTertiary} />
           </View>
           <Text style={[typography.body, { color: colors.textSecondary, marginTop: spacing.md }]}>
-            Henüz bildirim yok
+            {t('notifications.empty.title')}
           </Text>
           <Text style={[typography.caption, { color: colors.textMuted, marginTop: 4, textAlign: 'center' }]}>
-            Birisi seni takip ettiğinde veya{'\n'}gönderini beğendiğinde burada görürsün.
+            {t('notifications.empty.subtitle')}
           </Text>
         </View>
       ) : (

@@ -12,8 +12,9 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { SearchStackParamList, Place, FilterLabel } from '../../types';
-import { usePlaceSearch, useRecommendations, useFilters, usePopularPlaces } from '../../hooks/usePlaces';
+import { usePlaceSearch, useRecommendations, useFilters, usePopularPlaces, useLangId } from '../../hooks/usePlaces';
 import { PlaceCard } from '../../components/PlaceCard';
 import { PlaceSkeleton } from '../../components/SkeletonLoader';
 import { ErrorState } from '../../components/ErrorState';
@@ -24,7 +25,9 @@ import { useTheme } from '../../theme';
 type Props = { navigation: NativeStackNavigationProp<SearchStackParamList, 'Search'> };
 
 export function SearchScreen({ navigation }: Props) {
+  const { t } = useTranslation();
   const { colors } = useTheme();
+  const langId = useLangId();
   const [query, setQuery]                   = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const [selectedLabelIds, setSelectedLabelIds] = useState<number[]>([]);
@@ -51,13 +54,13 @@ export function SearchScreen({ navigation }: Props) {
     query:    hasQuery  ? debouncedQuery : undefined,
     labelIds: hasLabels ? selectedLabelIds : undefined,
     pageSize: 20,
-    langId:   1,
+    langId,
   };
 
   const searchQuery   = usePlaceSearch(searchReq, isSearchActive);
   const recsQuery     = useRecommendations(15);
   const popularQuery  = usePopularPlaces(20);
-  const filtersQuery  = useFilters(1);
+  const filtersQuery  = useFilters();
 
   const categories = filtersQuery.data ?? [];
   const allLabels: FilterLabel[] = useMemo(
@@ -97,7 +100,7 @@ export function SearchScreen({ navigation }: Props) {
   const useRecs = recWithImages.length > 0;
   const discoveryPlaces = useRecs ? recPlaces : popularPlaces;
   const isDiscoveryLoading = recsQuery.isLoading && popularQuery.isLoading;
-  const discoveryLabel = useRecs ? 'SENİN İÇİN ÖNERİLER' : 'POPÜLER MEKANLAR';
+  const discoveryLabel = useRecs ? t('feed.explore.forYouRecommendations') : t('feed.explore.popularPlaces');
   const discoveryIcon  = useRecs ? 'sparkles-outline' : 'flame-outline';
 
   return (
@@ -109,7 +112,7 @@ export function SearchScreen({ navigation }: Props) {
             <Ionicons name="search" size={18} color={colors.textTertiary} />
             <TextInput
               style={[s.searchInput, { color: colors.text }]}
-              placeholder="Mekan ara…"
+              placeholder={t('places.search.placeholder')}
               value={query}
               onChangeText={setQuery}
               returnKeyType="search"
@@ -188,7 +191,7 @@ export function SearchScreen({ navigation }: Props) {
                   {hasMore && (
                     <TouchableOpacity onPress={() => toggleCategory(cat.id)} style={s.showMoreBtn}>
                       <Text style={[s.showMoreText, { color: colors.accent }]}>
-                        {isExpanded ? 'Daha az göster ▲' : `+${cat.labels.length - 6} daha göster ▼`}
+                        {isExpanded ? t('places.search.showLess') : t('places.search.showMore', { count: cat.labels.length - 6 })}
                       </Text>
                     </TouchableOpacity>
                   )}
@@ -197,7 +200,7 @@ export function SearchScreen({ navigation }: Props) {
             })}
             {hasLabels && (
               <TouchableOpacity onPress={handleClearFilters} style={s.clearFiltersBtn}>
-                <Text style={[s.clearFiltersText, { color: colors.danger }]}>Filtreleri Temizle</Text>
+                <Text style={[s.clearFiltersText, { color: colors.danger }]}>{t('places.search.clearFilters')}</Text>
               </TouchableOpacity>
             )}
           </ScrollView>
@@ -237,8 +240,8 @@ export function SearchScreen({ navigation }: Props) {
           ) : searchResults.length === 0 ? (
             <EmptyState
               icon="search-outline"
-              title="Mekan bulunamadı"
-              subtitle="Farklı bir arama terimi deneyin."
+              title={t('places.search.notFound')}
+              subtitle={t('places.search.notFoundSubtitle')}
             />
           ) : (
             <FlatList
@@ -248,7 +251,7 @@ export function SearchScreen({ navigation }: Props) {
               contentContainerStyle={s.list}
               showsVerticalScrollIndicator={false}
               ListHeaderComponent={
-                <Text style={[s.sectionLabel, { color: colors.textMuted }]}>{searchResults.length} sonuç</Text>
+                <Text style={[s.sectionLabel, { color: colors.textMuted }]}>{t('common.results', { count: searchResults.length })}</Text>
               }
             />
           )}
@@ -277,8 +280,8 @@ export function SearchScreen({ navigation }: Props) {
             ) : (
               <EmptyState
                 icon="storefront-outline"
-                title="Mekan bulunamadı"
-                subtitle="Arama yaparak mekan keşfedin."
+                title={t('places.search.notFound')}
+                subtitle={t('places.search.notFoundDiscovery')}
               />
             )
           }

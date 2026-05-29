@@ -12,6 +12,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme, spacing, radius, typography, shadow } from '../theme';
+import { useTranslation } from 'react-i18next';
 import { AmberButton } from './ui';
 
 interface Props {
@@ -23,6 +24,7 @@ interface Props {
 const { height: SCREEN_H } = Dimensions.get('window');
 
 export function NotificationPermissionModal({ visible, onAllow, onDismiss }: Props) {
+  const { t } = useTranslation();
   const { colors, isDark } = useTheme();
   const slideAnim = useRef(new Animated.Value(SCREEN_H)).current;
   const backdropAnim = useRef(new Animated.Value(0)).current;
@@ -59,10 +61,10 @@ export function NotificationPermissionModal({ visible, onAllow, onDismiss }: Pro
   }, [visible]);
 
   const features = [
-    { icon: 'heart',           text: 'Gönderilerine gelen beğeniler' },
-    { icon: 'chatbubble',      text: 'Yeni yorumlar ve yanıtlar' },
-    { icon: 'person-add',      text: 'Yeni takipçiler' },
-    { icon: 'location',        text: 'Yakınındaki popüler mekanlar' },
+    { icon: 'heart',           text: t('notifications_permission.feature1') },
+    { icon: 'chatbubble',      text: t('notifications_permission.feature2') },
+    { icon: 'person-add',      text: t('notifications_permission.feature3') },
+    { icon: 'location',        text: t('notifications_permission.feature4') },
   ] as const;
 
   return (
@@ -105,10 +107,10 @@ export function NotificationPermissionModal({ visible, onAllow, onDismiss }: Pro
 
           {/* Title */}
           <Text style={[typography.titleL, { color: colors.text, textAlign: 'center', marginTop: spacing.lg }]}>
-            Bildirimleri Aç
+            {t('notifications_permission.title')}
           </Text>
           <Text style={[typography.bodyDim, { color: colors.textSecondary, textAlign: 'center', marginTop: spacing.sm, paddingHorizontal: spacing['2xl'] }]}>
-            Anlık bildirimleri açarak önemli gelişmeleri kaçırma.
+            {t('notifications_permission.subtitle')}
           </Text>
 
           {/* Feature list */}
@@ -128,7 +130,7 @@ export function NotificationPermissionModal({ visible, onAllow, onDismiss }: Pro
           {/* Actions */}
           <View style={styles.actions}>
             <AmberButton
-              label="Bildirimlere İzin Ver"
+              label={t('notifications_permission.allow')}
               variant="primary"
               onPress={onAllow}
               icon="notifications-outline"
@@ -136,7 +138,7 @@ export function NotificationPermissionModal({ visible, onAllow, onDismiss }: Pro
             />
             <TouchableOpacity onPress={onDismiss} style={styles.laterBtn} accessibilityRole="button">
               <Text style={[typography.body, { color: colors.textTertiary }]}>
-                Şimdi değil
+                {t('notifications_permission.later')}
               </Text>
             </TouchableOpacity>
           </View>
