@@ -19,6 +19,7 @@ public sealed class FeedQueryDbContext : DbContext
     public DbSet<PostCommentRow>   PostComments   => Set<PostCommentRow>();
     public DbSet<UserInterestRow>  UserInterests  => Set<UserInterestRow>();
     public DbSet<TrendingScoreRow> TrendingScores => Set<TrendingScoreRow>();
+    public DbSet<UserSeenPostRow>  UserSeenPosts  => Set<UserSeenPostRow>();
 
     // ── social schema ─────────────────────────────────────────────────────────
     public DbSet<UserFollowRow> UserFollows => Set<UserFollowRow>();
@@ -210,6 +211,16 @@ public sealed class FeedQueryDbContext : DbContext
             b.Property(x => x.Key).HasColumnName("key");
             b.Property(x => x.Value).HasColumnName("value").HasColumnType("jsonb");
             b.Property(x => x.UpdatedAt).HasColumnName("updated_at");
+        });
+
+        // ── content.user_seen_posts ───────────────────────────────────────────
+        modelBuilder.Entity<UserSeenPostRow>(b =>
+        {
+            b.ToTable("user_seen_posts", "content");
+            b.HasKey(x => new { x.UserId, x.PostId });
+            b.Property(x => x.UserId).HasColumnName("user_id");
+            b.Property(x => x.PostId).HasColumnName("post_id");
+            b.Property(x => x.SeenAt).HasColumnName("seen_at");
         });
 
         // ── admin.feature_flags ───────────────────────────────────────────────

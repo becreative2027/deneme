@@ -70,6 +70,13 @@ using (var scope = app.Services.CreateScope())
             PRIMARY KEY (place_id)
         );
         CREATE INDEX IF NOT EXISTS idx_trending_scores_score ON content.trending_scores (score DESC);
+        CREATE TABLE IF NOT EXISTS content.user_seen_posts (
+            user_id  UUID        NOT NULL,
+            post_id  UUID        NOT NULL,
+            seen_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            PRIMARY KEY (user_id, post_id)
+        );
+        CREATE INDEX IF NOT EXISTS idx_user_seen_posts_user ON content.user_seen_posts (user_id, seen_at DESC);
     ");
 }
 

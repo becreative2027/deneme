@@ -79,8 +79,8 @@ public sealed class GetPersonalizedFeedQueryHandler
         var opts     = _options.Value;
 
         _logger.LogInformation(
-            "GetPersonalizedFeed — userId={UserId} pageSize={PageSize} hasCursor={HasCursor} trendCap={Cap}",
-            request.UserId, pageSize, hasCursor, opts.Trending.Cap);
+            "GetPersonalizedFeed — userId={UserId} pageSize={PageSize} hasCursor={HasCursor} trendCap={Cap} freshnessBonus={FreshnessBonus}",
+            request.UserId, pageSize, hasCursor, opts.Trending.Cap, opts.FreshnessBonus);
 
         var cacheKey = $"feed:personalized:{request.UserId}:{pageSize}";
         if (!hasCursor && _cache.TryGetValue(cacheKey, out FeedResponse? cached))
@@ -167,6 +167,13 @@ public sealed class GetPersonalizedFeedQueryHandler
         var userIds  = candidates.Select(p => p.UserId).Distinct().ToList();
         var placeIds = candidates.Select(p => p.PlaceId).Distinct().ToList();
 
+        // ── STEP 2.5: Load seen post timestamps for this user ─────────────────
+        var seenCutoff = DateTime.UtcNow.AddDays(-7);
+        var seenMap = await _db.UserSeenPosts
+            .Where(s => s.UserId == request.UserId && s.SeenAt >= seenCutoff && postIds.Contains(s.PostId))
+            .Select(s => new { s.PostId, s.SeenAt })
+            .ToDictionaryAsync(s => s.PostId, s => s.SeenAt, ct);
+
         // ── STEP 3: Sequential bulk loads ─────────────────────────────────────
         var mediaList = await _db.PostMedia
             .Where(m => postIds.Contains(m.PostId))
@@ -221,15 +228,15 @@ public sealed class GetPersonalizedFeedQueryHandler
 
         // ── STEP 4: In-memory scoring ─────────────────────────────────────────
         //
-        // Phase 7.2:
-        //   trend_score is capped at Trending:Cap before being added.
-        //   log-normalisation is toggled by InterestLogScale config.
+        // Phase 7.3:
+        //   final_score = (feed_score + interest_contribution + trend_score + freshness_bonus)
+        //                 × seen_penalty_multiplier
         //
-        // final_score = feed_score
-        //             + (log(1 + interest_score) × 2)
-        //             + min(trend_score, trendCap)
+        //   freshness_bonus: +FreshnessBonus if post age < FreshnessCutoffHours
+        //   seen_penalty:    multiplier based on time since last seen (0.1 / 0.3 / 0.6 / 1.0)
 
         var trendCap     = opts.Trending.Cap;
+        var now          = DateTime.UtcNow;
         var trendByPlace = trendList.ToDictionary(
             t => t.PlaceId,
             t => Math.Min(t.Score, trendCap));
@@ -237,6 +244,10 @@ public sealed class GetPersonalizedFeedQueryHandler
         var labelsByPlace = placeLabelList
             .GroupBy(pl => pl.PlaceId)
             .ToDictionary(g => g.Key, g => g.Select(pl => pl.LabelId).ToList());
+
+        var penOpts       = opts.SeenPenalty;
+        var freshCutoff   = opts.FreshnessCutoffHours;
+        var freshnessBonus = opts.FreshnessBonus;
 
         var scored = candidates.Select(p =>
         {
@@ -246,7 +257,24 @@ public sealed class GetPersonalizedFeedQueryHandler
                 ? (decimal)Math.Log(1 + (double)rawInterest)
                 : rawInterest;
             var trendScore   = trendByPlace.GetValueOrDefault(p.PlaceId, 0m);
-            return (Post: p, FinalScore: (decimal)p.FeedScore + normInterest * 2m + trendScore);
+
+            // Freshness bonus — strong boost for posts within cutoff window
+            var ageHours     = (now - p.CreatedAt).TotalHours;
+            var freshBonus   = ageHours < freshCutoff ? freshnessBonus : 0m;
+
+            var rawScore = (decimal)p.FeedScore + normInterest * 2m + trendScore + freshBonus;
+
+            // Seen penalty — time-decaying multiplier
+            decimal seenMultiplier = 1.0m;
+            if (seenMap.TryGetValue(p.Id, out var seenAt))
+            {
+                var hoursSinceSeen = (now - seenAt).TotalHours;
+                seenMultiplier = hoursSinceSeen < 1    ? penOpts.Under1Hour
+                               : hoursSinceSeen < 24   ? penOpts.Under24Hours
+                               :                         penOpts.Under7Days;
+            }
+
+            return (Post: p, FinalScore: rawScore * seenMultiplier);
         });
 
         // Sort by final_score, apply diversity (max 2 posts per author), take page

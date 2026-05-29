@@ -13,6 +13,21 @@ public sealed class RecommendationOptions
 
     public bool    InterestLogScale { get; set; } = true;
 
+    /// <summary>
+    /// Bonus added to final_score for posts created within FreshnessCutoffHours.
+    /// Gives new posts a strong push to the top of For You.
+    /// </summary>
+    public decimal FreshnessBonus      { get; set; } = 150;
+
+    /// <summary>Hours within which a post is considered "fresh".</summary>
+    public int     FreshnessCutoffHours { get; set; } = 24;
+
+    /// <summary>
+    /// Score multiplier applied to posts the user has already seen.
+    /// Decays over time: &lt;1h → ×0.1, 1–24h → ×0.3, 1–7d → ×0.6, &gt;7d → no penalty.
+    /// </summary>
+    public SeenPenaltyOptions SeenPenalty { get; set; } = new();
+
     /// <summary>Default (Variant A) slot ratios for the explore feed.</summary>
     public ExploreBlendOptions ExploreBlend { get; set; } = new();
 
@@ -39,6 +54,17 @@ public sealed class RecommendationOptions
             deviation = Math.Abs(Personalized + Trending + Discovery - 1.0);
             return deviation < 0.01;
         }
+    }
+
+    public sealed class SeenPenaltyOptions
+    {
+        /// <summary>Multiplier for posts seen less than 1 hour ago.</summary>
+        public decimal Under1Hour  { get; set; } = 0.1m;
+        /// <summary>Multiplier for posts seen 1–24 hours ago.</summary>
+        public decimal Under24Hours { get; set; } = 0.3m;
+        /// <summary>Multiplier for posts seen 1–7 days ago.</summary>
+        public decimal Under7Days  { get; set; } = 0.6m;
+        // Posts seen more than 7 days ago: no penalty (1.0)
     }
 
     public sealed class TrendingOptions

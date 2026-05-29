@@ -47,3 +47,9 @@ export async function getPersonalizedFeed(cursor?: string, pageSize = 20): Promi
   });
   return normalizeFeedPage(data);
 }
+
+/** Fire-and-forget: tell backend which posts the user has seen. */
+export function markPostsSeen(postIds: string[]): void {
+  if (postIds.length === 0) return;
+  apiClient.post('/api/feed/seen', { postIds }).catch(() => {});
+}

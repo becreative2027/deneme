@@ -1,5 +1,5 @@
 import { useInfiniteQuery } from '@tanstack/react-query';
-import { getFollowingFeed, getExploreFeed, getPersonalizedFeed } from '../api/feed';
+import { getFollowingFeed, getExploreFeed, getPersonalizedFeed, markPostsSeen } from '../api/feed';
 import { FeedPage } from '../types';
 
 const STALE = 1000 * 60; // 60 s
@@ -31,7 +31,12 @@ export function useExploreFeed() {
 export function usePersonalizedFeed() {
   return useInfiniteQuery({
     queryKey: ['feed', 'personalized'],
-    queryFn: ({ pageParam }) => getPersonalizedFeed(pageParam),
+    queryFn: async ({ pageParam }) => {
+      const page = await getPersonalizedFeed(pageParam);
+      // Fire-and-forget: record these posts as seen for future ranking penalty
+      markPostsSeen(page.items.map((p) => p.id));
+      return page;
+    },
     ...infiniteOptions(getPersonalizedFeed),
   });
 }

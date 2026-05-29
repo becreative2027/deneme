@@ -2,6 +2,7 @@ using System.Security.Claims;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using SpotFinder.FeedService.Application.Features.Feed.Queries.GetExploreFeed;
 using SpotFinder.FeedService.Application.Features.Feed.Queries.GetFollowingFeed;
 using SpotFinder.FeedService.Application.Features.Feed.Queries.GetNearbyFeed;
@@ -9,6 +10,8 @@ using SpotFinder.FeedService.Application.Features.Feed.Queries.GetPersonalizedFe
 using SpotFinder.FeedService.Application.Features.Feed.Queries.GetPlaceFeed;
 using SpotFinder.FeedService.Application.Features.Feed.Queries.GetUserPosts;
 using SpotFinder.FeedService.Application.Features.Feed.Queries.GetUserPostCount;
+using SpotFinder.FeedService.Infrastructure.Persistence;
+using SpotFinder.FeedService.Infrastructure.Persistence.ReadModels;
 
 namespace SpotFinder.FeedService.API.Controllers;
 
@@ -17,8 +20,13 @@ namespace SpotFinder.FeedService.API.Controllers;
 [Authorize]
 public sealed class FeedController : ControllerBase
 {
-    private readonly ISender _sender;
-    public FeedController(ISender sender) => _sender = sender;
+    private readonly ISender           _sender;
+    private readonly FeedQueryDbContext _db;
+    public FeedController(ISender sender, FeedQueryDbContext db)
+    {
+        _sender = sender;
+        _db     = db;
+    }
 
     // ── GET /api/feed/following?pageSize=10
     //        &cursorScore=15&cursorCreatedAt=2026-03-22T10:30:00Z&cursorPostId=... ──
@@ -134,6 +142,39 @@ public sealed class FeedController : ControllerBase
         return result.IsSuccess ? Ok(result.Data) : BadRequest(result.Errors);
     }
 
+    // ── POST /api/feed/seen ──────────────────────────────────────────────────
+    /// <summary>
+    /// Records a batch of post IDs the user has seen.
+    /// Used for soft seen-penalty in For You ranking.
+    /// Mobile should call this fire-and-forget after posts scroll into view.
+    /// </summary>
+    [HttpPost("seen")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    public async Task<IActionResult> MarkSeen(
+        [FromBody] MarkSeenRequest request,
+        CancellationToken ct)
+    {
+        var userId = GetUserId();
+        if (userId == Guid.Empty) return Unauthorized();
+        if (request.PostIds is null || request.PostIds.Count == 0) return NoContent();
+
+        var now = DateTime.UtcNow;
+        var paramsList = request.PostIds
+            .Distinct()
+            .Take(50) // safety cap
+            .Select(id => $"('{userId}', '{id}', '{now:yyyy-MM-dd HH:mm:ss}')")
+            .ToList();
+
+        var sql = $"""
+            INSERT INTO content.user_seen_posts (user_id, post_id, seen_at)
+            VALUES {string.Join(",", paramsList)}
+            ON CONFLICT (user_id, post_id) DO UPDATE SET seen_at = EXCLUDED.seen_at
+            """;
+
+        await _db.Database.ExecuteSqlRawAsync(sql, ct);
+        return NoContent();
+    }
+
     // ── GET /api/users/{userId}/posts/count ──────────────────────────────────
     [HttpGet("/api/users/{userId:guid}/posts/count")]
     [AllowAnonymous]
@@ -168,3 +209,5 @@ public sealed class FeedController : ControllerBase
         return claim is not null && Guid.TryParse(claim.Value, out var id) ? id : Guid.Empty;
     }
 }
+
+public sealed record MarkSeenRequest(IReadOnlyList<Guid> PostIds);
