@@ -333,13 +333,6 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
             </View>
           )}
 
-          {/* Trend score */}
-          {typeof place.trendScore === 'number' && (
-            <View style={s.trendRow}>
-              <Ionicons name="trending-up-outline" size={14} color={PRIMARY} />
-              <Text style={s.trendText}>{t('places.detail.trendScore', { score: place.trendScore.toFixed(2) })}</Text>
-            </View>
-          )}
         </View>
 
         {/* ── Events ───────────────────────────────────────────────────────── */}
@@ -533,9 +526,6 @@ const s = StyleSheet.create({
   infoText:      { fontSize: 14, fontWeight: '500' },
   parkingBtn:    { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', backgroundColor: '#6c63ff', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, marginBottom: 12 },
   parkingBtnText: { fontSize: 13, color: '#fff', fontWeight: '600' },
-
-  trendRow:      { flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 16, paddingTop: 16, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: '#eee' },
-  trendText:     { fontSize: 13, color: PRIMARY },
 
   // Events
   eventCard: {
