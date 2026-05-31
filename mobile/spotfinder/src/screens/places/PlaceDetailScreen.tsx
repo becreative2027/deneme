@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,7 @@ import {
   Linking,
   ActivityIndicator,
   Dimensions,
+  AppState,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -67,12 +68,33 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
   const qc = useQueryClient();
   const currentUser = useAuthStore(s => s.user);
 
-  // Track place view + duration for analytics — fire-and-forget on unmount
-  React.useEffect(() => {
+  // Track place view + duration for analytics.
+  // Uses AppState to pause the timer while the app is backgrounded,
+  // so only actual foreground time is counted.
+  useEffect(() => {
     if (!currentUser?.id) return;
-    const startedAt = Date.now();
+
+    let activeMs = 0;
+    let lastForegroundAt: number | null = Date.now();
+
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'active') {
+        // Came back to foreground — resume timer
+        lastForegroundAt = Date.now();
+      } else if (lastForegroundAt !== null) {
+        // Going to background — accumulate elapsed time
+        activeMs += Date.now() - lastForegroundAt;
+        lastForegroundAt = null;
+      }
+    });
+
     return () => {
-      const durationSeconds = Math.min(Math.round((Date.now() - startedAt) / 1000), 1800);
+      sub.remove();
+      // Flush remaining foreground time
+      if (lastForegroundAt !== null) {
+        activeMs += Date.now() - lastForegroundAt;
+      }
+      const durationSeconds = Math.min(Math.round(activeMs / 1000), 1800);
       trackPlaceView(placeId, currentUser.id, durationSeconds);
     };
   }, [placeId, currentUser?.id]);
