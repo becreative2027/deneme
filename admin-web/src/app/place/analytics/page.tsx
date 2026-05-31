@@ -4,24 +4,44 @@ import { useEffect, useState, useMemo } from 'react';
 import { Eye, Users, Clock, TrendingUp, Loader2 } from 'lucide-react';
 import clsx from 'clsx';
 import { useAdminAuthStore } from '@/store/adminAuthStore';
-import { getPlaceAnalytics, PlaceAnalytics, DailyViewStat } from '@/api/admin';
+import { getPlaceAnalytics, PlaceAnalytics, DailyViewStat, HourlyViewStat } from '@/api/admin';
 
-// ── Date range options ────────────────────────────────────────────────────────
+// ── Range options ─────────────────────────────────────────────────────────────
 
-const RANGES = [
-  { label: 'Son 7 gün',  days: 7  },
-  { label: 'Son 30 gün', days: 30 },
-  { label: 'Son 90 gün', days: 90 },
-] as const;
+type Range =
+  | { kind: 'hours'; hours: 6 }
+  | { kind: 'days';  days: 7 | 30 | 90 };
+
+const RANGES: Array<{ label: string } & Range> = [
+  { label: 'Son 6 saat', kind: 'hours', hours: 6  },
+  { label: 'Son 7 gün',  kind: 'days',  days:  7  },
+  { label: 'Son 30 gün', kind: 'days',  days:  30 },
+  { label: 'Son 90 gün', kind: 'days',  days:  90 },
+];
+
+function rangeKey(r: Range) {
+  return r.kind === 'hours' ? `h${r.hours}` : `d${r.days}`;
+}
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function formatDuration(seconds: number | null): string {
-  if (seconds === null) return '—';
+  if (seconds === null || seconds === undefined) return '—';
   if (seconds < 60) return `${Math.round(seconds)}s`;
   const m = Math.floor(seconds / 60);
   const s = Math.round(seconds % 60);
   return s > 0 ? `${m}d ${s}s` : `${m}d`;
+}
+
+function fmtHour(isoUtc: string) {
+  const d = new Date(isoUtc);
+  return d.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+}
+
+function fmtDate(iso: string) {
+  return new Date(iso + 'T00:00:00').toLocaleDateString('tr-TR', {
+    day: '2-digit', month: 'short',
+  });
 }
 
 // ── Stat card ─────────────────────────────────────────────────────────────────
@@ -50,32 +70,35 @@ function StatCard({
   );
 }
 
-// ── Bar chart ─────────────────────────────────────────────────────────────────
+// ── Generic bar chart ─────────────────────────────────────────────────────────
 
-function BarChart({ stats }: { stats: DailyViewStat[] }) {
-  const max = useMemo(() => Math.max(...stats.map((s) => s.views), 1), [stats]);
+interface BarItem {
+  key: string;
+  label: string;
+  views: number;
+  uniqueVisitors: number;
+  extra?: string;   // extra tooltip line (e.g. avg duration)
+}
 
-  if (stats.length === 0) {
+function BarChart({ items, emptyText }: { items: BarItem[]; emptyText: string }) {
+  const max = useMemo(() => Math.max(...items.map((s) => s.views), 1), [items]);
+
+  if (items.length === 0) {
     return (
       <div className="flex items-center justify-center h-40 text-sm text-gray-400">
-        Bu dönemde görüntülenme yok.
+        {emptyText}
       </div>
     );
   }
 
   return (
-    <div className="flex items-end gap-1 h-40 px-1" aria-label="Günlük görüntülenme grafiği">
-      {stats.map((s) => {
+    <div className="flex items-end gap-1 h-40 px-1">
+      {items.map((s) => {
         const heightPct = Math.max((s.views / max) * 100, 4);
-        const label = new Date(s.date + 'T00:00:00').toLocaleDateString('tr-TR', {
-          day: '2-digit',
-          month: 'short',
-        });
         return (
           <div
-            key={s.date}
+            key={s.key}
             className="flex-1 flex flex-col items-center gap-1 group relative"
-            title={`${label}: ${s.views} görüntülenme, ${s.uniqueVisitors} tekil`}
           >
             <div
               className="w-full rounded-t-md bg-brand opacity-80 group-hover:opacity-100 transition-all"
@@ -83,10 +106,14 @@ function BarChart({ stats }: { stats: DailyViewStat[] }) {
             />
             {/* Tooltip */}
             <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 hidden group-hover:flex flex-col items-center z-10 pointer-events-none">
-              <div className="bg-gray-900 text-white text-[10px] rounded-lg px-2 py-1 whitespace-nowrap shadow-lg">
-                <span className="font-semibold">{s.views}</span> görüntülenme
-                <br />
-                <span className="text-gray-300">{s.uniqueVisitors} tekil kullanıcı</span>
+              <div className="bg-gray-900 text-white text-[10px] rounded-lg px-2.5 py-1.5 whitespace-nowrap shadow-lg text-center">
+                <p className="font-semibold text-white">{s.label}</p>
+                <p className="mt-0.5">
+                  <span className="font-semibold">{s.views}</span>{' '}
+                  <span className="text-gray-300">görüntülenme</span>
+                </p>
+                <p className="text-gray-300">{s.uniqueVisitors} tekil kullanıcı</p>
+                {s.extra && <p className="text-gray-400 mt-0.5">{s.extra}</p>}
               </div>
               <div className="w-2 h-2 bg-gray-900 rotate-45 -mt-1" />
             </div>
@@ -103,29 +130,63 @@ export default function PlaceAnalyticsPage() {
   const { user } = useAdminAuthStore();
   const placeId = user?.ownedPlaceIds?.[0];
 
-  const [days, setDays]         = useState<7 | 30 | 90>(30);
+  const [range, setRange]       = useState<Range>({ kind: 'days', days: 30 });
   const [data, setData]         = useState<PlaceAnalytics | null>(null);
   const [loading, setLoading]   = useState(true);
   const [error, setError]       = useState(false);
+
+  const isHourly = range.kind === 'hours';
 
   useEffect(() => {
     if (!placeId) { setLoading(false); return; }
     setLoading(true);
     setError(false);
-    getPlaceAnalytics(placeId, days)
+    const opts = range.kind === 'hours'
+      ? { hours: range.hours }
+      : { days: range.days };
+    getPlaceAnalytics(placeId, opts)
       .then(setData)
       .catch(() => setError(true))
       .finally(() => setLoading(false));
-  }, [placeId, days]);
+  }, [placeId, range]);
 
   if (!placeId) {
     return <div className="p-8 text-sm text-gray-400">Mekan atanmamış.</div>;
   }
 
+  // ── Chart items ───────────────────────────────────────────────────────────
+  const chartItems: BarItem[] = isHourly
+    ? (data?.hourlyStats ?? []).map((h: HourlyViewStat) => ({
+        key:            h.hour,
+        label:          fmtHour(h.hour),
+        views:          h.views,
+        uniqueVisitors: h.uniqueVisitors,
+        extra:          h.avgDurationSeconds !== null
+                          ? `Ort. ${formatDuration(h.avgDurationSeconds)}`
+                          : undefined,
+      }))
+    : (data?.dailyStats ?? []).map((d: DailyViewStat) => ({
+        key:            d.date,
+        label:          fmtDate(d.date),
+        views:          d.views,
+        uniqueVisitors: d.uniqueVisitors,
+      }));
+
+  // ── X-axis edge labels ────────────────────────────────────────────────────
+  const xLabels = chartItems.length >= 2
+    ? [chartItems[0].label, chartItems[Math.floor(chartItems.length / 2)].label, chartItems[chartItems.length - 1].label]
+    : chartItems.map((i) => i.label);
+
+  // ── 4th stat: period average ──────────────────────────────────────────────
+  const periodAvgLabel = isHourly ? 'Saatlik Ort.' : 'Günlük Ort.';
+  const periodAvgValue = chartItems.length > 0
+    ? Math.round((data?.totalViews ?? 0) / chartItems.length).toLocaleString('tr-TR')
+    : '0';
+
   return (
     <div className="p-8 max-w-5xl">
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Analitik</h1>
           <p className="text-sm text-gray-400 mt-1">Mekan sayfanızın ziyaret istatistikleri</p>
@@ -133,20 +194,25 @@ export default function PlaceAnalyticsPage() {
 
         {/* Range selector */}
         <div className="flex gap-1 bg-gray-100 rounded-xl p-1">
-          {RANGES.map((r) => (
-            <button
-              key={r.days}
-              onClick={() => setDays(r.days as 7 | 30 | 90)}
-              className={clsx(
-                'px-4 py-1.5 rounded-lg text-sm font-medium transition-all',
-                days === r.days
-                  ? 'bg-white text-gray-900 shadow-sm'
-                  : 'text-gray-500 hover:text-gray-700',
-              )}
-            >
-              {r.label}
-            </button>
-          ))}
+          {RANGES.map((r) => {
+            const active = rangeKey(r) === rangeKey(range);
+            return (
+              <button
+                key={rangeKey(r)}
+                onClick={() => setRange(r.kind === 'hours'
+                  ? { kind: 'hours', hours: r.hours }
+                  : { kind: 'days',  days:  r.days  })}
+                className={clsx(
+                  'px-3 py-1.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap',
+                  active
+                    ? 'bg-white text-gray-900 shadow-sm'
+                    : 'text-gray-500 hover:text-gray-700',
+                )}
+              >
+                {r.label}
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -182,12 +248,8 @@ export default function PlaceAnalyticsPage() {
             />
             <StatCard
               icon={TrendingUp}
-              label="Günlük Ort."
-              value={
-                data.dailyStats.length > 0
-                  ? Math.round(data.totalViews / data.dailyStats.length).toLocaleString('tr-TR')
-                  : '0'
-              }
+              label={periodAvgLabel}
+              value={periodAvgValue}
               color="bg-emerald-500"
             />
           </div>
@@ -195,61 +257,65 @@ export default function PlaceAnalyticsPage() {
           {/* Chart */}
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-sm font-semibold text-gray-700">Günlük Görüntülenme</h2>
-              <div className="flex items-center gap-3 text-xs text-gray-400">
-                <span className="flex items-center gap-1">
-                  <span className="w-3 h-3 rounded-sm bg-brand opacity-80 inline-block" />
-                  Görüntülenme
-                </span>
+              <h2 className="text-sm font-semibold text-gray-700">
+                {isHourly ? 'Saatlik Görüntülenme' : 'Günlük Görüntülenme'}
+              </h2>
+              <div className="flex items-center gap-1 text-xs text-gray-400">
+                <span className="w-3 h-3 rounded-sm bg-brand opacity-80 inline-block" />
+                <span>Görüntülenme</span>
               </div>
             </div>
-            <BarChart stats={data.dailyStats} />
 
-            {/* X-axis labels — show first, middle, last */}
-            {data.dailyStats.length > 0 && (
+            <BarChart
+              items={chartItems}
+              emptyText="Bu dönemde görüntülenme yok."
+            />
+
+            {xLabels.length > 0 && (
               <div className="flex justify-between mt-2 px-1 text-[10px] text-gray-400">
-                <span>
-                  {new Date(data.dailyStats[0].date + 'T00:00:00').toLocaleDateString('tr-TR', {
-                    day: '2-digit', month: 'short',
-                  })}
-                </span>
-                <span>
-                  {new Date(
-                    data.dailyStats[Math.floor(data.dailyStats.length / 2)].date + 'T00:00:00',
-                  ).toLocaleDateString('tr-TR', { day: '2-digit', month: 'short' })}
-                </span>
-                <span>
-                  {new Date(
-                    data.dailyStats[data.dailyStats.length - 1].date + 'T00:00:00',
-                  ).toLocaleDateString('tr-TR', { day: '2-digit', month: 'short' })}
-                </span>
+                {xLabels.map((l, i) => <span key={i}>{l}</span>)}
               </div>
             )}
           </div>
 
-          {/* Daily breakdown table */}
-          {data.dailyStats.length > 0 && (
+          {/* Breakdown table */}
+          {chartItems.length > 0 && (
             <div className="mt-6 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
               <div className="px-6 py-4 border-b border-gray-50">
-                <h2 className="text-sm font-semibold text-gray-700">Günlük Detay</h2>
+                <h2 className="text-sm font-semibold text-gray-700">
+                  {isHourly ? 'Saatlik Detay' : 'Günlük Detay'}
+                </h2>
               </div>
               <div className="divide-y divide-gray-50 max-h-72 overflow-y-auto">
-                {[...data.dailyStats].reverse().map((s) => (
-                  <div key={s.date} className="flex items-center justify-between px-6 py-3">
-                    <span className="text-sm text-gray-600">
-                      {new Date(s.date + 'T00:00:00').toLocaleDateString('tr-TR', {
-                        weekday: 'short', day: '2-digit', month: 'long',
-                      })}
+                {[...chartItems].reverse().map((item) => (
+                  <div key={item.key} className="flex items-center justify-between px-6 py-3">
+                    <span className="text-sm text-gray-600 min-w-[120px]">
+                      {isHourly
+                        ? (() => {
+                            const d = new Date(item.key);
+                            const end = new Date(d.getTime() + 3600_000);
+                            return `${fmtHour(item.key)} – ${end.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}`;
+                          })()
+                        : new Date(item.key + 'T00:00:00').toLocaleDateString('tr-TR', {
+                            weekday: 'short', day: '2-digit', month: 'long',
+                          })}
                     </span>
-                    <div className="flex gap-8 text-sm">
-                      <span className="text-gray-900 font-medium w-20 text-right">
-                        {s.views.toLocaleString('tr-TR')}{' '}
+                    <div className="flex gap-6 text-sm">
+                      <span className="text-gray-900 font-medium tabular-nums">
+                        {item.views.toLocaleString('tr-TR')}{' '}
                         <span className="text-gray-400 font-normal text-xs">görüntülenme</span>
                       </span>
-                      <span className="text-gray-500 w-28 text-right">
-                        {s.uniqueVisitors.toLocaleString('tr-TR')}{' '}
+                      <span className="text-gray-500 tabular-nums w-24 text-right">
+                        {item.uniqueVisitors.toLocaleString('tr-TR')}{' '}
                         <span className="text-xs">tekil</span>
                       </span>
+                      {isHourly && (
+                        <span className="text-gray-400 tabular-nums w-20 text-right text-xs">
+                          {formatDuration(
+                            (data.hourlyStats.find((h) => h.hour === item.key)?.avgDurationSeconds) ?? null,
+                          )}
+                        </span>
+                      )}
                     </div>
                   </div>
                 ))}

@@ -351,9 +351,16 @@ export async function getAuditLogs(page = 1, pageSize = 30) {
 // ── Place Analytics ───────────────────────────────────────────────────────
 
 export interface DailyViewStat {
-  date: string;       // ISO date "2026-05-01"
+  date: string;        // ISO date "2026-05-01"
   views: number;
   uniqueVisitors: number;
+}
+
+export interface HourlyViewStat {
+  hour: string;        // ISO datetime UTC "2026-05-31T14:00:00Z"
+  views: number;
+  uniqueVisitors: number;
+  avgDurationSeconds: number | null;
 }
 
 export interface PlaceAnalytics {
@@ -361,10 +368,15 @@ export interface PlaceAnalytics {
   uniqueVisitors: number;
   avgDurationSeconds: number | null;
   dailyStats: DailyViewStat[];
+  hourlyStats: HourlyViewStat[];
 }
 
-export async function getPlaceAnalytics(placeId: string, days = 30): Promise<PlaceAnalytics> {
-  const { data } = await adminClient.get(`/api/places/${placeId}/analytics`, { params: { days } });
+export async function getPlaceAnalytics(
+  placeId: string,
+  opts: { days?: number; hours?: number } = { days: 30 },
+): Promise<PlaceAnalytics> {
+  const params = opts.hours ? { hours: opts.hours } : { days: opts.days ?? 30 };
+  const { data } = await adminClient.get(`/api/places/${placeId}/analytics`, { params });
   const inner: any = data?.data ?? data;
   return {
     totalViews:         inner?.totalViews         ?? 0,
@@ -374,6 +386,12 @@ export async function getPlaceAnalytics(placeId: string, days = 30): Promise<Pla
       date:           d.date,
       views:          d.views          ?? 0,
       uniqueVisitors: d.uniqueVisitors ?? 0,
+    })),
+    hourlyStats: (inner?.hourlyStats ?? []).map((h: any) => ({
+      hour:               h.hour,
+      views:              h.views              ?? 0,
+      uniqueVisitors:     h.uniqueVisitors     ?? 0,
+      avgDurationSeconds: h.avgDurationSeconds ?? null,
     })),
   };
 }

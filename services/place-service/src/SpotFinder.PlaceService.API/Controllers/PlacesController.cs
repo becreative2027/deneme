@@ -112,15 +112,19 @@ public sealed class PlacesController : BaseController
         return NoContent();
     }
 
-    /// <summary>Get view analytics for a place (owner/admin only).</summary>
+    /// <summary>
+    /// Get view analytics for a place (owner/admin only).
+    /// Pass ?hours=6 for hourly mode, or ?days=30 for daily mode.
+    /// </summary>
     [HttpGet("{id:guid}/analytics")]
     [ProducesResponseType(typeof(ApiResult<PlaceAnalyticsResponse>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAnalytics(
         Guid id,
-        [FromQuery] int days = 30,
-        CancellationToken ct = default)
+        [FromQuery] int days  = 30,
+        [FromQuery] int hours = 0,
+        CancellationToken ct  = default)
     {
-        var result = await Sender.Send(new GetPlaceAnalyticsQuery(id, days), ct);
+        var result = await Sender.Send(new GetPlaceAnalyticsQuery(id, days, hours), ct);
         return Ok(result);
     }
 
