@@ -22,6 +22,7 @@ public sealed class AdminWriteDbContext : DbContext
     // ── place schema ──────────────────────────────────────────────────────
     public DbSet<AdminPlaceWrite>             Places             => Set<AdminPlaceWrite>();
     public DbSet<AdminPlaceTranslationWrite>  PlaceTranslations  => Set<AdminPlaceTranslationWrite>();
+    public DbSet<AdminPlaceEventWrite>        PlaceEvents        => Set<AdminPlaceEventWrite>();
 
     // ── label schema ──────────────────────────────────────────────────────
     public DbSet<AdminLabelWrite>             Labels             => Set<AdminLabelWrite>();
@@ -209,6 +210,22 @@ public sealed class AdminWriteDbContext : DbContext
             e.Property(t => t.Name).HasColumnName("name");
             e.Property(t => t.Slug).HasColumnName("slug");
             e.HasIndex(t => new { t.DistrictId, t.LanguageId }).IsUnique();
+        });
+
+        // ── place.place_events ────────────────────────────────────────────
+        b.Entity<AdminPlaceEventWrite>(e =>
+        {
+            e.ToTable("place_events", "place");
+            e.HasKey(ev => ev.Id);
+            e.Property(ev => ev.Id).HasColumnName("id");
+            e.Property(ev => ev.PlaceId).HasColumnName("place_id");
+            e.Property(ev => ev.Title).HasColumnName("title").HasMaxLength(200).IsRequired();
+            e.Property(ev => ev.Description).HasColumnName("description").HasMaxLength(2000);
+            e.Property(ev => ev.StartsAt).HasColumnName("starts_at");
+            e.Property(ev => ev.EndsAt).HasColumnName("ends_at");
+            e.Property(ev => ev.ImageUrl).HasColumnName("image_url").HasMaxLength(500);
+            e.Property(ev => ev.CreatedBy).HasColumnName("created_by").HasMaxLength(200);
+            e.Property(ev => ev.CreatedAt).HasColumnName("created_at");
         });
 
         // ── admin.write_audit_logs ─────────────────────────────────────────

@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SpotFinder.AdminService.Application.Features.Labels.Commands.Assign;
 using SpotFinder.AdminService.Application.Features.Labels.Commands.Remove;
+using SpotFinder.AdminService.Application.Features.PlaceEvents.Commands;
 using SpotFinder.AdminService.Application.Features.Places.Commands.Update;
 using SpotFinder.BuildingBlocks.Api;
 
@@ -115,7 +116,47 @@ public sealed class PlaceOwnerController : BaseController
 
         return OkResult("Etiket kaldırıldı.");
     }
+
+    // ── Events ─────────────────────────────────────────────────────────────
+
+    /// <summary>POST /api/owner/places/{placeId}/events — create a new place event</summary>
+    [HttpPost("places/{placeId:guid}/events")]
+    public async Task<IActionResult> CreateEvent(
+        Guid placeId,
+        [FromBody] CreatePlaceEventRequest req,
+        CancellationToken ct)
+    {
+        if (!OwnsPlace(placeId))
+            return StatusCode(403, ApiResponse<string>.Fail("Bu mekana erişim yetkiniz yok."));
+
+        var id = await Sender.Send(new CreatePlaceEventCommand(
+            placeId, req.Title, req.Description,
+            req.StartsAt, req.EndsAt, req.ImageUrl, CallerEmail), ct);
+
+        return StatusCode(201, ApiResponse<Guid>.Ok(id));
+    }
+
+    /// <summary>DELETE /api/owner/places/{placeId}/events/{eventId} — delete a place event</summary>
+    [HttpDelete("places/{placeId:guid}/events/{eventId:guid}")]
+    public async Task<IActionResult> DeleteEvent(
+        Guid placeId,
+        Guid eventId,
+        CancellationToken ct)
+    {
+        if (!OwnsPlace(placeId))
+            return StatusCode(403, ApiResponse<string>.Fail("Bu mekana erişim yetkiniz yok."));
+
+        var deleted = await Sender.Send(new DeletePlaceEventCommand(placeId, eventId), ct);
+        return deleted ? NoContent() : NotFound();
+    }
 }
+
+public sealed record CreatePlaceEventRequest(
+    string    Title,
+    string?   Description,
+    DateTime  StartsAt,
+    DateTime? EndsAt,
+    string?   ImageUrl);
 
 public sealed record UpdatePlaceMediaRequest(
     string?       CoverImageUrl,

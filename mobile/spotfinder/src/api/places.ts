@@ -131,6 +131,25 @@ export async function getFilters(langId = 1): Promise<FilterCategory[]> {
   }));
 }
 
+export interface PlaceEvent {
+  id: string;
+  title: string;
+  description?: string;
+  startsAt: string;
+  endsAt?: string;
+  imageUrl?: string;
+}
+
+export async function getPlaceEvents(placeId: string): Promise<PlaceEvent[]> {
+  try {
+    const { data } = await apiClient.get<any>(`/api/places/${placeId}/events`);
+    const items = data?.data ?? data ?? [];
+    return Array.isArray(items) ? items : [];
+  } catch {
+    return [];
+  }
+}
+
 export async function getPlacePosts(placeId: string, cursor?: string): Promise<FeedPage> {
   const { data } = await apiClient.get<any>(`/api/feed/place/${placeId}`, {
     params: { cursor, pageSize: 20 },

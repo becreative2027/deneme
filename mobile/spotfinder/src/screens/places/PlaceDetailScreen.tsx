@@ -25,7 +25,7 @@ import { NearbyParkingModal } from '../../components/NearbyParkingModal';
 import { formatRating, formatCount } from '../../utils/formatters';
 import { Post } from '../../types';
 import { getFavoritePlaceIds, addFavorite, removeFavorite } from '../../api/favorites';
-import { trackPlaceView } from '../../api/places';
+import { trackPlaceView, getPlaceEvents, PlaceEvent } from '../../api/places';
 import { useAuthStore } from '../../store/authStore';
 import { useWishlistStore } from '../../store/wishlistStore';
 import { WishlistStackParamList } from '../../types';
@@ -111,6 +111,14 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
 
   const allPosts: Post[] = postsQuery.data?.pages.flatMap((p) => p.items) ?? [];
   const photoPosts = allPosts.filter((p) => p.imageUrl);
+
+  // ── Events ─────────────────────────────────────────────────────────────────
+  const eventsQuery = useQuery<PlaceEvent[]>({
+    queryKey: ['placeEvents', placeId],
+    queryFn:  () => getPlaceEvents(placeId),
+    staleTime: 1000 * 60 * 5,
+  });
+  const events = eventsQuery.data ?? [];
 
   // ── Favorites ──────────────────────────────────────────────────────────────
   const favQuery = useQuery({
@@ -334,6 +342,42 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
           )}
         </View>
 
+        {/* ── Events ───────────────────────────────────────────────────────── */}
+        {events.length > 0 && (
+          <View style={[s.section, { paddingHorizontal: 20 }]}>
+            <View style={s.sectionHeader}>
+              <Ionicons name="calendar-outline" size={14} color="#888" />
+              <Text style={s.sectionTitle}>ETKİNLİKLER</Text>
+            </View>
+            {events.map((ev) => (
+              <View key={ev.id} style={s.eventCard}>
+                {ev.imageUrl && (
+                  <OptimizedImage
+                    uri={ev.imageUrl}
+                    style={s.eventImage}
+                    resizeMode="cover"
+                  />
+                )}
+                <View style={s.eventBody}>
+                  <Text style={s.eventTitle} numberOfLines={2}>{ev.title}</Text>
+                  {ev.description && (
+                    <Text style={s.eventDesc} numberOfLines={2}>{ev.description}</Text>
+                  )}
+                  <View style={s.eventTimeRow}>
+                    <Ionicons name="time-outline" size={12} color="#888" />
+                    <Text style={s.eventTime}>
+                      {new Date(ev.startsAt).toLocaleDateString('tr-TR', {
+                        day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit',
+                      })}
+                      {ev.endsAt && ` – ${new Date(ev.endsAt).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}`}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+            ))}
+          </View>
+        )}
+
         {/* ── Photo grid ────────────────────────────────────────────────────── */}
         {photoPosts.length > 0 && (
           <View style={s.photosSection}>
@@ -492,6 +536,24 @@ const s = StyleSheet.create({
 
   trendRow:      { flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 16, paddingTop: 16, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: '#eee' },
   trendText:     { fontSize: 13, color: PRIMARY },
+
+  // Events
+  eventCard: {
+    flexDirection: 'row',
+    gap: 12,
+    backgroundColor: '#fafafa',
+    borderRadius: 14,
+    overflow: 'hidden',
+    marginBottom: 10,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: '#eee',
+  },
+  eventImage: { width: 80, height: 80 },
+  eventBody:  { flex: 1, padding: 10, justifyContent: 'center' },
+  eventTitle: { fontSize: 14, fontWeight: '700', color: '#111', lineHeight: 18 },
+  eventDesc:  { fontSize: 12, color: '#666', marginTop: 3, lineHeight: 16 },
+  eventTimeRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 6 },
+  eventTime:  { fontSize: 11, color: '#888', flex: 1 },
 
   // Photos
   photosSection: { marginTop: 8 },

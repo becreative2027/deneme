@@ -348,6 +348,43 @@ export async function getAuditLogs(page = 1, pageSize = 30) {
   return { items: inner?.items ?? inner?.logs ?? [], totalCount: inner?.totalCount ?? 0 };
 }
 
+// ── Place Events ──────────────────────────────────────────────────────────
+
+export interface PlaceEventItem {
+  id: string;
+  title: string;
+  description?: string;
+  startsAt: string;
+  endsAt?: string;
+  imageUrl?: string;
+  createdAt: string;
+}
+
+export async function getPlaceEvents(placeId: string, includePast = false): Promise<PlaceEventItem[]> {
+  const { data } = await adminClient.get(`/api/places/${placeId}/events`, {
+    params: { includePast },
+  });
+  return data?.data ?? data ?? [];
+}
+
+export async function createPlaceEvent(
+  placeId: string,
+  input: {
+    title: string;
+    description?: string;
+    startsAt: string;
+    endsAt?: string;
+    imageUrl?: string;
+  },
+): Promise<string> {
+  const { data } = await adminClient.post(`/api/owner/places/${placeId}/events`, input);
+  return data?.data ?? data;
+}
+
+export async function deletePlaceEvent(placeId: string, eventId: string): Promise<void> {
+  await adminClient.delete(`/api/owner/places/${placeId}/events/${eventId}`);
+}
+
 // ── Place Analytics ───────────────────────────────────────────────────────
 
 export interface DailyViewStat {

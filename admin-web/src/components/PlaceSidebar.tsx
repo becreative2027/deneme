@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { LayoutDashboard, Store, Bell, Star, BarChart2, LogOut, ChevronRight } from 'lucide-react';
+import { LayoutDashboard, Store, Bell, Star, BarChart2, CalendarDays, LogOut, ChevronRight } from 'lucide-react';
 import clsx from 'clsx';
 import { useAdminAuthStore } from '@/store/adminAuthStore';
 
@@ -11,6 +11,7 @@ const NAV = [
   { href: '/place/my-place',       label: 'Mekanım',        icon: Store },
   { href: '/place/notifications',  label: 'Bildirimler',    icon: Bell },
   { href: '/place/reviews',        label: 'Yorumlar',       icon: Star },
+  { href: '/place/events',         label: 'Etkinlikler',    icon: CalendarDays },
   { href: '/place/analytics',      label: 'Analitik',       icon: BarChart2 },
 ];
 

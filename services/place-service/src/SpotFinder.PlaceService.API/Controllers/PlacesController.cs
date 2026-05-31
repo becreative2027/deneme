@@ -3,6 +3,7 @@ using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using SpotFinder.BuildingBlocks.Api;
 using SpotFinder.PlaceService.Application.Features.Analytics.Queries.GetPlaceAnalytics;
+using SpotFinder.PlaceService.Application.Features.Events.Queries.GetPlaceEvents;
 using SpotFinder.PlaceService.Application.Features.Places.Commands.AddOrUpdateReview;
 using SpotFinder.PlaceService.Application.Features.Places.Commands.CreatePlace;
 using SpotFinder.PlaceService.Application.Features.Places.Commands.DeleteReview;
@@ -125,6 +126,18 @@ public sealed class PlacesController : BaseController
         CancellationToken ct  = default)
     {
         var result = await Sender.Send(new GetPlaceAnalyticsQuery(id, days, hours), ct);
+        return Ok(result);
+    }
+
+    /// <summary>Get upcoming events for a place.</summary>
+    [HttpGet("{id:guid}/events")]
+    [ProducesResponseType(typeof(IReadOnlyList<PlaceEventDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetEvents(
+        Guid id,
+        [FromQuery] bool includePast = false,
+        CancellationToken ct = default)
+    {
+        var result = await Sender.Send(new GetPlaceEventsQuery(id, includePast), ct);
         return Ok(result);
     }
 
