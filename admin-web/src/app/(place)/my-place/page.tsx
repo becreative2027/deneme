@@ -8,8 +8,27 @@ import {
 } from '@/api/admin';
 import {
   Loader2, MapPin, Star, Heart, Bookmark, ImagePlus,
-  Link2, Plus, X, Tag, Check, Save, Store, DollarSign,
+  Link2, Plus, X, Tag, Check, Save, Store, DollarSign, Upload,
 } from 'lucide-react';
+
+// ── Cloudinary upload ─────────────────────────────────────────────────────────
+
+const CLOUDINARY_CLOUD = 'dnwylcwex';
+const CLOUDINARY_PRESET = 'spotfinder_posts';
+
+async function uploadToCloudinary(file: File, folder = 'spotfinder/places'): Promise<string> {
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('upload_preset', CLOUDINARY_PRESET);
+  formData.append('folder', folder);
+  const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/image/upload`, {
+    method: 'POST',
+    body: formData,
+  });
+  if (!res.ok) throw new Error('Yükleme başarısız');
+  const data = await res.json();
+  return data.secure_url as string;
+}
 
 export default function MyPlacePage() {
   const { user } = useAdminAuthStore();
@@ -31,7 +50,45 @@ export default function MyPlacePage() {
   const [labelSearch,  setLabelSearch]  = useState('');
   const [labelOpen,    setLabelOpen]    = useState(false);
 
-  const labelRef = useRef<HTMLDivElement>(null);
+  // Upload state
+  const [coverUploading,    setCoverUploading]    = useState(false);
+  const [menuImgUploading,  setMenuImgUploading]  = useState(false);
+
+  const labelRef    = useRef<HTMLDivElement>(null);
+  const coverInput  = useRef<HTMLInputElement>(null);
+  const menuInput   = useRef<HTMLInputElement>(null);
+
+  async function handleCoverFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setCoverUploading(true);
+    try {
+      const url = await uploadToCloudinary(file, 'spotfinder/places/covers');
+      setCoverUrl(url);
+    } catch {
+      alert('Fotoğraf yüklenemedi, tekrar deneyin.');
+    } finally {
+      setCoverUploading(false);
+      e.target.value = '';
+    }
+  }
+
+  async function handleMenuFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files ?? []);
+    if (files.length === 0) return;
+    setMenuImgUploading(true);
+    try {
+      const urls = await Promise.all(
+        files.map((f) => uploadToCloudinary(f, 'spotfinder/places/menus'))
+      );
+      setMenuImages((prev) => [...prev, ...urls]);
+    } catch {
+      alert('Fotoğraf yüklenemedi, tekrar deneyin.');
+    } finally {
+      setMenuImgUploading(false);
+      e.target.value = '';
+    }
+  }
 
   // Load place + labels
   useEffect(() => {
@@ -185,7 +242,7 @@ export default function MyPlacePage() {
       {/* ── Cover image ─────────────────────────────────────────────────── */}
       <Section icon={ImagePlus} title="Kapak Fotoğrafı">
         <div className="space-y-3">
-          {coverUrl && (
+          {coverUrl ? (
             <div className="relative w-full h-44 rounded-xl overflow-hidden border border-gray-200 bg-gray-50">
               <img src={coverUrl} alt="Kapak" className="w-full h-full object-cover" onError={(e) => (e.currentTarget.style.display = 'none')} />
               <button
@@ -195,14 +252,45 @@ export default function MyPlacePage() {
                 <X size={14} className="text-gray-600" />
               </button>
             </div>
+          ) : (
+            <div
+              onClick={() => !coverUploading && coverInput.current?.click()}
+              className="w-full h-44 rounded-xl border-2 border-dashed border-gray-300 bg-gray-50 flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-brand hover:bg-brand/5 transition-colors"
+            >
+              {coverUploading ? (
+                <Loader2 size={24} className="animate-spin text-brand" />
+              ) : (
+                <>
+                  <Upload size={24} className="text-gray-400" />
+                  <p className="text-sm text-gray-500 font-medium">Fotoğraf seç veya sürükle</p>
+                  <p className="text-xs text-gray-400">PNG, JPG, WEBP</p>
+                </>
+              )}
+            </div>
           )}
-          <div className="flex gap-2">
+          <input
+            ref={coverInput}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleCoverFileChange}
+          />
+          <div className="flex gap-2 items-center">
             <input
               value={coverUrl}
               onChange={(e) => setCoverUrl(e.target.value)}
-              placeholder="https://... görsel URL'i yapıştırın"
+              placeholder="veya URL yapıştırın"
               className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand"
             />
+            <button
+              type="button"
+              onClick={() => coverInput.current?.click()}
+              disabled={coverUploading}
+              className="flex items-center gap-1.5 px-3 py-2 text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors disabled:opacity-50 whitespace-nowrap"
+            >
+              {coverUploading ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
+              Yükle
+            </button>
           </div>
         </div>
       </Section>
@@ -233,14 +321,36 @@ export default function MyPlacePage() {
                   </button>
                 </div>
               ))}
+              {menuImgUploading && (
+                <div className="aspect-square rounded-xl border-2 border-dashed border-brand/40 bg-brand/5 flex items-center justify-center">
+                  <Loader2 size={20} className="animate-spin text-brand" />
+                </div>
+              )}
             </div>
           )}
+          <input
+            ref={menuInput}
+            type="file"
+            accept="image/*"
+            multiple
+            className="hidden"
+            onChange={handleMenuFileChange}
+          />
           <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => menuInput.current?.click()}
+              disabled={menuImgUploading}
+              className="flex items-center gap-2 px-4 py-2.5 text-sm border-2 border-dashed border-brand text-brand rounded-lg hover:bg-brand/5 transition-colors disabled:opacity-50"
+            >
+              {menuImgUploading ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
+              {menuImgUploading ? 'Yükleniyor…' : 'Fotoğraf Ekle'}
+            </button>
             <input
               value={newMenuImg}
               onChange={(e) => setNewMenuImg(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addMenuImage(); } }}
-              placeholder="Fotoğraf URL'i ekle ve Enter'a bas"
+              placeholder="veya URL yapıştırıp Enter"
               className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand"
             />
             <button

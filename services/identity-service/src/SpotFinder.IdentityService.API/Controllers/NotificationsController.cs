@@ -106,9 +106,9 @@ public sealed class NotificationsController : BaseController
         return NoContent();
     }
 
-    /// <summary>Returns Expo push tokens for a list of user IDs (internal/admin use).</summary>
+    /// <summary>Returns Expo push tokens for a list of user IDs (internal service-to-service call).</summary>
     [HttpPost("tokens-by-users")]
-    [Authorize(Roles = "Admin,SuperAdmin,PlaceOwner")]
+    [AllowAnonymous]
     [ProducesResponseType(typeof(IReadOnlyList<string>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetTokensByUsers(
         [FromBody] TokensByUsersRequest request,
