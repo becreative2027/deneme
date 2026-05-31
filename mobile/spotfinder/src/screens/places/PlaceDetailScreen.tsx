@@ -67,11 +67,14 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
   const qc = useQueryClient();
   const currentUser = useAuthStore(s => s.user);
 
-  // Track place view for personalization — fire-and-forget
+  // Track place view + duration for analytics — fire-and-forget on unmount
   React.useEffect(() => {
-    if (currentUser?.id) {
-      trackPlaceView(placeId, currentUser.id);
-    }
+    if (!currentUser?.id) return;
+    const startedAt = Date.now();
+    return () => {
+      const durationSeconds = Math.min(Math.round((Date.now() - startedAt) / 1000), 1800);
+      trackPlaceView(placeId, currentUser.id, durationSeconds);
+    };
   }, [placeId, currentUser?.id]);
 
   const [lightboxIndex, setLightboxIndex] = useState(0);

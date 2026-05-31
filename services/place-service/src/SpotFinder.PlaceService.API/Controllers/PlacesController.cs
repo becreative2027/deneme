@@ -2,6 +2,7 @@ using FluentValidation;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using SpotFinder.BuildingBlocks.Api;
+using SpotFinder.PlaceService.Application.Features.Analytics.Queries.GetPlaceAnalytics;
 using SpotFinder.PlaceService.Application.Features.Places.Commands.AddOrUpdateReview;
 using SpotFinder.PlaceService.Application.Features.Places.Commands.CreatePlace;
 using SpotFinder.PlaceService.Application.Features.Places.Commands.DeleteReview;
@@ -102,13 +103,25 @@ public sealed class PlacesController : BaseController
         return Ok(result);
     }
 
-    /// <summary>Track that a user viewed a place detail page (interest signal).</summary>
+    /// <summary>Track that a user viewed a place detail page (interest signal + analytics).</summary>
     [HttpPost("{id:guid}/view")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> TrackView(Guid id, [FromBody] TrackViewRequest req, CancellationToken ct)
     {
-        await Sender.Send(new TrackPlaceViewCommand(req.UserId, id), ct);
+        await Sender.Send(new TrackPlaceViewCommand(req.UserId, id, req.DurationSeconds), ct);
         return NoContent();
+    }
+
+    /// <summary>Get view analytics for a place (owner/admin only).</summary>
+    [HttpGet("{id:guid}/analytics")]
+    [ProducesResponseType(typeof(ApiResult<PlaceAnalyticsResponse>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetAnalytics(
+        Guid id,
+        [FromQuery] int days = 30,
+        CancellationToken ct = default)
+    {
+        var result = await Sender.Send(new GetPlaceAnalyticsQuery(id, days), ct);
+        return Ok(result);
     }
 
     /// <summary>Admin: Delete a review by id.</summary>
@@ -130,4 +143,4 @@ public sealed record AddReviewRequest(
     int Rating,
     string? Comment);
 
-public sealed record TrackViewRequest(Guid UserId);
+public sealed record TrackViewRequest(Guid UserId, int? DurationSeconds = null);

@@ -86,9 +86,9 @@ export async function searchPlaces(req: PlaceSearchRequest): Promise<PlaceSearch
   };
 }
 
-export async function trackPlaceView(placeId: string, userId: string): Promise<void> {
+export async function trackPlaceView(placeId: string, userId: string, durationSeconds?: number): Promise<void> {
   try {
-    await apiClient.post(`/api/places/${placeId}/view`, { userId });
+    await apiClient.post(`/api/places/${placeId}/view`, { userId, durationSeconds });
   } catch {
     // fire-and-forget — silently ignore errors
   }

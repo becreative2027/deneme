@@ -347,3 +347,33 @@ export async function getAuditLogs(page = 1, pageSize = 30) {
   const inner = data?.data ?? data;
   return { items: inner?.items ?? inner?.logs ?? [], totalCount: inner?.totalCount ?? 0 };
 }
+
+// ── Place Analytics ───────────────────────────────────────────────────────
+
+export interface DailyViewStat {
+  date: string;       // ISO date "2026-05-01"
+  views: number;
+  uniqueVisitors: number;
+}
+
+export interface PlaceAnalytics {
+  totalViews: number;
+  uniqueVisitors: number;
+  avgDurationSeconds: number | null;
+  dailyStats: DailyViewStat[];
+}
+
+export async function getPlaceAnalytics(placeId: string, days = 30): Promise<PlaceAnalytics> {
+  const { data } = await adminClient.get(`/api/places/${placeId}/analytics`, { params: { days } });
+  const inner: any = data?.data ?? data;
+  return {
+    totalViews:         inner?.totalViews         ?? 0,
+    uniqueVisitors:     inner?.uniqueVisitors      ?? 0,
+    avgDurationSeconds: inner?.avgDurationSeconds  ?? null,
+    dailyStats: (inner?.dailyStats ?? []).map((d: any) => ({
+      date:           d.date,
+      views:          d.views          ?? 0,
+      uniqueVisitors: d.uniqueVisitors ?? 0,
+    })),
+  };
+}
