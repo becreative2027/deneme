@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "196817036029",
+    "project_id": "spotfinder-app",
+    "storage_bucket": "spotfinder-app.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:196817036029:android:REPLACE_WITH_APP_ID",
+        "android_client_info": {
+          "package_name": "com.ayberkkemal.spotfinder"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "196817036029-REPLACE_WITH_ANDROID_CLIENT_ID.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.ayberkkemal.spotfinder",
+            "certificate_hash": "REPLACE_WITH_SHA1"
+          }
+        },
+        {
+          "client_id": "196817036029-ad7o8lof6tm0le250vjo5b03jdak1961.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBXJTEBXIpAADNzMk1AdxI1eErMTic1klQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "196817036029-ad7o8lof6tm0le250vjo5b03jdak1961.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

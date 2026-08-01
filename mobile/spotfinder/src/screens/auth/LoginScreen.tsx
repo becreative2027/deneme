@@ -22,18 +22,21 @@ import { useToast } from '../../components/Toast';
 import { useTheme, radius, spacing, typography, shadow } from '../../theme';
 import { GlassCard, AmberButton, AmberInput, Eyebrow } from '../../components/ui';
 
+const IS_IOS = Platform.OS === 'ios';
+
 // Required for expo-auth-session to handle the browser redirect
 WebBrowser.maybeCompleteAuthSession();
 
 const { width, height } = Dimensions.get('window');
 
-// ─── Google OAuth — replace with your actual client IDs from Google Cloud Console ───
-// https://console.cloud.google.com → APIs & Services → Credentials → Create OAuth 2.0 Client ID
-// iOS Client ID  : "App type = iOS", Bundle ID = com.spotfinder.app
-// Web Client ID  : "App type = Web application" (required for id_token)
-const GOOGLE_IOS_CLIENT_ID = '196817036029-74cmitujnep5s5il8cmsbfjb6hjif5so.apps.googleusercontent.com';
-const GOOGLE_WEB_CLIENT_ID = '196817036029-ad7o8lof6tm0le250vjo5b03jdak1961.apps.googleusercontent.com';
-// ────────────────────────────────────────────────────────────────────────────────────
+// ─── Google OAuth ─────────────────────────────────────────────────────────────
+// iOS Client ID  : Google Cloud Console → OAuth 2.0 → App type = iOS
+// Android Client ID: Google Cloud Console → OAuth 2.0 → App type = Android
+// Web Client ID  : Google Cloud Console → OAuth 2.0 → App type = Web application (required for id_token)
+const GOOGLE_IOS_CLIENT_ID     = '196817036029-74cmitujnep5s5il8cmsbfjb6hjif5so.apps.googleusercontent.com';
+const GOOGLE_ANDROID_CLIENT_ID = '196817036029-REPLACE_WITH_ANDROID_CLIENT_ID.apps.googleusercontent.com';
+const GOOGLE_WEB_CLIENT_ID     = '196817036029-ad7o8lof6tm0le250vjo5b03jdak1961.apps.googleusercontent.com';
+// ─────────────────────────────────────────────────────────────────────────────
 
 type Props = { navigation: NativeStackNavigationProp<AuthStackParamList, 'Login'> };
 
@@ -83,6 +86,7 @@ export function LoginScreen({ navigation }: Props) {
   // ── Google OAuth ────────────────────────────────────────────────────────────
   const [_googleRequest, googleResponse, promptGoogleAsync] = Google.useAuthRequest({
     iosClientId: GOOGLE_IOS_CLIENT_ID,
+    androidClientId: GOOGLE_ANDROID_CLIENT_ID,
     webClientId: GOOGLE_WEB_CLIENT_ID,
     scopes: ['openid', 'profile', 'email'],
   });
@@ -256,18 +260,20 @@ export function LoginScreen({ navigation }: Props) {
             <View style={[styles.orLine, { backgroundColor: colors.border }]} />
           </View>
 
-          {/* Apple Sign In */}
-          <AppleAuthentication.AppleAuthenticationButton
-            buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
-            buttonStyle={
-              colors.background === '#ffffff' || colors.background === '#fafaf9'
-                ? AppleAuthentication.AppleAuthenticationButtonStyle.BLACK
-                : AppleAuthentication.AppleAuthenticationButtonStyle.WHITE
-            }
-            cornerRadius={12}
-            style={[styles.appleBtn, styles.btn]}
-            onPress={handleAppleLogin}
-          />
+          {/* Apple Sign In — iOS only */}
+          {IS_IOS && (
+            <AppleAuthentication.AppleAuthenticationButton
+              buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
+              buttonStyle={
+                colors.background === '#ffffff' || colors.background === '#fafaf9'
+                  ? AppleAuthentication.AppleAuthenticationButtonStyle.BLACK
+                  : AppleAuthentication.AppleAuthenticationButtonStyle.WHITE
+              }
+              cornerRadius={12}
+              style={[styles.appleBtn, styles.btn]}
+              onPress={handleAppleLogin}
+            />
+          )}
 
           {/* Google Sign In */}
           <AmberButton
